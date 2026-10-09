@@ -52,13 +52,19 @@ export interface LabelLayout {
   titleYPx: number;
   gapPx: number;
   qrRequestedPx: number;
+  /** 预览画布上二维码的实际绘制边长（像素；可能已被等比缩放） */
   qrSidePx: number;
+  /** 二维码在**导出网格**上的落地边长（像素）；模块边长与它配套，打印与读数都以它为准 */
+  qrExportSidePx: number;
+  /** 单模块边长（整数像素，导出网格） */
   qrModulePx: number;
+  /** 二维码落地后的真实边长（毫米）——屏幕拿尺子量到的就是它 */
+  qrActualMm: number;
   qrModules: number;
   qrX: number;
   qrY: number;
-  /** 二维码被可用空间压小 */
-  clipped: boolean;
+  /** 被版心或剩余高度**真的**限住（与「整数像素取整导致的微小缩短」是两回事） */
+  spaceLimited: boolean;
   /** 字号过大导致标题自己就溢出版心 */
   titleOverflow: boolean;
 }
@@ -201,12 +207,23 @@ function build(config: LabelConfig, scale: number): Built {
   const availableForQr = contentHeightPx - titleBlockPx;
 
   const qrRequestedPx = Math.max(1, Math.round(mmToPx(config.qr.sizeMm, dpi)));
-  const qrLimit = Math.max(1, Math.min(qrRequestedPx, contentWidthPx || 1, availableForQr > 0 ? availableForQr : 1));
-  const qr = renderQrCode(config.content, pxToMm(qrLimit, dpi), dpi, config.qr.errorCorrectionLevel, config.qr.quietZoneModules);
+  // 二维码：空间上限按毫米算（与 scale 无关），取整只在**导出网格**上做一次；
+  // 预览只把这张满 DPI 位图等比缩放绘制，绝不在缩小后的 dpi 上重新取整——
+  // 否则屏幕拿尺子量到的毫米会与读数条、与印出来的一直打架。
+  const exportDpi = config.page.dpi;
+  const contentWidthMm = pxToMm(contentWidthPx, dpi);
+  const availableForQrMm = pxToMm(availableForQr, dpi);
+  const qrLimitMm = Math.max(
+    0.1,
+    Math.min(config.qr.sizeMm, contentWidthMm || 0.1, availableForQrMm > 0 ? availableForQrMm : 0.1),
+  );
+  const qr = renderQrCode(config.content, qrLimitMm, exportDpi, config.qr.errorCorrectionLevel, config.qr.quietZoneModules);
+  const qrActualMm = pxToMm(qr.sidePx, exportDpi);
+  const qrDrawPx = Math.max(1, Math.round(mmToPx(qrActualMm, dpi)));
 
-  const titleYPx = config.title.position === 'above' || !hasTitle ? marginPx : marginPx + qr.sidePx + gapPx;
+  const titleYPx = config.title.position === 'above' || !hasTitle ? marginPx : marginPx + qrDrawPx + gapPx;
   const qrY = hasTitle && config.title.position === 'above' ? marginPx + titleHeightPx + gapPx : marginPx;
-  const qrX = Math.round(marginPx + Math.max(0, (contentWidthPx - qr.sidePx) / 2));
+  const qrX = Math.round(marginPx + Math.max(0, (contentWidthPx - qrDrawPx) / 2));
 
   return {
     config,
@@ -228,12 +245,14 @@ function build(config: LabelConfig, scale: number): Built {
       titleYPx,
       gapPx,
       qrRequestedPx,
-      qrSidePx: qr.sidePx,
+      qrSidePx: qrDrawPx,
+      qrExportSidePx: qr.sidePx,
       qrModulePx: qr.modulePx,
+      qrActualMm,
       qrModules: qr.modules,
       qrX,
       qrY,
-      clipped: qr.sidePx < qrRequestedPx - 1,
+      spaceLimited: qrLimitMm < config.qr.sizeMm - 0.01,
       titleOverflow: titleBlockPx + 1 >= contentHeightPx,
     },
   };
@@ -297,7 +316,7 @@ function drawColorBar(ctx: CanvasRenderingContext2D, built: Built) {
   const barWidthPx = cellPx * 8;
   const barHeightPx = Math.max(2, Math.round(Math.min(mmToPx(2.6, dpi), bandPx * 0.42)));
   const fontPx = Math.max(6, Math.round(ptToPx(5, dpi)));
-  const text = `${config.page.widthMm}×${config.page.heightMm}mm · ${dpi}DPI · 模块${qrModulePx}px · ${qrModules}模块 · 纠错${config.qr.errorCorrectionLevel}`;
+  const text = `${config.page.widthMm}×${config.page.heightMm}mm · ${config.page.dpi}DPI · 模块${qrModulePx}px · ${qrModules}模块 · 纠错${config.qr.errorCorrectionLevel}`;
 
   ctx.save();
   ctx.font = `400 ${fontPx}px "Cascadia Mono", Consolas, monospace`;
@@ -355,7 +374,7 @@ export function renderLabel(config: LabelConfig, scale = 1): RenderResult {
       ctx.restore();
     }
 
-    ctx.drawImage(qr.canvas, layout.qrX, layout.qrY);
+    ctx.drawImage(qr.canvas, layout.qrX, layout.qrY, layout.qrSidePx, layout.qrSidePx);
     drawColorBar(ctx, built);
   }
 
@@ -379,12 +398,14 @@ export function validateLabel(config: LabelConfig, layout: LabelLayout): LabelIs
   }
   if (layout.titleOverflow) {
     issues.push({ level: 'error', message: '标题太高，已经占满版心，二维码无处安放：缩小字号、减小行高或加大页边距。' });
-  } else if (layout.clipped) {
+  } else if (layout.spaceLimited) {
     issues.push({
       level: 'warn',
-      message: `可用空间不足，二维码已由 ${config.qr.sizeMm} mm 压到 ${pxToMm(layout.qrSidePx, dpi).toFixed(1)} mm。`,
+      message: `可用空间不足：二维码已由 ${config.qr.sizeMm} mm 压到 ${layout.qrActualMm.toFixed(1)} mm。`,
     });
   }
+  // 整数像素取整造成的微小缩短不报警：读数条已经报出真实边长，
+  // 而「模块必须是整数像素」是保证打印不发虚的前提，不是用户要改的东西。
   if (layout.qrModulePx > 0 && layout.qrModulePx < 2 && layout.qrModules > 0) {
     issues.push({ level: 'warn', message: `模块只有 ${layout.qrModulePx} 像素，打印会发虚：加大二维码边长、降低纠错等级或缩短内容。` });
   }

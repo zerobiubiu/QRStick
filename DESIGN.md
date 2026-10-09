@@ -3,6 +3,7 @@ name: QRStick 码贴生成器
 description: 印刷工单与印张 —— 纸白、墨黑、发丝线的可打印二维码标签车间
 colors:
   ink: "#101010"
+  ink-deep: "#000"
   paper: "#ffffff"
   ground: "#f4f4f2"
   rule: "rgba(16,16,16,0.16)"

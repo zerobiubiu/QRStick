@@ -54,7 +54,7 @@ export function BatchSource({ store }: { store: LabelStore }) {
           borderBottom: '1px solid var(--rule)',
         }}
       >
-        <Typography sx={{ fontSize: 11.5, fontWeight: 700 }}>数据</Typography>
+        <Typography sx={{ fontSize: 11.5, fontWeight: 700 }}>批量数据源</Typography>
         <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary' }}>
           {rows.length ? `${rows.length} 条` : '未导入'}
         </Typography>

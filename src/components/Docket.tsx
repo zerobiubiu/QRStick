@@ -29,7 +29,7 @@ import type { LabelIssue } from '../lib/render';
 import type { LabelStore } from '../state/labelStore';
 import { BatchSource } from './BatchSource';
 import { LineMark } from './StateLine';
-import { INK, MONO_FONT, PAPER, RULE_STRONG, UI_FONT } from '../theme';
+import { INK, MONO_FONT, PAPER } from '../theme';
 
 /** 字段名到控件的无障碍连线：FieldRow 生成 id，控件用 aria-labelledby 指回来 */
 const FieldLabelId = createContext<string | undefined>(undefined);
@@ -177,7 +177,6 @@ function NumberField({
   max = 9999,
   step = 1,
   suffix,
-  width = 82,
 }: {
   value: number;
   onCommit: (value: number) => void;
@@ -186,37 +185,59 @@ function NumberField({
   max?: number;
   step?: number;
   suffix?: string;
-  width?: number;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
+  const [notice, setNotice] = useState('');
   const labelId = useContext(FieldLabelId);
+  // 宽度只有两档规则：带单位 / 不带单位，不再按字段即兴取值
+  const width = suffix ? 96 : 76;
   return (
-    <TextField
-      size="small"
-      type="number"
-      value={draft ?? String(value)}
-      aria-label={ariaLabel}
-      onChange={(event) => {
-        const text = event.target.value;
-        setDraft(text);
-        if (text.trim() === '') return;
-        const parsed = Number(text);
-        if (Number.isFinite(parsed)) onCommit(clamp(parsed, min, max, 2));
-      }}
-      onBlur={() => setDraft(null)}
-      slotProps={{
-        htmlInput: { min, max, step, 'aria-labelledby': labelId },
-        input: {
-          style: { fontFamily: MONO_FONT, paddingBlock: 6 },
-          endAdornment: suffix ? (
-            <Typography component="span" sx={{ fontSize: 10.5, color: 'text.secondary', ml: 0.5 }}>
-              {suffix}
-            </Typography>
-          ) : undefined,
-        },
-      }}
-      sx={{ width }}
-    />
+    <Stack sx={{ gap: 0.25 }}>
+      <TextField
+        size="small"
+        type="number"
+        value={draft ?? String(value)}
+        aria-label={ariaLabel}
+        onChange={(event) => {
+          const text = event.target.value;
+          setDraft(text);
+          if (text.trim() === '') {
+            setNotice('');
+            return;
+          }
+          const parsed = Number(text);
+          if (!Number.isFinite(parsed)) return;
+          if (parsed < min || parsed > max) {
+            const limit = parsed > max ? max : min;
+            setNotice(`已收到 ${parsed}，按${parsed > max ? '上' : '下'}限 ${limit} 生效`);
+          } else {
+            setNotice('');
+          }
+          onCommit(clamp(parsed, min, max, 2));
+        }}
+        onBlur={() => {
+          setDraft(null);
+          setNotice('');
+        }}
+        slotProps={{
+          htmlInput: { min, max, step, 'aria-labelledby': labelId },
+          input: {
+            style: { fontFamily: MONO_FONT, paddingBlock: 6 },
+            endAdornment: suffix ? (
+              <Typography component="span" sx={{ fontSize: 10.5, color: 'text.secondary', ml: 0.5, whiteSpace: 'nowrap' }}>
+                {suffix}
+              </Typography>
+            ) : undefined,
+          },
+        }}
+        sx={{ width }}
+      />
+      {notice ? (
+        <Typography sx={{ fontSize: 10, fontFamily: MONO_FONT, color: 'text.secondary', whiteSpace: 'nowrap' }}>
+          {notice}
+        </Typography>
+      ) : null}
+    </Stack>
   );
 }
 
@@ -254,12 +275,18 @@ function Segmented<T extends string | number>({
 export function Docket({ store, compact, issues }: { store: LabelStore; compact: boolean; issues: LabelIssue[] }) {
   const { config, patchPage, patchQr, patchTitle, patchMarks } = store;
   const [ratioText, setRatioText] = useState('1:1.414');
+  const [ratioError, setRatioError] = useState('');
   const [moreOpen, setMoreOpen] = useState(!compact);
   const custom = config.page.presetId === 'custom';
 
   const applyRatio = () => {
     const ratio = parseAspectRatio(ratioText);
-    if (ratio === null) return;
+    if (ratio === null) {
+      // 静默丢弃会被当成「这功能坏了」：就地说明它看不懂什么
+      setRatioError('看不懂这种写法。请用 宽:高（1:1.414）、3:4，或一个小数（0.707）');
+      return;
+    }
+    setRatioError('');
     patchPage({ presetId: 'custom', heightMm: Math.round(config.page.widthMm * ratio * 10) / 10 });
   };
 
@@ -322,12 +349,15 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
                   onCommit={(heightMm) => patchPage({ heightMm })}
                 />
               </FieldRow>
-              <FieldRow label="长宽比" hint="宽:高，回车套用（例 1:1.414、3:4、0.707）">
+              <FieldRow label="长宽比" hint={ratioError || '宽:高，回车套用（例 1:1.414、3:4、0.707）'}>
                 <Stack direction="row" sx={{ gap: 0.75, alignItems: 'center' }}>
                   <TextField
                     size="small"
                     value={ratioText}
-                    onChange={(event) => setRatioText(event.target.value)}
+                    onChange={(event) => {
+                      setRatioText(event.target.value);
+                      if (ratioError) setRatioError('');
+                    }}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter') applyRatio();
                     }}
@@ -350,7 +380,7 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
                 max={1200}
                 step={6}
                 suffix="DPI"
-                width={92}
+                
                 onCommit={(dpi) => patchPage({ dpi: Math.round(dpi) })}
               />
               <ToggleButtonGroup
@@ -377,7 +407,7 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
                 min={0}
                 max={80}
                 suffix="mm"
-                width={82}
+                
                 onCommit={(marginMm) => patchPage({ marginMm })}
               />
               <Slider
@@ -395,7 +425,7 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
         </DocketSection>
 
         <DocketSection title="标题" meta={`${config.title.text.split('\n').length} 行输入`}>
-          <FieldRow label="标题内容" align="start">
+          <FieldRow label="标题内容" align="start" hint="批量模式下同样由 CSV 的「标题」列逐行覆盖">
             <FieldTextArea value={config.title.text} onChange={(text) => patchTitle({ text })} minRows={2} maxRows={4} />
           </FieldRow>
           <FieldRow label="字体">
@@ -418,7 +448,7 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
                 max={400}
                 step={0.5}
                 suffix="pt"
-                width={84}
+                
                 onCommit={(fontSizePt) => patchTitle({ fontSizePt })}
               />
               <Slider
@@ -474,7 +504,7 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
                 max={2.5}
                 step={0.05}
                 suffix="倍"
-                width={84}
+                
                 onCommit={(lineHeight) => patchTitle({ lineHeight })}
               />
             </Stack>
@@ -557,7 +587,7 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
           </FieldRow>
           <Box sx={{ px: 2, py: 0.75 }}>
             <Button size="small" variant="text" onClick={() => setMoreOpen((open) => !open)} sx={{ color: 'text.secondary' }}>
-              {moreOpen ? '收起更多规格' : '更多规格（静默区）'}
+              {moreOpen ? '收起更多二维码规格' : '更多二维码规格（静默区）'}
             </Button>
           </Box>
           <Collapse in={moreOpen} unmountOnExit>
@@ -568,7 +598,7 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
                 min={0}
                 max={16}
                 suffix="模块"
-                width={92}
+                
                 onCommit={(quietZoneModules) => patchQr({ quietZoneModules: Math.round(quietZoneModules) })}
               />
             </FieldRow>
@@ -576,49 +606,36 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
         </DocketSection>
 
         {store.mode === 'batch' ? <BatchSource store={store} /> : null}
-
-        {issues.length ? (
-          <DocketSection
-            title="体检"
-            meta={`${issues.filter((item) => item.level === 'error').length} 错 · ${issues.filter((item) => item.level === 'warn').length} 警`}
-          >
-            {issues.map((issue, index) => (
-              <Stack key={`${index}-${issue.message}`} direction="row" sx={{ gap: 1, alignItems: 'flex-start', px: 2, py: 0.6 }}>
-                <Box sx={{ pt: 0.25 }}>
-                  <LineMark form={issue.level === 'error' ? 'double' : 'dashed'} width={22} />
-                </Box>
-                <Typography
-                  sx={{ fontSize: 11.5, lineHeight: 1.5, color: 'text.primary' }}
-                >
-                  {issue.message}
-                </Typography>
-              </Stack>
-            ))}
-          </DocketSection>
-        ) : null}
       </Box>
 
-      <Box
-        sx={{
-          mt: 'auto',
-          px: 2,
-          py: 1.25,
-          borderTop: `1.5px solid ${INK}`,
-          bgcolor: 'rgba(16,16,16,0.02)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 2,
-        }}
-      >
-        <Typography sx={{ fontSize: 10.5, color: 'text.secondary', fontFamily: UI_FONT, borderColor: RULE_STRONG }}>
-          参数改动即时重排印张，没有「应用」这一步。
-        </Typography>
-        <Tooltip title="恢复到出厂的默认参数；批量数据不会被删除">
-          <Button size="small" variant="outlined" onClick={store.reset}>
-            恢复默认
-          </Button>
-        </Tooltip>
+      {/* 体检常驻底栏：它是提醒的唯一解释处，不能停在滚动区最底部 */}
+      <Box sx={{ mt: 'auto', borderTop: `1.5px solid ${INK}`, bgcolor: 'rgba(16,16,16,0.02)' }}>
+        {issues.length ? (
+          <Box sx={{ borderBottom: '1px solid var(--rule)', maxHeight: 140, overflowY: 'auto', px: 2, py: 0.75 }}>
+            <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary', mb: 0.25 }}>
+              体检 · {issues.filter((item) => item.level === 'error').length} 错 ·{' '}
+              {issues.filter((item) => item.level === 'warn').length} 警
+            </Typography>
+            {issues.map((issue, index) => (
+              <Stack key={`${index}-${issue.message}`} direction="row" sx={{ gap: 1, alignItems: 'flex-start', py: 0.25 }}>
+                <Box sx={{ pt: 0.75 }}>
+                  <LineMark form={issue.level === 'error' ? 'double' : 'dashed'} width={22} />
+                </Box>
+                <Typography sx={{ fontSize: 11.5, lineHeight: 1.45, color: 'text.primary' }}>{issue.message}</Typography>
+              </Stack>
+            ))}
+          </Box>
+        ) : null}
+        <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 2, px: 2, py: 1.25 }}>
+          <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>
+            参数改动即时重排印张，没有「应用」这一步。
+          </Typography>
+          <Tooltip title="恢复到出厂的默认参数；批量数据不会被删除">
+            <Button size="small" variant="outlined" onClick={store.reset}>
+              恢复默认
+            </Button>
+          </Tooltip>
+        </Stack>
       </Box>
     </Box>
   );

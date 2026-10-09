@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Stack, Typography } from '@mui/material';
 import { renderLabel, type LabelLayout } from '../lib/render';
-import { formatMm, pxToMm } from '../lib/units';
+import { formatMm } from '../lib/units';
 import type { LabelConfig } from '../lib/types';
 import { INK, MONO_FONT } from '../theme';
 
@@ -180,10 +180,9 @@ export function PressSheet({ config, layout, signature }: { config: LabelConfig;
   );
   const displayWidth = layout.sheetWidthMm * pxPerMm;
   const displayHeight = layout.sheetHeightMm * pxPerMm;
-  const qrActualMm = pxToMm(layout.qrSidePx, layout.dpi);
   const qrReadout =
     layout.qrModules > 0
-      ? `${qrActualMm.toFixed(1)} mm · ${layout.qrModulePx} px/模块 · ${layout.qrModules} 模块`
+      ? `${layout.qrActualMm.toFixed(1)} mm · ${layout.qrModulePx} px/模块 · ${layout.qrModules} 模块`
       : '占位（内容为空）';
 
   return (

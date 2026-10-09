@@ -3,7 +3,7 @@
  *
  * 窄屏时印张上移、工单下沉——优先级塌缩里，预览与导出永远不被挤掉。
  */
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Button, Paper, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import { BatchGrid } from './components/BatchGrid';
 import { Docket } from './components/Docket';
@@ -41,6 +41,14 @@ export default function App() {
   const previewLayout = useMemo(() => layoutLabel(previewConfig), [previewConfig]);
   const previewSignature = useMemo(() => JSON.stringify(previewConfig), [previewConfig]);
 
+  const [exportedKey, setExportedKey] = useState('');
+  const configKey = useMemo(() => JSON.stringify(config), [config]);
+
+  // 导出记录不能挂在改过的参数上：参数一变，上一次「已导出」就不再成立
+  useEffect(() => {
+    if (record.phase === 'done' && exportedKey && exportedKey !== configKey) setRecord(IDLE_EXPORT);
+  }, [configKey, exportedKey, record.phase, setRecord]);
+
   const handleExport = useCallback(
     async (format: ExportFormat) => {
       setRecord({ ...IDLE_EXPORT, phase: 'busy', action: EXPORT_ACTION[format] });
@@ -55,6 +63,7 @@ export default function App() {
           at: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
           ...outcome,
         });
+        setExportedKey(configKey);
       } catch (cause) {
         setRecord({ ...IDLE_EXPORT, error: cause instanceof Error ? cause.message : '无法写入下载文件，请检查浏览器的下载权限' });
       }
@@ -127,7 +136,7 @@ export default function App() {
           minHeight: 0,
           display: 'grid',
           gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: '392px minmax(0, 1fr)' },
-          gridTemplateRows: { xs: 'auto auto', md: '1fr' },
+          gridTemplateRows: { xs: 'max-content max-content', md: '1fr' },
           overflow: { xs: 'auto', md: 'hidden' },
         }}
       >
@@ -181,6 +190,7 @@ export default function App() {
           <StateLine
             record={record}
             flagged={flagged}
+            reason={issues.length ? issues[0].message : undefined}
             summary={`${layout.pixelWidth} × ${layout.pixelHeight} px · ${layout.qrModulePx} px/模块 · 纠错 ${config.qr.errorCorrectionLevel}`}
           />
         </Box>

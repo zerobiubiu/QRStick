@@ -77,6 +77,19 @@ body {
   background-clip: content-box;
 }
 
+/* 数字格：去掉浏览器自带的上下箭头——它会和等宽数字的点零糊成一处，
+   13px 下「60」容易被读成「6Ø」；且真正调值用的是旁边的滑杆 */
+input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 /* 印张每次重排都会上墨一次：这是全站唯一的动效 */
 @keyframes qrstick-ink {
   from {

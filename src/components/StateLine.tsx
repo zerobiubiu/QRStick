@@ -4,7 +4,7 @@
  * 实线 = 已生效；点划线 = 正在出片；双线 = 已导出；虚线 = 有提醒。
  * 这套词汇来自印张上的套准线与裁切线本身。
  */
-import { Box, Typography } from '@mui/material';
+import { Box, Tooltip, Typography } from '@mui/material';
 import type { ExportRecord } from '../state/labelStore';
 import { INK, MONO_FONT } from '../theme';
 
@@ -14,7 +14,12 @@ interface StateLineProps {
   flagged: boolean;
   /** 出片、付印前的实时描述，例如当前印张的规格 */
   summary: string;
+  /** flagged 时的原因；线型只说「有提醒」，原因得说出来 */
+  reason?: string;
 }
+
+/** 四种线型的含义：这个世界自己知道，使用者也得看得见 */
+const LINE_LEGEND = '线型即状态：实线 = 已生效 · 点划线 = 正在出片 · 双线 = 已导出 · 虚线 = 有提醒';
 
 type LineForm = 'solid' | 'dashdot' | 'double' | 'dashed';
 
@@ -49,9 +54,9 @@ export function LineMark({ form, width = 34 }: { form: LineForm; width?: number 
   );
 }
 
-export function StateLine({ record, flagged, summary }: StateLineProps) {
+export function StateLine({ record, flagged, summary, reason }: StateLineProps) {
   let form: LineForm = 'solid';
-  let text = summary;
+  let text = flagged && reason ? reason : summary;
 
   if (record.phase === 'busy') {
     form = 'dashdot';
@@ -64,26 +69,34 @@ export function StateLine({ record, flagged, summary }: StateLineProps) {
   }
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1.25,
-        px: 1.75,
-        py: 0.75,
-        borderTop: '1px solid var(--rule)',
-        bgcolor: 'var(--paper)',
-      }}
-    >
-      <LineMark form={form} />
-      <Typography
-        sx={{ fontSize: 11, color: record.phase === 'idle' && !flagged ? 'text.secondary' : 'text.primary', fontFamily: MONO_FONT }}
+    <Tooltip title={LINE_LEGEND} placement="top-start">
+      <Box
+        role="status"
+        aria-live="polite"
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.25,
+          px: 1.75,
+          py: 0.75,
+          borderTop: '1px solid var(--rule)',
+          bgcolor: 'var(--paper)',
+        }}
       >
-        {text}
-      </Typography>
-      {record.error ? (
-        <Typography sx={{ fontSize: 11, color: 'text.primary' }}>· 导出失败：{record.error}</Typography>
-      ) : null}
-    </Box>
+        <LineMark form={form} />
+        <Typography
+          sx={{
+            fontSize: 11,
+            color: record.phase === 'idle' && !flagged ? 'text.secondary' : 'text.primary',
+            fontFamily: MONO_FONT,
+          }}
+        >
+          {text}
+        </Typography>
+        {record.error ? (
+          <Typography sx={{ fontSize: 11, color: 'text.primary' }}>· 导出失败：{record.error}</Typography>
+        ) : null}
+      </Box>
+    </Tooltip>
   );
 }

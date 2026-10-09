@@ -163,10 +163,16 @@
         "canonical": "rgba(16,16,16,0.34)",
         "note": "控件轮廓：按钮、输入框 fieldset、菜单纸、分段相邻边框、滑杆轨道、未选中复选框"
       },
-      "ink-secondary": {
+"ink-deep": {
         "role": "neutral",
-        "displayName": "次级墨 Ink Secondary",
-        "canonical": "rgba(16,16,16,0.62)",
+        "displayName": "深墨 Ink Deep",
+        "canonical": "#000",
+        "note": "悬停时墨再压深一档：实心主按钮与选中态分段按钮的反白底"
+      },
+      "ink-secondary": {
+      "role": "neutral",
+      "displayName": "次级墨 Ink Secondary",
+      "canonical": "rgba(16,16,16,0.62)",
         "note": "字段名、字段提示、元数据、未选中分段文字、状态行空闲读数"
       },
       "ink-disabled": {

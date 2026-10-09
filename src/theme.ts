@@ -10,6 +10,8 @@
 import { createTheme } from '@mui/material/styles';
 
 export const INK = '#101010';
+/** 悬停时墨再压深一档：按钮与选中态的反白底 */
+export const INK_DEEP = '#000';
 export const PAPER = '#ffffff';
 export const GROUND = '#f4f4f2';
 export const RULE = 'rgba(16,16,16,0.16)';
@@ -46,8 +48,6 @@ export const theme = createTheme({
     fontFamily: UI_FONT,
     fontSize: 13,
     htmlFontSize: 16,
-    h1: { fontSize: '1.25rem', fontWeight: 700, letterSpacing: 0 },
-    h2: { fontSize: '1.0625rem', fontWeight: 700, letterSpacing: 0 },
     h3: { fontSize: '0.9375rem', fontWeight: 700, letterSpacing: 0 },
     body1: { fontSize: '0.8125rem' },
     body2: { fontSize: '0.75rem' },
@@ -73,7 +73,7 @@ export const theme = createTheme({
         contained: {
           borderColor: INK,
           color: PAPER,
-          '&:hover': { background: '#000', borderColor: '#000' },
+          '&:hover': { background: INK_DEEP, borderColor: INK_DEEP },
         },
         outlined: { color: INK },
         text: { border: '1px solid transparent', paddingInline: 8 },
@@ -103,7 +103,7 @@ export const theme = createTheme({
           '&.Mui-selected': {
             background: INK,
             color: PAPER,
-            '&:hover': { background: '#000' },
+            '&:hover': { background: INK_DEEP },
           },
         },
       },
@@ -156,7 +156,6 @@ export const theme = createTheme({
         arrow: { color: INK },
       },
     },
-    MuiDivider: { styleOverrides: { root: { borderColor: RULE } } },
     MuiFormControlLabel: {
       styleOverrides: { label: { fontSize: '0.75rem' }, root: { marginLeft: -6 } },
     },
