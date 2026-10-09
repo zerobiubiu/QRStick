@@ -126,23 +126,25 @@ export default function App() {
           flex: 1,
           minHeight: 0,
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: '392px minmax(0, 1fr)' },
+          gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: '392px minmax(0, 1fr)' },
           gridTemplateRows: { xs: 'auto auto', md: '1fr' },
           overflow: { xs: 'auto', md: 'hidden' },
         }}
       >
-        <Box sx={{ order: { xs: 2, md: 1 }, display: 'flex', minHeight: 0 }}>
+        <Box sx={{ order: { xs: 2, md: 1 }, display: 'flex', minHeight: 0, minWidth: 0 }}>
           <Docket store={store} compact={compact} issues={issues} />
         </Box>
 
-        <Box sx={{ order: { xs: 1, md: 2 }, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <Box sx={{ order: { xs: 1, md: 2 }, display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0 }}>
           {mode === 'batch' ? (
             <Box
               sx={{
-                flex: 1,
+                flex: { lg: 1 },
                 minHeight: 0,
                 display: 'grid',
                 gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.3fr) minmax(0, 1fr)' },
+                // 窄屏是单列 auto 行，分不到剩余高度：给数据表一个明确高度，别让它塌成 0
+                height: { xs: '38dvh', lg: 'auto' },
               }}
             >
               <BatchGrid rows={rows} selectedRow={selectedRow} onSelect={setSelectedRow} />
@@ -153,11 +155,22 @@ export default function App() {
               ) : null}
             </Box>
           ) : (
-            <PressSheet config={previewConfig} layout={previewLayout} signature={previewSignature} />
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: 0,
+                flex: { md: 1 },
+                // 同理：窄屏的印张要自带高度，否则台面量到 0 就不画了
+                height: { xs: '58dvh', md: 'auto' },
+              }}
+            >
+              <PressSheet config={previewConfig} layout={previewLayout} signature={previewSignature} />
+            </Box>
           )}
 
           {mode === 'batch' && !wide ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', height: 420, borderTop: '1px solid var(--rule)' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', height: 360, borderTop: '1px solid var(--rule)' }}>
               <PressSheet config={previewConfig} layout={previewLayout} signature={previewSignature} />
             </Box>
           ) : null}

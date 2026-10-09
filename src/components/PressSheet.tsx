@@ -5,7 +5,7 @@
  *  台面（灰底 + 四角套准十字）→ 毫米刻度尺（贴着印张的真实刻度）→ 纸（渲染核产出的画布）。
  * 刻度尺的刻度不是装饰：它按印张在当前屏幕上每毫米多少像素现算，读数就是真实尺寸。
  */
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Stack, Typography } from '@mui/material';
 import { renderLabel, type LabelLayout } from '../lib/render';
 import { formatMm, pxToMm } from '../lib/units';
@@ -30,19 +30,35 @@ function RegistrationMark({ size = 17 }: { size?: number }) {
   );
 }
 
-function useMeasuredBox(ref: RefObject<HTMLElement | null>) {
+/**
+ * 量台面的尺寸：节点挂载（含布局变化后重新挂载）时同步量一次，
+ * ResizeObserver 负责后续变化。0 尺寸一律忽略——切标签页、整页截图这类
+ * 瞬时的 0 高度不该把印张从界面上抹掉。
+ */
+function useMeasuredBox() {
+  const [node, setNode] = useState<HTMLDivElement | null>(null);
   const [box, setBox] = useState({ width: 0, height: 0 });
+
   useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    const observer = new ResizeObserver((entries) => {
-      const rect = entries[0]?.contentRect;
-      if (rect) setBox({ width: rect.width, height: rect.height });
-    });
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [ref]);
-  return box;
+    if (!node) return;
+    const measure = () => {
+      const rect = node.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) setBox({ width: rect.width, height: rect.height });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    // 兜底：ResizeObserver 在隐身/无头环境里可能不投递回调，窗口尺寸变化必须照样量
+    window.addEventListener('resize', measure);
+    const frame = requestAnimationFrame(measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', measure);
+      cancelAnimationFrame(frame);
+    };
+  }, [node]);
+
+  return { box, attach: setNode };
 }
 
 /** 按「当前每毫米多少像素」现算刻度：太密时自动降到 2 / 5 / 10 mm 一档 */
@@ -119,7 +135,7 @@ function SheetRuler({ axis, lengthPx, pxPerMm }: { axis: 'x' | 'y'; lengthPx: nu
 
 function Readout({ label, value }: { label: string; value: string }) {
   return (
-    <Box sx={{ px: 1.5, py: 0.75, borderLeft: '1px solid var(--rule)', minWidth: 0 }}>
+    <Box sx={{ px: 1.5, py: 0.75, borderLeft: '1px solid var(--rule)', minWidth: 0, flex: '0 0 auto' }}>
       <Typography sx={{ fontSize: 10, color: 'text.secondary', lineHeight: 1.2 }}>{label}</Typography>
       <Typography sx={{ fontSize: 11, fontFamily: MONO_FONT, lineHeight: 1.45, whiteSpace: 'nowrap' }}>{value}</Typography>
     </Box>
@@ -127,8 +143,7 @@ function Readout({ label, value }: { label: string; value: string }) {
 }
 
 export function PressSheet({ config, layout, signature }: { config: LabelConfig; layout: LabelLayout; signature: string }) {
-  const stageRef = useRef<HTMLDivElement>(null);
-  const stage = useMeasuredBox(stageRef);
+  const { box: stage, attach: attachStage } = useMeasuredBox();
 
   const rendered = useMemo(() => {
     const scale = Math.min(1, STAGE_MAX_PX / Math.max(layout.pixelWidth, layout.pixelHeight));
@@ -168,9 +183,9 @@ export function PressSheet({ config, layout, signature }: { config: LabelConfig;
       : '占位（内容为空）';
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1, bgcolor: 'var(--ground)' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0, flex: 1, bgcolor: 'var(--ground)' }}>
       <Box
-        ref={stageRef}
+        ref={attachStage}
         sx={{
           position: 'relative',
           flex: 1,
@@ -216,7 +231,17 @@ export function PressSheet({ config, layout, signature }: { config: LabelConfig;
         ) : null}
       </Box>
 
-      <Stack direction="row" sx={{ flexWrap: 'wrap', bgcolor: 'var(--paper)', borderTop: '1px solid var(--rule)', pl: 0.25 }}>
+      <Stack
+        direction="row"
+        sx={{
+          // 窄屏把读数压成一行横滑：读数不能把印张挤掉（优先级塌缩）
+          flexWrap: { xs: 'nowrap', md: 'wrap' },
+          overflowX: { xs: 'auto', md: 'visible' },
+          bgcolor: 'var(--paper)',
+          borderTop: '1px solid var(--rule)',
+          pl: 0.25,
+        }}
+      >
         <Readout
           label="印张"
           value={`${formatMm(layout.sheetWidthMm)} × ${formatMm(layout.sheetHeightMm)} mm · ${config.page.landscape ? '横向' : '纵向'}`}
