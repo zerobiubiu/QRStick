@@ -11,6 +11,7 @@ bun run dev      # 开发服务 http://localhost:5173
 bun run build    # 产物 dist/，可直接发布到静态托管（阿里云 ESA Pages，根路径）
 bunx tsc -b      # 类型检查
 bun run lint     # oxlint
+bun test         # 单元测试（bun 自带运行器，无需额外依赖）
 ```
 
 ## 能做什么
