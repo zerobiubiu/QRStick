@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-09T12:16:21",
+  "generatedAt": "2026-10-09T18:18:36.405Z",
   "title": "Design System: QRStick 码贴生成器",
   "extensions": {
     "colorMeta": {
@@ -163,16 +163,16 @@
         "canonical": "rgba(16,16,16,0.34)",
         "note": "控件轮廓：按钮、输入框 fieldset、菜单纸、分段相邻边框、滑杆轨道、未选中复选框"
       },
-"ink-deep": {
+      "ink-deep": {
         "role": "neutral",
         "displayName": "深墨 Ink Deep",
         "canonical": "#000",
         "note": "悬停时墨再压深一档：实心主按钮与选中态分段按钮的反白底"
       },
       "ink-secondary": {
-      "role": "neutral",
-      "displayName": "次级墨 Ink Secondary",
-      "canonical": "rgba(16,16,16,0.62)",
+        "role": "neutral",
+        "displayName": "次级墨 Ink Secondary",
+        "canonical": "rgba(16,16,16,0.62)",
         "note": "字段名、字段提示、元数据、未选中分段文字、状态行空闲读数"
       },
       "ink-disabled": {
@@ -517,146 +517,136 @@
       "description": "批量出码的数据表：表头带报「第 X–Y 条 / 共 N 条」真实可视范围，列头下沿 1.5px 墨线，序号右对齐等宽，当前行用内描边 + 0.05 墨洗，与印张预览联动。",
       "html": "<div class=\"ds-table\">\n  <div class=\"ds-table-band\"><span class=\"ds-table-title\">数据</span><span class=\"ds-table-readout\">第 3–14 条 / 共 42 条</span></div>\n  <div class=\"ds-table-head\"><span class=\"ds-col-index\">序号</span><span class=\"ds-col-text\">标题</span><span class=\"ds-col-mono\">内容</span></div>\n  <div class=\"ds-table-row ds-table-row-current\"><span class=\"ds-col-index\">3</span><span class=\"ds-col-text\">库位 A-03-12</span><span class=\"ds-col-mono\">LOC-A-03-12</span></div>\n  <div class=\"ds-table-row\"><span class=\"ds-col-index\">4</span><span class=\"ds-col-text\">库位 A-03-13</span><span class=\"ds-col-mono\">LOC-A-03-13</span></div>\n</div>",
       "css": ".ds-table { background: #ffffff; font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', sans-serif; }\n.ds-table-band { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 6px 14px; background: rgba(16,16,16,0.035); border-bottom: 1px solid rgba(16,16,16,0.16); }\n.ds-table-title { font-size: 11.5px; font-weight: 700; color: #101010; }\n.ds-table-readout { font-family: 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', Menlo, monospace; font-size: 10.5px; color: rgba(16,16,16,0.62); }\n.ds-table-head, .ds-table-row { display: flex; gap: 12px; padding: 6px 14px; }\n.ds-table-head { font-size: 11px; font-weight: 700; color: #101010; border-bottom: 1.5px solid #101010; }\n.ds-table-row { font-size: 12px; color: #101010; border-bottom: 1px solid rgba(16,16,16,0.16); cursor: pointer; }\n.ds-table-row:hover { background: rgba(16,16,16,0.035); }\n.ds-table-row-current { outline: 1px solid #101010; outline-offset: -1px; background: rgba(16,16,16,0.05); font-weight: 600; }\n.ds-col-index { width: 68px; text-align: right; font-family: 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', Menlo, monospace; }\n.ds-col-mono { flex: 2; font-family: 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', Menlo, monospace; }\n.ds-col-text { flex: 1; }"
+    },
+    {
+      "name": "首访上手条 OnboardStrip",
+      "kind": "custom",
+      "description": "首次打开时的一次性引导条：只在状态行空闲时出现，点「知道了」或第一次导出成功即收起并写进本机记忆。",
+      "html": "<div class=\"ds-onboard\"><svg class=\"ds-onboard-mark\" width=\"22\" height=\"12\" viewBox=\"0 0 22 12\" aria-hidden=\"true\"><line x1=\"0\" y1=\"6\" x2=\"22\" y2=\"6\" stroke=\"#101010\" stroke-width=\"1.2\" stroke-dasharray=\"5 3\"/></svg><span class=\"ds-onboard-text\">示例标签：把工单里的标题与内容换成你的，点「付印 PDF」出来的就是能直接打印的 A4 标签</span><button class=\"ds-onboard-ok\" type=\"button\">知道了</button></div>",
+      "css": ".ds-onboard { display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: #ffffff; border-bottom: 1px solid rgba(16,16,16,0.16); font-family: \"Segoe UI\", \"Microsoft YaHei\", sans-serif; } .ds-onboard-mark { display: block; flex: 0 0 auto; } .ds-onboard-text { font-size: 10.5px; line-height: 1.45; color: rgba(16,16,16,0.62); min-width: 0; } .ds-onboard-ok { margin-left: auto; flex: 0 0 auto; height: 26px; padding: 0 8px; background: transparent; color: #101010; border: 1px solid transparent; border-radius: 0; font-size: 13px; font-weight: 600; cursor: pointer; } .ds-onboard-ok:hover { border-color: #101010; background: rgba(16,16,16,0.04); } .ds-onboard-ok:focus-visible { outline: 2px solid #0093d0; outline-offset: 1px; }"
     }
   ],
   "narrative": {
     "northStar": "印刷工单与印张",
-    "overview": "界面是一张待付印的印张摊在看版台上，台面灰底、四角钉着四色套准十字，贴着纸边是一把按当前屏幕密度现算的毫米刻度尺；左边夹着一张联单工单，每个参数都是「字段名 : 值」的一格，按规格 / 标题 / 二维码 / 数据 / 体检分段。这不是贴上去的皮：产品真实的机制就是「参数 → 印张 → 交付文件」，工单与印张正好是这个对应关系。\n\n整套系统只有两种材料——墨（#101010）与纸（#ffffff），加一块台面灰（#f4f4f2）。层级全部由 1 物理像素的发丝线、墨的透明度梯度、以及三条 1.5px 重线分界承担；没有圆角、没有卡片、没有阴影堆叠。印刷三原色只在极小面积上出现：套准十字的四条色版臂、焦点环、选中底色。数字一律等宽对齐，尺寸一律带单位（mm / DPI / pt），因为这套界面最终要落到实物上。\n\n密度是车间密度：正文 13px，元数据 10.5–11px，读数条一行六格，字段行上下各 8px 内边距、按钮与分段最小高 26px、数字格内边距 6px 9px。参数改动即时重排印张，没有「应用」这一步；破坏性动作（恢复默认）被隔离到工单最底部并附说明。窄屏时参数与读数先让位，印张与导出永不被挤掉——优先级塌缩是这个世界的秩序。",
+    "overview": "Overview\n\n\n界面是一张待付印的印张摊在看版台上，台面灰底、四角钉着四色套准十字，贴着纸边是一把按当前屏幕密度现算的毫米刻度尺；左边夹着一张联单工单，每个参数都是「字段名 : 值」的一格，按规格 / 标题 / 二维码 / 数据 / 体检分段。这不是贴上去的皮：产品真实的机制就是「参数 → 印张 → 交付文件」，工单与印张正好是这个对应关系（源码：`docs/decisions/0001-界面语言-印刷工单与印张.md`）。\n\n整套系统只有两种材料——墨（`#101010`）与纸（`#ffffff`），加一块台面灰（`#f4f4f2`）。层级全部由 1 物理像素的发丝线、墨的透明度梯度、以及三条 1.5px 重线分界承担；没有圆角、没有卡片、没有阴影堆叠。印刷三原色只在极小面积上出现：套准十字的四条色版臂、焦点环、选中底色。数字一律等宽对齐，尺寸一律带单位（mm / DPI / pt），因为这套界面最终要落到实物上。\n\n密度是车间密度：正文 13px，元数据 10.5–11px，读数条一行七格（末格是实际纠错等级），字段行上下各 8px 内边距、按钮与分段最小高 26px、数字格内边距 6px 9px。参数改动即时重排印张，没有「应用」这一步；破坏性动作（恢复默认）被隔离到工单最底部并附说明。窄屏时参数与读数先让位，印张与导出永不被挤掉——优先级塌缩是这个世界的秩序。",
     "keyCharacteristics": [
-      "直角是唯一的形：全局 borderRadius: 0，滑块拇指是 10 × 16 的立式矩形，复选框方角。",
-      "发丝线承担全部层级：1px solid rgba(16,16,16,0.16) 分层，1px solid rgba(16,16,16,0.34) 描边控件，1.5px solid #101010 只画三条边界重线。",
+      "直角是唯一的形：全局 `borderRadius: 0`，滑块拇指是 10 × 16 的立式矩形，复选框方角。",
+      "发丝线承担全部层级：`1px solid rgba(16,16,16,0.16)` 分层，`1px solid rgba(16,16,16,0.34)` 描边控件，`1.5px solid #101010` 只画三条边界重线。",
       "状态只用线型：实线已生效 / 点划线出片中 / 双线已导出 / 虚线有提醒，全站没有彩色状态。",
       "颜色是标记而不是装饰：三原色与色标条都按毫米级面积出现，界面主体永远是墨黑 / 纸白。",
-      "数字等宽 + 单位标注：读数、序号、型号一律等宽字体与 tabular-nums，每个尺寸写明 mm / DPI / pt。",
+      "数字等宽 + 单位标注：读数、序号、型号一律等宽字体与 `tabular-nums`，每个尺寸写明 mm / DPI / pt。",
       "零网络资源：不引网络字体、无插图、无位图（唯一的图形是 SVG 刻线与套准十字），离线可出正确的图。"
     ],
     "rules": [
       {
-        "name": "The Three-Ink Rule",
-        "zh": "三原色只做标记",
-        "body": "青 / 品红 / 黄永远不做文字色、不做背景色、不做边框色，只出现在套准十字色版臂、焦点环、选中底色、色标条。",
+        "name": "The Three-Ink Rule（三原色只做标记）",
+        "body": "青 / 品红 / 黄永远不做文字色、不做背景色、不做边框色。它们只出现在：套准十字的四条色版臂（各 1.2px 宽、2.5px 长的短线）、焦点环、选中底色、色标条。检验方法：把界面截成灰度图，若某处原色消失后信息就丢了，说明它被当成了装饰以外的用途——那是错的用法。",
         "section": "colors"
       },
       {
-        "name": "The Four-Wash Rule",
-        "zh": "墨洗只有四档",
-        "body": "背景层次只能用 0.02 / 0.035 / 0.04 / 0.05 四个墨洗，选哪一档由职责决定（页脚 / 分段带 / 悬停 / 当前行）；需要更深的底就用实底墨黑。",
+        "name": "The Four-Wash Rule（墨洗只有四档）",
+        "body": "背景层次只能用 `0.02 / 0.035 / 0.04 / 0.05` 这四个墨洗，选哪一档由元素职责决定（页脚 / 分段带 / 悬停 / 当前行），不按喜好挑选。需要更深的底就用实底墨黑（那意味着它是主按钮或选中态），需要更浅就退回纸白。",
         "section": "colors"
       },
       {
-        "name": "The No-Grey Hex Rule",
-        "zh": "灰不出现",
-        "body": "所有中间调都是 #101010 的 alpha，不引入灰色 hex；屏幕上唯一非墨非纸的颜色就是三原色标记与只印在纸面上的过程色。",
+        "name": "The No-Grey Hex Rule（灰不出现）",
+        "body": "所有中间调都是 `#101010` 的 alpha，不引入灰色 hex 值。屏幕上唯一非墨非纸的颜色就是三原色标记，以及只印在纸面上的过程色。",
         "section": "colors"
       },
       {
-        "name": "The No-Colour-State Rule",
-        "zh": "状态不着色",
-        "body": "这套系统里不存在彩色状态：调色板的 error 就是墨黑，错误、提醒、进行中、完成全靠线型加文案前缀区分；任何新状态先回答「它的线型是什么」。",
+        "name": "The No-Colour-State Rule（状态不着色）",
+        "body": "这套系统里不存在彩色状态：调色板的 `error` 就是墨黑（`src/theme.ts`），错误、提醒、进行中、完成全靠线型加文案前缀区分。任何新状态先回答「它的线型是什么」，答不出来就说明它不是状态而是内容。色觉障碍者与黑白打印都受益。",
         "section": "colors"
       },
       {
-        "name": "The Tabular Rule",
-        "zh": "数字必等宽",
-        "body": "会被比对、核对、抄写的数字用等宽字体并叠 tabular-nums；比例字体的数字只允许出现在正文叙述里。",
+        "name": "The Tabular Rule（数字必等宽）",
+        "body": "任何会被比对、核对、抄写的数字（读数、序号、DPI、mm、pt、模块边长）用等宽字体，并在全局叠上 `font-variant-numeric: tabular-nums`（`src/index.css`）。比例字体的数字只允许出现在正文叙述里，不允许出现在读数位。",
         "section": "typography"
       },
       {
-        "name": "The Installed-Fonts Rule",
-        "zh": "只用装好的字体",
-        "body": "不引任何网络字体；标签字体必须是操作者机器上装好的字体，否则离线导出的标签会换字。",
+        "name": "The Installed-Fonts Rule（只用装好的字体）",
+        "body": "不引任何网络字体（`src/lib/fonts.ts` 的注释就是这条纪律）。标签字体必须是操作者机器上装好的字体，因为 PDF / Word 要在离线环境里渲染出正确的字——选一个下不到的字体，导出的标签就会换字。",
         "section": "typography"
       },
       {
-        "name": "The One Ramp Rule",
-        "zh": "字号只走八级",
-        "body": "界面字号只取 15 / 13 / 12 / 11.5 / 11 / 10.5 / 10 / 9 八级；标签标题的磅值是唯一的例外。",
+        "name": "The One Ramp Rule（字号只走八级）",
+        "body": "界面字号只取 15 / 13 / 12 / 11.5 / 11 / 10.5 / 10 / 9 这八级，从不即兴加值；标签标题的磅值是唯一的例外，因为它是印件参数不是界面字号。",
         "section": "typography"
       },
       {
-        "name": "The No-Case Rule",
-        "zh": "不改字形",
-        "body": "textTransform: none、letterSpacing: 0；强调靠字重与墨色浓度，唯一例外是站名的 -0.01em。",
+        "name": "The No-Case Rule（不改字形）",
+        "body": "`textTransform: none`、`letterSpacing: 0`（`src/theme.ts`、`src/theme.ts`）——中文不需要大写变形，字距交给字体本身。唯一例外是站名的 `-0.01em`。",
         "section": "typography"
       },
       {
-        "name": "The Priority-Collapse Rule",
-        "zh": "优先级塌缩",
-        "body": "空间不够时按顺序牺牲低优先级参数、读数横滑、参数区下沉；印张与导出按钮在任何屏宽下都在场。",
+        "name": "The Priority-Collapse Rule（优先级塌缩）",
+        "body": "空间不够时按顺序牺牲：低优先级参数收进「更多规格」（窄屏默认收起，`src/components/Docket.tsx`）→ 读数条改为横滑（`src/components/PressSheet.tsx`）→ 参数区下沉。印张与导出按钮在任何屏宽下都不被挤掉，因为它们是这个工具的全部产出。",
         "section": "layout"
       },
       {
-        "name": "The Millimetre Rule",
-        "zh": "毫米是版面真相",
-        "body": "一切尺寸以毫米书写、按 DPI 换算成整数像素落地、再回读成毫米显示；屏幕缩放只影响预览，不影响导出。",
+        "name": "The Millimetre Rule（毫米是版面真相）",
+        "body": "一切版面尺寸以毫米书写、按 DPI 换算成整数像素落地，再回读成毫米显示（`src/lib/units.ts`、`src/lib/units.ts`、`src/lib/render.ts`）。界面里出现的每个尺寸都带单位；屏幕缩放（`scale`）只影响预览，不影响导出。",
         "section": "layout"
       },
       {
-        "name": "The Isolated Destructive Rule",
-        "zh": "破坏性动作隔离",
-        "body": "「恢复默认」单独占工单底部一行，带 1.5px 墨线与说明，不放在参数中间。",
+        "name": "The Isolated Destructive Rule（破坏性动作隔离）",
+        "body": "「恢复默认」不放在参数中间，它单独占工单底部一行，带 1.5px 墨线分界与一句说明（`src/components/Docket.tsx`）。",
         "section": "layout"
       },
       {
-        "name": "The Hairline Rule",
-        "zh": "发丝线承担层级",
-        "body": "分区、分隔、描边一律用 1px 线；需要更强分隔就加粗到 1.5px 墨黑，绝不加阴影。",
+        "name": "The Hairline Rule（发丝线承担层级）",
+        "body": "分区、分隔、描边一律用 1px 线：分层线 `rgba(16,16,16,0.16)`、控件轮廓 `rgba(16,16,16,0.34)`。需要更强的分隔就加粗到 1.5px 墨黑，绝不加阴影。",
         "section": "elevation"
       },
       {
-        "name": "The Single-Shadow Rule",
-        "zh": "唯一投影",
-        "body": "全站只有印张可以投影，理由是纸在台面上的物理抬升；悬停、聚焦、选中一律靠线型或底色，不靠抬高。",
+        "name": "The Single-Shadow Rule（唯一投影）",
+        "body": "全站只有印张可以投影，理由是纸在台面上的物理抬升。新增投影=新增一个不存在的物理层。悬停、聚焦、选中一律用线型或底色变化回应，不用抬高。",
         "section": "elevation"
       },
       {
-        "name": "The Heavy-Rule Rule",
-        "zh": "重线分界",
-        "body": "1.5px 墨黑线只画三条边界：顶栏下沿、工单底栏上沿、数据表表头下沿。",
+        "name": "The Heavy-Rule Rule（重线分界）",
+        "body": "1.5px 墨黑线只画三条边界：顶栏下沿（`src/App.tsx`）、工单底栏上沿（`src/components/Docket.tsx`）、数据表表头下沿（`src/components/BatchTable.tsx`）。它标的是「单据的固定边」，不是强调手段。",
         "section": "elevation"
       },
       {
-        "name": "The Right-Angle Rule",
-        "zh": "直角",
-        "body": "任何圆角都是错误的，包括拇指、复选框、提示条与滚动条；例外为零。",
+        "name": "The Right-Angle Rule（直角）",
+        "body": "任何圆角都是错误的，包括拇指、复选框、提示条与滚动条。例外为零。",
         "section": "shapes"
       },
       {
-        "name": "The Line-Form Rule",
-        "zh": "形态即状态",
-        "body": "状态必须是线的形态，四种线型含义固定，不可发明第五种；需要新状态先问它能否落进已有四态。",
+        "name": "The Line-Form Rule（形态即状态）",
+        "body": "状态必须是线的形态，不是色块、不是图标、不是徽章。四种线型的含义固定，不可发明第五种；需要新状态时先问它能不能落在已生效 / 出片中 / 已导出 / 有提醒这四态里。",
         "section": "shapes"
       },
       {
-        "name": "The Overlap Rule",
-        "zh": "拼合不叠线",
+        "name": "The Overlap Rule（拼合不叠线）",
         "body": "相邻同级元素共用一条边框（分段按钮 -1px 重叠、读数格共用左线），不许出现两条并排的 1px 线冒充 2px。",
         "section": "shapes"
       }
     ],
     "dos": [
-      "**Do** 用 1px 发丝线分层（rgba(16,16,16,0.16)）、1px 强线描边控件（0.34）、1.5px 墨线只画三条单据边界。",
-      "**Do** 让每个参数都长成「字段名 : 值」的一格（96px 字段列 + 值列），新参数先问它属于哪一段（规格 / 标题 / 二维码 / 数据 / 体检）。",
-      "**Do** 把数字写成等宽（Cascadia Mono 栈）并带上单位：mm、DPI、pt、模块、倍。",
+      "**Do** 用 1px 发丝线分层（`rgba(16,16,16,0.16)`）、1px 强线描边控件（`0.34`）、1.5px 墨线只画三条单据边界。",
+      "**Do** 让每个参数都长成「字段名 : 值」的一格（`96px` 字段列 + 值列），新参数先问它属于哪一段（规格 / 标题 / 二维码 / 数据 / 体检）。",
+      "**Do** 把数字写成等宽（`Cascadia Mono` 栈）并带上单位：`mm`、`DPI`、`pt`、`模块`、`倍`。",
       "**Do** 用四种线型表达状态（实线 / 点划线 / 双线 / 虚线），需要图形时优先加一条线而不是一个图标。",
       "**Do** 给选中态用反白（墨黑底 + 纸白字）或内描边，让灰度打印照样分得清。",
-      "**Do** 保留键盘焦点环 2px solid #0093d0 + 1px 偏移——青色的这一处用途不可省略。",
+      "**Do** 保留键盘焦点环 `2px solid #0093d0` + `1px` 偏移——青色的这一处用途不可省略。",
       "**Do** 让参数改动即时生效并让印张上墨一次；破坏性动作放到工单底部单独一行。",
-      "**Do** 在 prefers-reduced-motion: reduce 下关掉动效（唯一动效已就关）。",
+      "**Do** 在 `prefers-reduced-motion: reduce` 下关掉动效（唯一动效已就关）。",
       "**Do** 批量表头钉住可见范围读数「第 X–Y 条 / 共 N 条」，拿不到范围时退回「共 N 条」，用真实的渲染上下文而不是估算。",
       "**Do** 把预览与导出走同一条渲染路径、同一份毫米 + DPI 参数：屏幕上看到的就是打印出来的。"
     ],
     "donts": [
-      "**Don't** 使用任何圆角（borderRadius 必须为 0，包括拇指、复选框、提示条、滚动条）。",
-      "**Don't** 做卡片：不要加第二层纸、不要嵌套容器；分区只用发丝线 + 一档墨洗（0.02 / 0.035 / 0.04 / 0.05）。",
-      "**Don't** 加第二个投影。唯一允许的投影属于看版台上的印张。",
-      "**Don't** 给状态上色：错误 / 提醒 / 进行中 / 完成都只用线型加文案前缀，连调色板的 error 也是墨黑。",
-      "**Don't** 把青 / 品红 / 黄用作文字色、背景色或边框色——它们只做标记。",
-      "**Don't** 发明新的墨色 hex 或新的墨洗档位；需要新的中间调就从 #101010 的既有 alpha 里取。",
+      "**Don't** 使用任何圆角（`borderRadius` 必须为 0，包括拇指、复选框、提示条、滚动条）。",
+      "**Don't** 做卡片：不要加第二层纸、不要嵌套容器；分区只用发丝线 + 一档墨洗（`0.02 / 0.035 / 0.04 / 0.05`），再深的底意味着它是实底墨黑控件。",
+      "**Don't** 加第二个投影。唯一允许的投影属于看版台上的印张；悬停、聚焦、选中一律靠线型或底色，不靠抬高。",
+      "**Don't** 给状态上色：错误 / 提醒 / 进行中 / 完成都只用线型加文案前缀，连调色板的 `error` 也是墨黑（`src/theme.ts`）。",
+      "**Don't** 把青 / 品红 / 黄用作文字色、背景色或边框色——它们只做标记（套准十字色版臂、焦点环、选中底色、色标条）。",
+      "**Don't** 发明新的墨色 hex 或新的墨洗档位；需要新的中间调就从 `#101010` 的既有 alpha 里取。",
       "**Don't** 引入网络字体、图标字体或位图插图；界面唯一的图形是 SVG 刻线（刻度尺、套准十字、线型标记）。",
-      "**Don't** 给界面做做旧纹理、做旧纸纹或引用旧字形——纸白 + 墨黑要停在现代工单的克制上。",
-      "**Don't** 用大写变形或加字距来「强调」文字（textTransform: none、letterSpacing: 0）。",
-      "**Don't** 引入 theme 里未被消费的字号变体（h1 / h2 / h3 / body1 / body2 / caption 当前没有任何界面在用）。",
+      "**Don't** 给界面做做旧纹理、做旧纸纹或引用旧字形——纸白 + 墨黑要停在现代工单的克制上（决策 0001 的后果与风险一节明写了这条）。",
+      "**Don't** 用大写变形或加字距来「强调」文字（`textTransform: none`、`letterSpacing: 0`），强调靠字重 600 / 700 与墨色浓度。",
+      "**Don't** 引入 theme 里未被消费的字号变体（`h1 / h2 / h3 / body1 / body2 / caption` 当前没有任何界面在用），界面字号只用八级 ramp 与 `sx` 显式值。",
       "**Don't** 加「应用」按钮或任何待提交状态：参数即时重排是这个产品的机制本身。",
       "**Don't** 把「恢复默认」挪回参数区中间，或去掉它旁边的说明。",
       "**Don't** 让参数区或读数条把印张挤掉：窄屏按优先级塌缩，印张与导出按钮永远在场。"
