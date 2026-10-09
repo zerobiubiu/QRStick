@@ -28,6 +28,40 @@ export type BlockAlign = 'top' | 'center' | 'bottom';
 /** 预设的存档范围：整套参数，还是只存样式（标题格式 / 二维码参数 / 印刷标记 / 版式站位） */
 export type PresetScope = 'full' | 'style';
 
+/** 图片导出格式 */
+export type ImageFormat = 'png' | 'jpeg';
+
+/** 批量图片导出模式：逐张保存 / ZIP 打包 / 拼接成一张 */
+export type ImageExportMode = 'each' | 'zip' | 'stitch';
+
+/** 拼接排版方式 */
+export type StitchPlacement = 'grid' | 'vertical' | 'horizontal';
+
+/** 拼接参数 */
+export interface StitchOptions {
+  placement: StitchPlacement;
+  /** 网格布局的列数（1–8） */
+  columns: number;
+  /** 相邻图片间距，毫米 */
+  gapMm: number;
+  /** 是否在每张图下印一行标题 */
+  captions: boolean;
+}
+
+/** 图片导出选项（跟着导出动作走，存在本机） */
+export interface ImageExportOptions {
+  format: ImageFormat;
+  /** JPEG 质量 0.5–1（PNG 忽略） */
+  quality: number;
+  /** 背景色：JPEG 没有透明通道，纸白之外可换（PNG 也用它填拼接底板） */
+  background: string;
+  mode: ImageExportMode;
+  stitch: StitchOptions;
+}
+
+/** 批量模式的预览排布：单张突出 / 多张网格 */
+export type PreviewLayout = 'single' | 'grid';
+
 /** 页面（印张）参数 */
 export interface PageConfig {
   /** 预设 id，见 units.ts 的 PAGE_PRESETS；'custom' 表示自定义宽高 */

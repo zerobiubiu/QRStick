@@ -8,16 +8,16 @@ import { useRef, useState } from 'react';
 import { Box, Button, Stack, TextField, Typography } from '@mui/material';
 import { DATA_FORMAT_LABEL, buildSampleCsv, parseDataFile, parsePastedText, type DataParse } from '../lib/importData';
 import { saveBlob } from '../lib/download';
+import type { ConfirmRequest } from './ConfirmDialog';
 import type { LabelStore } from '../state/labelStore';
 import { MONO_FONT } from '../theme';
 
-export function BatchSource({ store }: { store: LabelStore }) {
+export function BatchSource({ store, confirm }: { store: LabelStore; confirm: (request: ConfirmRequest) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState('');
-  const [confirmClear, setConfirmClear] = useState(false);
   const { batch, rows } = store;
 
   const apply = (parsed: DataParse, fileName: string) => {
@@ -30,7 +30,6 @@ export function BatchSource({ store }: { store: LabelStore }) {
       warnings: parsed.warnings,
     });
     store.setSelectedRow(parsed.rows[0]?.index ?? 1);
-    setConfirmClear(false);
   };
 
   const load = async (file: File) => {
@@ -97,17 +96,20 @@ export function BatchSource({ store }: { store: LabelStore }) {
             <Button
               size="small"
               variant="outlined"
-              onClick={() => {
-                if (!confirmClear) {
-                  setConfirmClear(true);
-                  return;
-                }
-                store.setRows([]);
-                store.setBatch(null);
-                setConfirmClear(false);
-              }}
+              onClick={() =>
+                confirm({
+                  title: `清空 ${rows.length} 行数据`,
+                  detail: '会同时清掉导入信息与提醒；这一步不能撤销（已经导出的文件不受影响）。',
+                  items: rows.slice(0, 8).map((row) => `${row.index}. ${row.title || '（无标题）'} → ${row.content || '（内容为空）'}`),
+                  confirmLabel: '清空数据',
+                  onConfirm: () => {
+                    store.setRows([]);
+                    store.setBatch(null);
+                  },
+                })
+              }
             >
-              {confirmClear ? '再点一次清空' : '清空数据'}
+              清空数据
             </Button>
           ) : null}
         </Stack>

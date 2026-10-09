@@ -5,13 +5,67 @@
  * 形状对不上就退回默认，绝不把旧结构直接塞进界面。
  */
 import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
-import type { BatchRow, LabelConfig, MarksConfig, PageConfig, PresetScope, QrConfig, TitleConfig } from '../lib/types';
+import type {
+  BatchRow,
+  ImageExportOptions,
+  LabelConfig,
+  MarksConfig,
+  PageConfig,
+  PresetScope,
+  PreviewLayout,
+  QrConfig,
+  StitchOptions,
+  TitleConfig,
+} from '../lib/types';
 import type { DataFormat } from '../lib/importData';
 import type { PresetFileEntry } from '../lib/presetFile';
 
 const CONFIG_KEY = 'qrstick.config.v1';
 const ROWS_KEY = 'qrstick.rows.v1';
 const PRESETS_KEY = 'qrstick.presets.v1';
+const VIEW_KEY = 'qrstick.view.v1';
+
+/** 批量模式的界面状态（预览排布 / 分栏比例 / 列宽）：跟着模式切换走，不能丢 */
+interface ViewState {
+  previewLayout: PreviewLayout;
+  splitRatio: number;
+  columnWidths: Record<string, number>;
+  imageExport: ImageExportOptions;
+}
+
+export const DEFAULT_VIEW: ViewState = {
+  previewLayout: 'grid',
+  splitRatio: 0.5,
+  columnWidths: { index: 64, title: 190, content: 240, select: 44, handle: 40, actions: 40 },
+  imageExport: {
+    format: 'png',
+    quality: 0.92,
+    background: '#ffffff',
+    // 批量默认打包：逐张下载会被浏览器拦，打包是一个动作一个文件
+    mode: 'zip',
+    stitch: { placement: 'grid', columns: 3, gapMm: 2, captions: false },
+  },
+};
+
+function loadView(): ViewState {
+  try {
+    const raw = localStorage.getItem(VIEW_KEY);
+    if (!raw) return DEFAULT_VIEW;
+    const saved = JSON.parse(raw) as Partial<ViewState>;
+    return {
+      previewLayout: saved.previewLayout === 'single' ? 'single' : 'grid',
+      splitRatio: typeof saved.splitRatio === 'number' ? Math.min(0.75, Math.max(0.25, saved.splitRatio)) : DEFAULT_VIEW.splitRatio,
+      columnWidths: { ...DEFAULT_VIEW.columnWidths, ...saved.columnWidths },
+      imageExport: {
+        ...DEFAULT_VIEW.imageExport,
+        ...saved.imageExport,
+        stitch: { ...DEFAULT_VIEW.imageExport.stitch, ...saved.imageExport?.stitch },
+      },
+    };
+  } catch {
+    return DEFAULT_VIEW;
+  }
+}
 
 export const DEFAULT_CONFIG: LabelConfig = {
   page: {
@@ -126,6 +180,14 @@ function makeId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/** 拖拽排序后行号怎么变：被移动的那一行落到目标位，夹在中间的整段挤一位 */
+function remapAfterMove(index: number, from: number, to: number): number {
+  if (index === from) return to;
+  if (from < to && index > from && index <= to) return index - 1;
+  if (from > to && index >= to && index < from) return index + 1;
+  return index;
+}
+
 export interface LabelStore {
   config: LabelConfig;
   mode: AppMode;
@@ -135,6 +197,25 @@ export interface LabelStore {
   addRow: () => void;
   updateRow: (index: number, patch: Partial<Pick<BatchRow, 'title' | 'content'>>) => void;
   removeRow: (index: number) => void;
+  /** 批量删除（确认对话框之后调用） */
+  removeRows: (indexes: number[]) => void;
+  /** 拖拽排序：数组位置（0 开始），内部按行身份搬移并重排序号 */
+  moveRow: (from: number, to: number) => void;
+  /** 多选：用于批量操作，与「当前预览行」分开 */
+  selectedIds: number[];
+  toggleSelected: (index: number) => void;
+  setSelectedIds: (indexes: number[]) => void;
+  /** 批量模式的预览排布（模式切换不丢） */
+  previewLayout: PreviewLayout;
+  setPreviewLayout: (layout: PreviewLayout) => void;
+  /** 表格与预览的分栏比例（0.25–0.75），拖拽调整并持久化 */
+  splitRatio: number;
+  setSplitRatio: (ratio: number) => void;
+  /** 表格列宽（持久化，手动拖拽调整） */
+  columnWidths: Record<string, number>;
+  setColumnWidths: (widths: Record<string, number>) => void;
+  imageExport: ImageExportOptions;
+  setImageExport: (next: Partial<Omit<ImageExportOptions, 'stitch'>> & { stitch?: Partial<StitchOptions> }) => void;
   batch: BatchMeta | null;
   setBatch: (meta: BatchMeta | null) => void;
   selectedRow: number;
@@ -162,6 +243,16 @@ export function useLabelStore(): LabelStore {
   const [selectedRow, setSelectedRow] = useState(1);
   const [record, setRecord] = useState<ExportRecord>(IDLE_EXPORT);
   const [presets, setPresets] = useState<LabelPreset[]>(loadPresets);
+  const [view, setView] = useState<ViewState>(loadView);
+  const [selectedIds, setSelectedIdsState] = useState<number[]>([]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(VIEW_KEY, JSON.stringify(view));
+    } catch {
+      /* 隐私模式下写入会失败，不影响使用 */
+    }
+  }, [view]);
 
   useEffect(() => {
     try {
@@ -205,28 +296,73 @@ export function useLabelStore(): LabelStore {
   const reset = useCallback(() => setConfig(DEFAULT_CONFIG), []);
 
   const addRow = useCallback(() => {
-    setRows((prev) => {
-      const next = [...prev, { index: prev.length + 1, title: '', content: '' }];
-      setSelectedRow(next.length);
-      return next;
-    });
-  }, []);
+    const next = [...rows, { index: rows.length + 1, title: '', content: '' }];
+    setRows(next);
+    setSelectedRow(next.length);
+  }, [rows]);
 
   const updateRow = useCallback((index: number, patch: Partial<Pick<BatchRow, 'title' | 'content'>>) => {
     setRows((prev) => prev.map((row) => (row.index === index ? { ...row, ...patch } : row)));
   }, []);
 
-  const removeRow = useCallback(
-    (index: number) => {
-      const next = rows.filter((row) => row.index !== index).map((row, i) => ({ ...row, index: i + 1 }));
+  /** 删除（单条 / 多条走同一条路）：重排序号，并让选中行落到最近的一行 */
+  const removeRows = useCallback(
+    (indexes: number[]) => {
+      const targets = new Set(indexes);
+      const next = rows.filter((row) => !targets.has(row.index)).map((row, i) => ({ ...row, index: i + 1 }));
       setRows(next);
+      setSelectedIdsState((prev) => prev.filter((id) => !targets.has(id)));
       setSelectedRow((current) => {
         if (next.length === 0) return 1;
-        if (current === index) return Math.min(index, next.length);
-        return current > index ? current - 1 : current;
+        if (targets.has(current)) return Math.min(Math.min(...indexes), next.length);
+        // 被删的行在当前行之前 → 当前行整体前移
+        return current - indexes.filter((id) => id < current).length;
       });
     },
     [rows],
+  );
+  const removeRow = useCallback((index: number) => removeRows([index]), [removeRows]);
+
+  /** 拖拽排序：from/to 是数组位置（0 开始）；按行身份搬移，行号整体重排 */
+  const moveRow = useCallback(
+    (from: number, to: number) => {
+      const count = rows.length;
+      if (count === 0 || from === to || from < 0 || from >= count) return;
+      const target = Math.max(0, Math.min(to, count - 1));
+      const moved = rows[from];
+      const next = [...rows];
+      next.splice(from, 1);
+      next.splice(target, 0, moved);
+      setRows(next.map((row, i) => ({ ...row, index: i + 1 })));
+      // 选中行与多选都要跟着搬位置，否则索引会指向别人
+      setSelectedRow((current) => remapAfterMove(current - 1, from, target) + 1);
+      setSelectedIdsState((prev) => prev.map((id) => remapAfterMove(id - 1, from, target) + 1).sort((a, b) => a - b));
+    },
+    [rows],
+  );
+
+  const toggleSelected = useCallback((index: number) => {
+    setSelectedIdsState((prev) =>
+      prev.includes(index) ? prev.filter((id) => id !== index) : [...prev, index].sort((a, b) => a - b),
+    );
+  }, []);
+  const setSelectedIds = useCallback((indexes: number[]) => {
+    setSelectedIdsState([...new Set(indexes)].sort((a, b) => a - b));
+  }, []);
+
+  const setPreviewLayout = useCallback((previewLayout: PreviewLayout) => setView((v) => ({ ...v, previewLayout })), []);
+  const setSplitRatio = useCallback(
+    (splitRatio: number) => setView((v) => ({ ...v, splitRatio: Math.min(0.75, Math.max(0.25, splitRatio)) })),
+    [],
+  );
+  const setColumnWidths = useCallback((columnWidths: Record<string, number>) => setView((v) => ({ ...v, columnWidths })), []);
+  const setImageExport = useCallback(
+    (next: Partial<Omit<ImageExportOptions, 'stitch'>> & { stitch?: Partial<StitchOptions> }) =>
+      setView((v) => ({
+        ...v,
+        imageExport: { ...v.imageExport, ...next, stitch: { ...v.imageExport.stitch, ...next.stitch } },
+      })),
+    [],
   );
 
   const savePreset = useCallback(
@@ -310,6 +446,19 @@ export function useLabelStore(): LabelStore {
     addRow,
     updateRow,
     removeRow,
+    removeRows,
+    moveRow,
+    selectedIds,
+    toggleSelected,
+    setSelectedIds,
+    previewLayout: view.previewLayout,
+    setPreviewLayout,
+    splitRatio: view.splitRatio,
+    setSplitRatio,
+    columnWidths: view.columnWidths,
+    setColumnWidths,
+    imageExport: view.imageExport,
+    setImageExport,
     batch,
     setBatch,
     selectedRow,

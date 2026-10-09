@@ -26,7 +26,17 @@ import { LABEL_FONTS } from '../lib/fonts';
 import { saveBlob, sanitizeFileName } from '../lib/download';
 import { buildPresetFile, parsePresetFile } from '../lib/presetFile';
 import { DPI_PRESETS, PAGE_PRESETS, clamp, formatMm, parseAspectRatio } from '../lib/units';
-import type { Align, BlockAlign, ErrorCorrectionLevel, PresetScope, TitlePosition } from '../lib/types';
+import type {
+  Align,
+  BlockAlign,
+  ErrorCorrectionLevel,
+  ImageExportMode,
+  ImageFormat,
+  PresetScope,
+  StitchPlacement,
+  TitlePosition,
+} from '../lib/types';
+import type { ConfirmRequest } from './ConfirmDialog';
 import type { LabelIssue } from '../lib/render';
 import type { LabelStore } from '../state/labelStore';
 import { BatchSource } from './BatchSource';
@@ -274,7 +284,17 @@ function Segmented<T extends string | number>({
   );
 }
 
-export function Docket({ store, compact, issues }: { store: LabelStore; compact: boolean; issues: LabelIssue[] }) {
+export function Docket({
+  store,
+  compact,
+  issues,
+  confirm,
+}: {
+  store: LabelStore;
+  compact: boolean;
+  issues: LabelIssue[];
+  confirm: (request: ConfirmRequest) => void;
+}) {
   const { config, patchPage, patchQr, patchTitle, patchMarks } = store;
   const [ratioText, setRatioText] = useState('1:1.414');
   const [ratioError, setRatioError] = useState('');
@@ -341,7 +361,7 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
     >
       <Box sx={{ overflowY: 'auto', minHeight: 0, flex: 1 }}>
         {/* 批量模式下数据源就是首要任务，排在最前 */}
-        {store.mode === 'batch' ? <BatchSource store={store} /> : null}
+        {store.mode === 'batch' ? <BatchSource store={store} confirm={confirm} /> : null}
 
         <DocketSection title="样式预设" meta={store.presets.length ? `${store.presets.length} 套` : '未保存'}>
           <FieldRow label="存下这套" hint="整套 = 纸张 + 样式；只样式 = 标题格式 / 二维码参数 / 印刷标记 / 版式站位（不动纸张与页边距）">
@@ -416,7 +436,19 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
                   <Button size="small" variant="outlined" onClick={() => store.applyPreset(preset.id)}>
                     套用
                   </Button>
-                  <Button size="small" variant="text" onClick={() => store.deletePreset(preset.id)}>
+                  <Button
+                    size="small"
+                    variant="text"
+                    onClick={() =>
+                      confirm({
+                        title: `删除预设「${preset.name}」`,
+                        detail: '只删本机这一套；已经导出成文件的预设不受影响。',
+                        items: [`${preset.name} · ${preset.scope === 'style' ? '只样式' : '整套'} · 保存于 ${preset.savedAt}`],
+                        confirmLabel: '删除预设',
+                        onConfirm: () => store.deletePreset(preset.id),
+                      })
+                    }
+                  >
                     删除
                   </Button>
                 </Stack>
@@ -742,6 +774,118 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
               />
             </FieldRow>
           </Collapse>
+        </DocketSection>
+
+        <DocketSection title="导出" meta={`${store.imageExport.format.toUpperCase()} · ${
+          store.imageExport.mode === 'each' ? '逐张' : store.imageExport.mode === 'zip' ? '打包' : '拼接'
+        }`}>
+          <FieldRow label="图片格式" hint="PNG 无损、体积大；JPEG 有损、可调质量">
+            <Segmented<ImageFormat>
+              ariaLabel="图片导出格式"
+              value={store.imageExport.format}
+              options={[
+                { value: 'png', label: 'PNG' },
+                { value: 'jpeg', label: 'JPEG' },
+              ]}
+              onChange={(format) => store.setImageExport({ format })}
+            />
+          </FieldRow>
+          {store.imageExport.format === 'jpeg' ? (
+            <>
+              <FieldRow label="JPEG 质量" hint={`当前 ${Math.round(store.imageExport.quality * 100)}%`}>
+                <Slider
+                  size="small"
+                  min={0.5}
+                  max={1}
+                  step={0.01}
+                  value={store.imageExport.quality}
+                  aria-label="JPEG 质量"
+                  onChange={(_event, next) => store.setImageExport({ quality: next as number })}
+                />
+              </FieldRow>
+              <FieldRow label="背景色" hint="JPEG 没有透明通道：标签本身是纸白，这个颜色只在图片有透明区域（拼接留白）时可见">
+                <Stack direction="row" sx={{ gap: 1, alignItems: 'center' }}>
+                  <Box
+                    component="input"
+                    type="color"
+                    aria-label="导出背景色"
+                    value={store.imageExport.background}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => store.setImageExport({ background: event.target.value })}
+                    sx={{ width: 44, height: 26, p: 0, border: '1px solid var(--rule-strong)', bgcolor: 'transparent' }}
+                  />
+                  <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary' }}>
+                    {store.imageExport.background}
+                  </Typography>
+                </Stack>
+              </FieldRow>
+            </>
+          ) : null}
+          {store.mode === 'batch' ? (
+            <>
+              <FieldRow label="批量模式" hint="逐张会被浏览器拦多次下载；打包是一个动作一个文件；拼接把多张拼成一张">
+                <Segmented<ImageExportMode>
+                  ariaLabel="批量图片导出模式"
+                  value={store.imageExport.mode}
+                  options={[
+                    { value: 'each', label: '逐张' },
+                    { value: 'zip', label: '打包 ZIP' },
+                    { value: 'stitch', label: '拼接一张' },
+                  ]}
+                  onChange={(mode) => store.setImageExport({ mode })}
+                />
+              </FieldRow>
+              {store.imageExport.mode === 'stitch' ? (
+                <>
+                  <FieldRow label="拼接排布">
+                    <Segmented<StitchPlacement>
+                      ariaLabel="拼接排布"
+                      value={store.imageExport.stitch.placement}
+                      options={[
+                        { value: 'grid', label: '网格' },
+                        { value: 'vertical', label: '纵向' },
+                        { value: 'horizontal', label: '横向' },
+                      ]}
+                      onChange={(placement) => store.setImageExport({ stitch: { placement } })}
+                    />
+                  </FieldRow>
+                  {store.imageExport.stitch.placement === 'grid' ? (
+                    <FieldRow label="列数">
+                      <NumberField
+                        ariaLabel="拼接列数"
+                        value={store.imageExport.stitch.columns}
+                        min={1}
+                        max={8}
+                        suffix="列"
+                        onCommit={(columns) => store.setImageExport({ stitch: { columns: Math.round(columns) } })}
+                      />
+                    </FieldRow>
+                  ) : null}
+                  <FieldRow label="间距">
+                    <NumberField
+                      ariaLabel="拼接间距（毫米）"
+                      value={store.imageExport.stitch.gapMm}
+                      min={0}
+                      max={40}
+                      step={0.5}
+                      suffix="mm"
+                      onCommit={(gapMm) => store.setImageExport({ stitch: { gapMm } })}
+                    />
+                  </FieldRow>
+                  <FieldRow label="每张加标题">
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={store.imageExport.stitch.captions}
+                          onChange={(event) => store.setImageExport({ stitch: { captions: event.target.checked } })}
+                        />
+                      }
+                      label="在每张图下面印一行标题"
+                    />
+                  </FieldRow>
+                </>
+              ) : null}
+            </>
+          ) : null}
         </DocketSection>
 
         </Box>

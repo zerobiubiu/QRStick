@@ -5,9 +5,10 @@
  *  台面（灰底 + 四角套准十字）→ 毫米刻度尺（贴着印张的真实刻度）→ 纸（渲染核产出的画布）。
  * 刻度尺的刻度不是装饰：它按印张在当前屏幕上每毫米多少像素现算，读数就是真实尺寸。
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Box, Stack, Typography } from '@mui/material';
 import { renderLabel, type LabelLayout } from '../lib/render';
+import { useElementSize } from '../lib/useElementSize';
 import { formatMm } from '../lib/units';
 import type { LabelConfig } from '../lib/types';
 import { INK, MONO_FONT } from '../theme';
@@ -31,38 +32,11 @@ function RegistrationMark({ size = 17 }: { size?: number }) {
 }
 
 /**
- * 量台面的尺寸：节点挂载（含布局变化后重新挂载）时同步量一次，
- * ResizeObserver 负责后续变化。0 尺寸一律忽略——切标签页、整页截图这类
- * 瞬时的 0 高度不该把印张从界面上抹掉。
+ * 量台面的尺寸：交给共用的 useElementSize（挂载即量 + ResizeObserver + resize/rAF 兜底）。
  */
 function useMeasuredBox() {
-  const [node, setNode] = useState<HTMLDivElement | null>(null);
-  const [box, setBox] = useState({ width: 0, height: 0 });
-
-  useEffect(() => {
-    if (!node) return;
-    // 量内容框：clientWidth 含内边距，而印张只摆在内容框里——
-    // 多量进 44px 内边距，纸面就会溢出到台面外被裁掉（毫米尺整条被切）
-    const measure = () => {
-      const style = getComputedStyle(node);
-      const width = node.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-      const height = node.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
-      if (width > 0 && height > 0) setBox({ width, height });
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(node);
-    // 兜底：ResizeObserver 在隐身/无头环境里可能不投递回调，窗口尺寸变化必须照样量
-    window.addEventListener('resize', measure);
-    const frame = requestAnimationFrame(measure);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('resize', measure);
-      cancelAnimationFrame(frame);
-    };
-  }, [node]);
-
-  return { box, attach: setNode };
+  const { size, attach } = useElementSize();
+  return { box: { width: size.width, height: size.height }, attach };
 }
 
 /** 按「当前每毫米多少像素」现算刻度：太密时自动降到 2 / 5 / 10 mm 一档 */

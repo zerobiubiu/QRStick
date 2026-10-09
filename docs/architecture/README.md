@@ -6,6 +6,8 @@
 
 阅读顺序：先 `0001`，再看源码 `src/lib/render.ts` → `src/lib/export.ts` → `src/export/run.ts`。
 
-相关代码/配置：`src/lib/{units,types,fonts,render,export,download,importData,presetFile,batch}.ts`、`src/export/run.ts`、`src/state/labelStore.ts`（本机三个键：`qrstick.config.v1` 配置、`qrstick.rows.v1` 批量行、`qrstick.presets.v1` 样式预设）。
+相关代码/配置：`src/lib/{units,types,fonts,render,export,exportImage,download,importData,presetFile,batch,preview,async,useElementSize}.ts`、`src/export/{run,runImage}.ts`、`src/state/labelStore.ts`（本机四个键：`qrstick.config.v1` 配置、`qrstick.rows.v1` 批量行、`qrstick.presets.v1` 样式预设、`qrstick.view.v1` 界面状态）。
+
+界面层：`src/components/{PressSheet,Docket,BatchSource,BatchTable,BatchPreviewGrid,ConfirmDialog,StateLine}.tsx`（批量表用 MUI Table + dnd-kit，预览网格用懒渲染画布）。
 
 废弃与替代：无。

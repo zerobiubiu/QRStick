@@ -10,6 +10,7 @@
  */
 import { buildBatch } from '../lib/batch';
 import { canvasToPngBlob, sanitizeFileName } from '../lib/download';
+import { yieldToPaint } from '../lib/async';
 import { createPdfBuilder, exportPng, exportWord, type ExportPage, type WordPage } from '../lib/export';
 import { layoutLabel, renderLabel, renderQrCode } from '../lib/render';
 import { pxToMm, sheetSize } from '../lib/units';
@@ -41,22 +42,6 @@ export interface ExportOutcome {
 
 /** 进度回调：批量出码时界面靠它报「第 n / 共 m 页」 */
 export type ExportProgress = (done: number, total: number) => void;
-
-/**
- * 让出一次事件循环：批量出码时界面要能继续把进度画出来。
- *
- * 项目 lib 停在 ES2023，`Promise.withResolvers` 的类型还没进 lib，
- * 这里就地补一次形状（现代 Chromium 运行时本来就有这个方法）。
- */
-function yieldToPaint(): Promise<void> {
-  const { promise, resolve } = (
-    Promise as PromiseConstructor & {
-      withResolvers<T>(): { promise: Promise<T>; resolve: (value: T | PromiseLike<T>) => void };
-    }
-  ).withResolvers<void>();
-  setTimeout(resolve, 0);
-  return promise;
-}
 
 function toExportPage(config: LabelConfig): ExportPage {
   const { canvas } = renderLabel(config);
