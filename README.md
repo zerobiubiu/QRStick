@@ -44,3 +44,13 @@ bun run lint     # oxlint
 
 1. **毫米是版面真相，像素是导出真相**：换算只发生在 `src/lib/units.ts`，不引入隐式换算。
 2. **预览与导出同源**：只有 `src/lib/render.ts` 一个渲染核，不要在别处再画一遍标签。
+
+## 界面
+
+![单张模式](docs/screenshots/desktop.png)
+
+左：参数工单（字段名 : 值 的联单语法）· 中：贴着毫米刻度尺的印张预览 · 右：套准十字钉住看版台 · 下：读数条与线型状态行。
+
+## 许可
+
+[MIT](LICENSE) © 2026 zerobiubiu
