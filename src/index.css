@@ -1,0 +1,100 @@
+/**
+ * 全局基底样式。
+ *
+ * 世界是「印刷工单与印张」：纸白 + 墨黑 + 印刷三原色只作极小面积的标记。
+ * 这里管三件事：调色板变量、浏览器自有表面（选中、光标、滚动条、焦点环）、
+ * 以及那一次上墨动效。组件尺寸不在这里定，一律留在组件里。
+ */
+:root {
+  --ink: #101010;
+  --ink-70: rgba(16, 16, 16, 0.7);
+  --ink-54: rgba(16, 16, 16, 0.54);
+  --rule: rgba(16, 16, 16, 0.16);
+  --rule-strong: rgba(16, 16, 16, 0.34);
+  --paper: #ffffff;
+  --ground: #f4f4f2;
+  --cyan: #0093d0;
+  --magenta: #e5007d;
+  --yellow: #ffe200;
+  --ui-font: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', sans-serif;
+  --mono-font: 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', Menlo, monospace;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--ui-font);
+  font-size: 13px;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(0, 147, 208, 0.24);
+}
+
+:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 1px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--rule-strong);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--ink-54);
+  background-clip: content-box;
+}
+
+/* 印张每次重排都会上墨一次：这是全站唯一的动效 */
+@keyframes qrstick-ink {
+  from {
+    opacity: 0.42;
+    filter: blur(0.6px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+.sheet-ink {
+  animation: qrstick-ink 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-ink {
+    animation: none;
+  }
+}

@@ -1,0 +1,164 @@
+/**
+ * MUI 主题：印刷车间的工单。
+ *
+ * 纪律（来自锁定方向）：
+ *  - 直角：印刷东西上不出现圆角，圆角是屏幕的语法；
+ *  - 发丝线承担全部层级，不用阴影堆叠、不用卡片；
+ *  - 印刷三原色只作极小面积的标记与读数，界面主体永远墨黑 / 纸白；
+ *  - 数字一律等宽对齐（tabular-nums）。
+ */
+import { createTheme } from '@mui/material/styles';
+
+export const INK = '#101010';
+export const PAPER = '#ffffff';
+export const GROUND = '#f4f4f2';
+export const RULE = 'rgba(16,16,16,0.16)';
+export const RULE_STRONG = 'rgba(16,16,16,0.34)';
+export const CYAN = '#0093d0';
+export const MAGENTA = '#e5007d';
+export const YELLOW = '#ffe200';
+
+export const UI_FONT =
+  "'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', sans-serif";
+export const MONO_FONT = "'Cascadia Mono', Consolas, 'DejaVu Sans Mono', Menlo, monospace";
+
+/** 发丝线：1 物理像素的界内线 */
+export const hairline = `1px solid ${RULE}`;
+
+export const theme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: { main: INK, contrastText: PAPER },
+    secondary: { main: CYAN },
+    background: { default: GROUND, paper: PAPER },
+    divider: RULE,
+    text: {
+      primary: INK,
+      secondary: 'rgba(16,16,16,0.62)',
+      disabled: 'rgba(16,16,16,0.36)',
+    },
+    error: { main: '#c0143c' },
+    warning: { main: '#9a5b00' },
+    success: { main: '#0f6b3a' },
+  },
+  shape: { borderRadius: 0 },
+  typography: {
+    fontFamily: UI_FONT,
+    fontSize: 13,
+    htmlFontSize: 16,
+    h1: { fontSize: '1.25rem', fontWeight: 700, letterSpacing: 0 },
+    h2: { fontSize: '1.0625rem', fontWeight: 700, letterSpacing: 0 },
+    h3: { fontSize: '0.9375rem', fontWeight: 700, letterSpacing: 0 },
+    body1: { fontSize: '0.8125rem' },
+    body2: { fontSize: '0.75rem' },
+    caption: { fontSize: '0.6875rem', letterSpacing: 0 },
+    button: { textTransform: 'none', fontWeight: 600, letterSpacing: 0, fontSize: '0.8125rem' },
+  },
+  components: {
+    MuiPaper: {
+      defaultProps: { elevation: 0, square: true },
+      styleOverrides: { root: { backgroundImage: 'none' } },
+    },
+    MuiButton: {
+      defaultProps: { disableElevation: true, disableRipple: false },
+      styleOverrides: {
+        root: {
+          borderRadius: 0,
+          minHeight: 32,
+          paddingInline: 14,
+          border: `1px solid ${RULE_STRONG}`,
+          color: INK,
+          '&:hover': { borderColor: INK, background: 'rgba(16,16,16,0.04)' },
+        },
+        contained: {
+          borderColor: INK,
+          color: PAPER,
+          '&:hover': { background: '#000', borderColor: '#000' },
+        },
+        outlined: { color: INK },
+        text: { border: '1px solid transparent', paddingInline: 8 },
+        sizeSmall: { minHeight: 26, fontSize: '0.75rem', paddingInline: 10 },
+      },
+    },
+    MuiToggleButtonGroup: {
+      styleOverrides: {
+        root: { borderRadius: 0, gap: 0 },
+        grouped: {
+          borderRadius: '0 !important',
+          marginLeft: '-1px !important',
+          borderColor: RULE_STRONG,
+        },
+      },
+    },
+    MuiToggleButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 0,
+          textTransform: 'none',
+          fontSize: '0.75rem',
+          fontWeight: 600,
+          color: 'rgba(16,16,16,0.62)',
+          paddingBlock: 5,
+          paddingInline: 10,
+          '&.Mui-selected': {
+            background: INK,
+            color: PAPER,
+            '&:hover': { background: '#000' },
+          },
+        },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          borderRadius: 0,
+          fontSize: '0.8125rem',
+          backgroundColor: PAPER,
+          '& fieldset': { borderColor: RULE_STRONG },
+          '&:hover fieldset': { borderColor: INK },
+          '&.Mui-focused fieldset': { borderColor: INK, borderWidth: '1px' },
+        },
+        input: { padding: '6px 9px', height: 'auto' },
+      },
+    },
+    MuiSelect: { styleOverrides: { select: { paddingBlock: 6, paddingInline: 9 } } },
+    MuiInputLabel: { styleOverrides: { root: { fontSize: '0.75rem' } } },
+    MuiMenu: { styleOverrides: { paper: { border: `1px solid ${RULE_STRONG}`, borderRadius: 0, marginTop: 2 } } },
+    MuiMenuItem: { styleOverrides: { root: { fontSize: '0.8125rem', minHeight: 32 } } },
+    MuiSlider: {
+      styleOverrides: {
+        root: { color: INK, paddingBlock: 10 },
+        rail: { backgroundColor: RULE_STRONG, opacity: 1 },
+        track: { border: 'none', backgroundColor: INK },
+        thumb: {
+          borderRadius: 0,
+          width: 10,
+          height: 16,
+          marginTop: -5,
+          marginLeft: -5,
+          '&:hover, &.Mui-focusVisible': { boxShadow: 'none' },
+        },
+      },
+    },
+    MuiCheckbox: {
+      defaultProps: { size: 'small' },
+      styleOverrides: { root: { borderRadius: 0, padding: 5, color: RULE_STRONG, '&.Mui-checked': { color: INK } } },
+    },
+    MuiTooltip: {
+      styleOverrides: {
+        tooltip: {
+          borderRadius: 0,
+          backgroundColor: INK,
+          fontSize: '0.6875rem',
+          padding: '5px 7px',
+          maxWidth: 260,
+        },
+        arrow: { color: INK },
+      },
+    },
+    MuiDivider: { styleOverrides: { root: { borderColor: RULE } } },
+    MuiFormControlLabel: {
+      styleOverrides: { label: { fontSize: '0.75rem' }, root: { marginLeft: -6 } },
+    },
+  },
+});
