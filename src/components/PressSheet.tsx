@@ -8,13 +8,13 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Box, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { renderLabel, type LabelLayout } from '../lib/render';
+import { PREVIEW_MAX_PX, previewScaleFor } from '../lib/preview';
 import { useElementSize } from '../lib/useElementSize';
 import { formatMm } from '../lib/units';
 import type { LabelConfig } from '../lib/types';
 import { INK, MONO_FONT } from '../theme';
 
-/** 预览画布的最长边；超过就等比降采样，导出永远用满 DPI */
-const STAGE_MAX_PX = 1800;
+/** 刻度尺条的高度（像素） */
 const STRIP_PX = 22;
 /** 可选的缩放倍数：1 = 适应窗口 */
 const ZOOM_STEPS = [1, 1.5, 2, 3];
@@ -183,9 +183,9 @@ export function PressSheet({
   }, []);
 
   const rendered = useMemo(() => {
-    const scale = Math.min(1, STAGE_MAX_PX / Math.max(layout.pixelWidth, layout.pixelHeight));
-    return renderLabel(config, scale);
-  }, [config, layout.pixelWidth, layout.pixelHeight]);
+    // 预览上限与缩略图共用 lib/preview.ts 的同一套口径（导出永远用满 DPI）
+    return renderLabel(config, previewScaleFor(layout, PREVIEW_MAX_PX));
+  }, [config, layout]);
 
   // 用回调 ref 挂画布：hold 住节点的可以是首次测量之前（台面还没量到尺寸），
   // 用 effect 会因为「节点晚于 effect 出现」而漏挂。

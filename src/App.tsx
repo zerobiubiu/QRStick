@@ -6,7 +6,7 @@
  *  - 单张：工单 + 整张印张预览（刻度尺、套准十字、读数条）；
  *  - 批量：数据表（可拖拽排序 / 列宽可调 / 多选）+ 多图预览（单张突出或网格）。
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Box, Button, Paper, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import { BatchPreviewGrid } from './components/BatchPreviewGrid';
 import { BatchTable } from './components/BatchTable';
@@ -14,16 +14,17 @@ import { ConfirmDialog, type ConfirmRequest } from './components/ConfirmDialog';
 import { Docket } from './components/Docket';
 import { PressSheet } from './components/PressSheet';
 import { StateLine } from './components/StateLine';
-import { EXPORT_ACTION, runExport, type ExportFormat } from './export/run';
-import { runImageExport } from './export/runImage';
+import { EXPORT_ACTION } from './export/run';
 import { layoutLabel, validateLabel } from './lib/render';
+import { buildRowConfig } from './lib/batch';
 import { formatMm } from './lib/units';
-import { IDLE_EXPORT, useLabelStore, type AppMode } from './state/labelStore';
+import { useAppShortcuts } from './lib/useAppShortcuts';
+import { useSplitDrag } from './lib/useSplitDrag';
+import { useLabelStore } from './state/labelStore';
+import { useExportActions, type TopAction } from './state/useExportActions';
+import { type AppMode } from './state/types';
 import { theme, MONO_FONT } from './theme';
 import type { LabelConfig } from './lib/types';
-
-/** 顶栏三个动作：出片走图片导出（格式/模式可配），另两个是文档导出 */
-type TopAction = 'image' | 'pdf' | 'word';
 
 const ACTIONS: TopAction[] = ['image', 'pdf', 'word'];
 
@@ -55,27 +56,20 @@ export default function App() {
   const compact = useMediaQuery(theme.breakpoints.down('md'));
   const wide = useMediaQuery(theme.breakpoints.up('lg'));
   const [confirm, setConfirm] = useState<ConfirmRequest | null>(null);
-  const splitRef = useRef<HTMLDivElement>(null);
+  // 分栏拖拽的指针事件与几何换算在 lib/useSplitDrag.ts
+  const { containerRef: splitRef, startDrag: startSplit } = useSplitDrag(setSplitRatio);
 
   const layout = useMemo(() => layoutLabel(config), [config]);
   const issues = useMemo(() => validateLabel(config, layout), [config, layout]);
 
-  /** 批量模式下，单张预览跟着当前选中行走 */
+  /** 批量模式下，单张预览跟着当前选中行走（行 → 配置走 lib/batch.ts 的唯一实现） */
   const previewConfig = useMemo<LabelConfig>(() => {
     if (mode !== 'batch' || !rows.length) return config;
     const row = rows.find((item) => item.index === selectedRow) ?? rows[0];
-    return { ...config, title: { ...config.title, text: row.title }, content: row.content };
+    return buildRowConfig(config, row);
   }, [config, mode, rows, selectedRow]);
   const previewLayoutInfo = useMemo(() => layoutLabel(previewConfig), [previewConfig]);
   const previewSignature = useMemo(() => JSON.stringify(previewConfig), [previewConfig]);
-
-  const [exportedKey, setExportedKey] = useState('');
-  const configKey = useMemo(() => JSON.stringify(config), [config]);
-
-  // 导出记录不能挂在改过的参数上：参数一变，上一次「已导出」就不再成立
-  useEffect(() => {
-    if (record.phase === 'done' && exportedKey && exportedKey !== configKey) setRecord(IDLE_EXPORT);
-  }, [configKey, exportedKey, record.phase, setRecord]);
 
   const pickedRows = useMemo(() => rows.filter((row) => selectedIds.includes(row.index)), [rows, selectedIds]);
 
@@ -91,84 +85,26 @@ export default function App() {
         } 张 · 付印 PDF / 交版 Word：每行一页，共 ${rows.length} 页 · 打印请设 100%，关闭「适应页面」`
       : `出片 ${imageExport.format.toUpperCase()}：按 DPI 原样出图（${layout.pixelWidth} × ${layout.pixelHeight} px）· 付印 PDF：一页一张，页面就是 ${formatMm(layout.sheetWidthMm)} × ${formatMm(layout.sheetHeightMm)} mm（打印请设 100%，关闭「适应页面」）· 交版 Word：标题是可编辑文字`;
 
-  const handleImageExport = useCallback(async () => {
-    const action = `${imageLabel}（${imageModeLabel}）`;
-    setRecord({ ...IDLE_EXPORT, phase: 'busy', action });
-    try {
-      const result = await runImageExport({
-        config,
-        rows: mode === 'batch' ? rows : [],
-        picked: mode === 'batch' ? pickedRows : [],
-        options: imageExport,
-        onProgress: (_done, total, note) =>
-          setRecord((prev) => (prev.phase === 'busy' && total > 1 ? { ...prev, action: `${action} ${note}` } : prev)),
-      });
-      setRecord({
-        phase: 'done',
-        at: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
-        action: result.action,
-        fileName: result.fileName,
-        pages: result.pages,
-        note: result.failed.length ? `${result.failed.length} 张失败：${result.failed[0]}` : undefined,
-      });
-      setExportedKey(configKey);
-    } catch (cause) {
-      setRecord({ ...IDLE_EXPORT, error: cause instanceof Error ? cause.message : '无法写入下载文件，请检查浏览器的下载权限' });
-    }
-  }, [config, configKey, imageExport, imageLabel, imageModeLabel, mode, pickedRows, rows, setRecord]);
-
-  const handleExport = useCallback(
-    async (action: TopAction) => {
-      if (action === 'image') {
-        await handleImageExport();
-        return;
-      }
-      const format: ExportFormat = action;
-      setRecord({ ...IDLE_EXPORT, phase: 'busy', action: EXPORT_ACTION[format] });
-      try {
-        const outcome = await runExport(
-          { format, config, rows: mode === 'batch' ? (pickedRows.length ? pickedRows : rows) : [], selectedRow },
-          (done, total) => {
-            setRecord((prev) =>
-              prev.phase === 'busy' && total > 1 ? { ...prev, action: `${EXPORT_ACTION[format]} ${done}/${total}` } : prev,
-            );
-          },
-        );
-        setRecord({
-          phase: 'done',
-          at: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
-          note: format === 'pdf' ? '打印请设 100%，关闭「适应页面」缩放' : undefined,
-          ...outcome,
-        });
-        setExportedKey(configKey);
-      } catch (cause) {
-        setRecord({ ...IDLE_EXPORT, error: cause instanceof Error ? cause.message : '无法写入下载文件，请检查浏览器的下载权限' });
-      }
-    },
-    [config, configKey, handleImageExport, mode, pickedRows, rows, selectedRow, setRecord],
-  );
+  // 导出编排（含导出记录状态机与「参数一改就不再算已导出」）在 state/useExportActions.ts
+  const { busy, handleExport } = useExportActions({
+    mode,
+    config,
+    rows,
+    pickedRows,
+    selectedRow,
+    imageExport,
+    record,
+    setRecord,
+    imageLabel,
+    imageModeLabel,
+  });
 
   // Alt+1/2/3 导出、Alt+M 切模式；在输入框里打字时不抢键
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (!event.altKey || event.ctrlKey || event.metaKey) return;
-      const target = event.target as HTMLElement | null;
-      const tag = target?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target?.isContentEditable) return;
-      const action = SHORTCUTS[event.key];
-      if (action) {
-        event.preventDefault();
-        void handleExport(action);
-        return;
-      }
-      if (event.key.toLowerCase() === 'm') {
-        event.preventDefault();
-        setMode(mode === 'batch' ? 'single' : 'batch');
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [handleExport, mode, setMode]);
+  useAppShortcuts({
+    bindings: SHORTCUTS,
+    onExport: handleExport,
+    onToggleMode: () => setMode(mode === 'batch' ? 'single' : 'batch'),
+  });
 
   const requestRowDelete = useCallback(
     (indexes: number[]) => {
@@ -185,23 +121,6 @@ export default function App() {
     [rows, store],
   );
 
-  const startSplit = (event: React.PointerEvent) => {
-    const container = splitRef.current;
-    if (!container) return;
-    event.preventDefault();
-    const rect = container.getBoundingClientRect();
-    const onMove = (moveEvent: PointerEvent) => setSplitRatio((moveEvent.clientX - rect.left) / rect.width);
-    const onUp = () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-      document.body.style.cursor = '';
-    };
-    document.body.style.cursor = 'col-resize';
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-  };
-
-  const busy = record.phase === 'busy';
   const flagged = issues.length > 0;
 
   const modeSwitch = (

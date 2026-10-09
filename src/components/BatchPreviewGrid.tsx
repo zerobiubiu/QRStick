@@ -13,6 +13,7 @@ import { Box, Button, Stack, ToggleButton, ToggleButtonGroup, Typography } from 
 import { PressSheet } from './PressSheet';
 import { layoutLabel, renderLabel, type LabelLayout } from '../lib/render';
 import { THUMB_MAX_PX, previewScaleFor } from '../lib/preview';
+import { buildRowConfig } from '../lib/batch';
 import type { BatchRow, LabelConfig } from '../lib/types';
 import type { LabelStore } from '../state/labelStore';
 import { INK, MONO_FONT } from '../theme';
@@ -21,10 +22,6 @@ import { INK, MONO_FONT } from '../theme';
 const PREVIEW_CAP = 200;
 /** 估范围用的单格高度（像素）：只为「第 X–Y 张」这个读数服务 */
 const TILE_STRIDE_PX = 240;
-
-function buildRowConfig(config: LabelConfig, row: BatchRow): LabelConfig {
-  return { ...config, title: { ...config.title, text: row.title }, content: row.content };
-}
 
 /** 网格里的一格：媒体框按此行标签的自身宽高比，画布 object-fit 放入 → 不拉伸、不裁切 */
 function Tile({

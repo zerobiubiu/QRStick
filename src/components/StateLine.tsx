@@ -5,7 +5,7 @@
  * 这套词汇来自印张上的套准线与裁切线本身。
  */
 import { Box, Tooltip, Typography } from '@mui/material';
-import type { ExportRecord } from '../state/labelStore';
+import type { ExportRecord } from '../state/types';
 import { INK, MONO_FONT } from '../theme';
 
 interface StateLineProps {

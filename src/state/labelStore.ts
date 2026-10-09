@@ -4,7 +4,7 @@
  * 全部落在本机 localStorage（纯前端、零上传）。配置、批量行、预设各占一个键，
  * 形状对不上就退回默认，绝不把旧结构直接塞进界面。
  */
-import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
+import { useCallback, useState, type Dispatch, type SetStateAction } from 'react';
 import type {
   BatchRow,
   ImageExportOptions,
@@ -18,169 +18,12 @@ import type {
   StitchOptions,
   TitleConfig,
 } from '../lib/types';
-import type { DataFormat } from '../lib/importData';
 import type { PresetFileEntry } from '../lib/presetFile';
+import { CONFIG_KEY, DEFAULT_CONFIG, PRESETS_KEY, ROWS_KEY, VIEW_KEY, loadInitialState, usePersisted } from './persistence';
+import { IDLE_EXPORT, type AppMode, type BatchMeta, type ExportRecord, type LabelPreset, type ViewState } from './types';
 
-const CONFIG_KEY = 'qrstick.config.v1';
-const ROWS_KEY = 'qrstick.rows.v1';
-const PRESETS_KEY = 'qrstick.presets.v1';
-const VIEW_KEY = 'qrstick.view.v1';
-
-/** 单张预览的缩放：1 = 适应窗口；大于 1 按倍数放大（容器内滚动，不裁切） */
-export interface ViewState {
-  previewLayout: PreviewLayout;
-  previewZoom: number;
-  previewColumns: PreviewColumns;
-  splitRatio: number;
-  columnWidths: Record<string, number>;
-  imageExport: ImageExportOptions;
-}
-
-export const DEFAULT_VIEW: ViewState = {
-  previewLayout: 'grid',
-  previewZoom: 1,
-  previewColumns: 'auto',
-  splitRatio: 0.5,
-  columnWidths: { index: 64, title: 190, content: 240, select: 44, handle: 40, actions: 40 },
-  imageExport: {
-    format: 'png',
-    quality: 0.92,
-    background: '#ffffff',
-    // 批量默认打包：逐张下载会被浏览器拦，打包是一个动作一个文件
-    mode: 'zip',
-    stitch: { placement: 'grid', columns: 3, gapMm: 2, captions: false },
-  },
-};
-
-function loadView(): ViewState {
-  try {
-    const raw = localStorage.getItem(VIEW_KEY);
-    if (!raw) return DEFAULT_VIEW;
-    const saved = JSON.parse(raw) as Partial<ViewState>;
-    return {
-      previewLayout: saved.previewLayout === 'single' ? 'single' : 'grid',
-      previewZoom: typeof saved.previewZoom === 'number' && saved.previewZoom >= 1 ? Math.min(3, saved.previewZoom) : 1,
-      previewColumns: ['auto', 2, 3, 4, 5].includes(saved.previewColumns as never) ? (saved.previewColumns as PreviewColumns) : 'auto',
-      splitRatio: typeof saved.splitRatio === 'number' ? Math.min(0.75, Math.max(0.25, saved.splitRatio)) : DEFAULT_VIEW.splitRatio,
-      columnWidths: { ...DEFAULT_VIEW.columnWidths, ...saved.columnWidths },
-      imageExport: {
-        ...DEFAULT_VIEW.imageExport,
-        ...saved.imageExport,
-        stitch: { ...DEFAULT_VIEW.imageExport.stitch, ...saved.imageExport?.stitch },
-      },
-    };
-  } catch {
-    return DEFAULT_VIEW;
-  }
-}
-
-export const DEFAULT_CONFIG: LabelConfig = {
-  page: {
-    presetId: 'A4',
-    widthMm: 210,
-    heightMm: 297,
-    landscape: false,
-    dpi: 300,
-    marginMm: 12,
-    blockAlign: 'center',
-  },
-  qr: { sizeMm: 60, errorCorrectionLevel: 'M', quietZoneModules: 4 },
-  title: {
-    text: '库位 A-03-12',
-    fontId: 'hei',
-    fontSizePt: 32,
-    bold: true,
-    align: 'center',
-    position: 'above',
-    gapMm: 8,
-    lineHeight: 1.25,
-  },
-  content: 'LOC-A-03-12',
-  // 裁切标记与色标条默认打开：标记本来就该印在纸上，色标条还能在纸上自证尺寸
-  marks: { cropMarks: true, colorBar: true, marginGuides: false },
-};
-
-export type AppMode = 'single' | 'batch';
-
-export interface BatchMeta {
-  fileName: string;
-  format: DataFormat;
-  encoding: 'utf-8' | 'gbk';
-  hasHeader: boolean;
-  warnings: string[];
-}
-
-export interface ExportRecord {
-  phase: 'idle' | 'busy' | 'done';
-  /** 正在做或刚做完的动作，用界面上的说法 */
-  action: string;
-  fileName: string;
-  pages: number;
-  at: string;
-  /** 导出后要补的一句提醒（例如打印请设 100%） */
-  note?: string;
-  error?: string;
-}
-
-export interface LabelPreset {
-  id: string;
-  name: string;
-  savedAt: string;
-  /** full = 整套参数；style = 只存样式（标题格式 / 二维码参数 / 印刷标记 / 版式站位） */
-  scope: PresetScope;
-  config: LabelConfig;
-}
-
-export const IDLE_EXPORT: ExportRecord = { phase: 'idle', action: '', fileName: '', pages: 0, at: '' };
-
-/** 老配置里没有的字段一律回落到默认值（例如后来才加的 blockAlign） */
-function loadConfig(): LabelConfig {
-  try {
-    const raw = localStorage.getItem(CONFIG_KEY);
-    if (!raw) return DEFAULT_CONFIG;
-    const saved = JSON.parse(raw) as Partial<LabelConfig>;
-    return {
-      page: { ...DEFAULT_CONFIG.page, ...saved.page },
-      qr: { ...DEFAULT_CONFIG.qr, ...saved.qr },
-      title: { ...DEFAULT_CONFIG.title, ...saved.title },
-      marks: { ...DEFAULT_CONFIG.marks, ...saved.marks },
-      content: typeof saved.content === 'string' ? saved.content : DEFAULT_CONFIG.content,
-    };
-  } catch {
-    return DEFAULT_CONFIG;
-  }
-}
-
-function loadRows(): { rows: BatchRow[]; batch: BatchMeta | null } {
-  try {
-    const raw = localStorage.getItem(ROWS_KEY);
-    if (!raw) return { rows: [], batch: null };
-    const saved = JSON.parse(raw) as { rows?: BatchRow[]; batch?: BatchMeta | null };
-    const rows = Array.isArray(saved.rows)
-      ? saved.rows
-          .filter((row) => typeof row?.content === 'string')
-          .map((row, i) => ({ index: i + 1, title: String(row.title ?? ''), content: String(row.content) }))
-      : [];
-    return { rows, batch: saved.batch ?? null };
-  } catch {
-    return { rows: [], batch: null };
-  }
-}
-
-function loadPresets(): LabelPreset[] {
-  try {
-    const raw = localStorage.getItem(PRESETS_KEY);
-    if (!raw) return [];
-    const saved = JSON.parse(raw) as LabelPreset[];
-    return Array.isArray(saved)
-      ? saved
-          .filter((preset) => preset?.id && preset?.config)
-          .map((preset) => ({ ...preset, scope: preset.scope === 'style' ? 'style' : 'full' }))
-      : [];
-  } catch {
-    return [];
-  }
-}
+/* 四个本机键、默认值、读取与写入都在 `state/persistence.ts`（全项目唯一碰 localStorage 的地方）；
+   状态形状（AppMode / BatchMeta / ExportRecord / LabelPreset / ViewState）在 `state/types.ts`。 */
 
 /** 本机唯一标识：不用 crypto.randomUUID（内网 http 下不可用） */
 function makeId(): string {
@@ -249,47 +92,23 @@ export interface LabelStore {
 }
 
 export function useLabelStore(): LabelStore {
-  const [config, setConfig] = useState<LabelConfig>(loadConfig);
+  // 本机四键一次读齐：形状对不上的兜底规则在 state/persistence.ts
+  const [initial] = useState(loadInitialState);
+  const [config, setConfig] = useState<LabelConfig>(initial.config);
   const [mode, setMode] = useState<AppMode>('single');
-  const [rows, setRows] = useState<BatchRow[]>(() => loadRows().rows);
-  const [batch, setBatch] = useState<BatchMeta | null>(() => loadRows().batch);
+  const [rows, setRows] = useState<BatchRow[]>(initial.rows);
+  const [batch, setBatch] = useState<BatchMeta | null>(initial.batch);
   const [selectedRow, setSelectedRow] = useState(1);
   const [record, setRecord] = useState<ExportRecord>(IDLE_EXPORT);
-  const [presets, setPresets] = useState<LabelPreset[]>(loadPresets);
-  const [view, setView] = useState<ViewState>(loadView);
+  const [presets, setPresets] = useState<LabelPreset[]>(initial.presets);
+  const [view, setView] = useState<ViewState>(initial.view);
   const [selectedIds, setSelectedIdsState] = useState<number[]>([]);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(VIEW_KEY, JSON.stringify(view));
-    } catch {
-      /* 隐私模式下写入会失败，不影响使用 */
-    }
-  }, [view]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-    } catch {
-      /* 隐私模式下写入会失败，不影响使用 */
-    }
-  }, [config]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(ROWS_KEY, JSON.stringify({ rows, batch }));
-    } catch {
-      /* 同上 */
-    }
-  }, [rows, batch]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
-    } catch {
-      /* 同上 */
-    }
-  }, [presets]);
+  // 四份状态各自落本机：写入失败（隐私模式）只影响持久化，不影响使用
+  usePersisted(VIEW_KEY, view);
+  usePersisted(CONFIG_KEY, config);
+  usePersisted(ROWS_KEY, { rows, batch });
+  usePersisted(PRESETS_KEY, presets);
 
   const patchPage = useCallback((next: Partial<PageConfig>) => {
     setConfig((c) => ({ ...c, page: { ...c.page, ...next } }));
