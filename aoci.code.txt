@@ -5,8 +5,8 @@
 .gitignore[FC4T]: F:声明不入库的路径：依赖、构建产物、impeccable 过程产物与其它包管理器锁文件 | R:code:.impeccable/design.json | A:.impeccable/*,!.impeccable/design.json,node_modules,dist | S:放行规则必须紧跟忽略规则：只写 .impeccable/ 会让 design.json 无法入库
 .oxlintrc.json[XQ3T]: F:oxlint 静态检查配置：启用 react/typescript/oxc 插件与两条 react 规则 | R:code:package.json | A:plugins,rules,react/rules-of-hooks,react/only-export-components | S:-
 AGENTS.md[SC6S]: F:agent 执行规则：Git、版本、文档、验证与 bun 口径，并承载 AOCI 认知区块 | R:code:docs/README.md,code:aoci.txt | A:aoci:begin,bun,docs/changes | S:aoci 区块由 aoci init 追加、原文不可改动；受管文件变更后须按 Guide 收尾维护认知
-CHANGELOG.md[SV5T]: F:语义化版本变更日志：只有被发布程序的行为变更才递增版本并记录，含 0.5.2 加固、0.5.3 性能与 0.6.0 首访引导 | R:code:package.json,code:docs/changes/README.md | A:0.6.0,语义化版本 | S:版本号唯一事实来源是 package.json，递增版本必须同步本文件与 docs/changes/
-DESIGN.md[CU7L]: F:设计令牌与视觉语法唯一事实来源（frontmatter 为规范层）：调色板、字阶、间距、组件语法、读数条与状态行措辞、首访条、预览渲染口径及拒绝清单 | R:code:.impeccable/design.json,code:src/theme.ts,code:src/components/PressSheet.tsx,code:src/components/StateLine.tsx | A:colors,typography,ink,cyan,读数条 | S:字号与颜色超出字阶即判漂移；读数条格数与提示条措辞以本文件为准；源码引用只写文件与符号，不写会漂的行号
+CHANGELOG.md[SV5T]: F:语义化版本变更日志：只有被发布程序的行为变更才递增版本并记录，含 0.5.x 加固与性能、0.6.x 首访引导与设计系统提取 | R:code:package.json,code:docs/changes/README.md | A:0.6.1,语义化版本 | S:版本号唯一事实来源是 package.json，递增版本必须同步本文件与 docs/changes/
+DESIGN.md[CU7L]: F:设计令牌与视觉语法唯一事实来源（frontmatter 为规范层）：调色板、字阶、间距、组件语法、读数条与状态行措辞、首访条、预览渲染口径及拒绝清单 | R:code:.impeccable/design.json,code:src/theme.ts,code:src/components/PressSheet.tsx,code:src/components/StateLine.tsx | A:colors,typography,ink,cyan,读数条 | S:字号超阶梯／颜色超调色板即判漂移；读数条格数与提示条措辞以本文件为准；源码引用只写文件与符号；代码侧字号 token 是 FONT_PX、墨洗是 --tint-*
 LICENSE[SG2T]: F:MIT 许可证原文：允许自由使用、修改与分发，须保留版权声明 | R:code:package.json | A:MIT | S:-
 PRODUCT.md[SU6T]: F:产品与用户上下文：使用者、场景、定位与约束，impeccable 的约定输入 | R:code:docs/decisions/0001-界面语言-印刷工单与印张.md | A:Users,Positioning,Constraints | S:未定事项（多标签拼版）本期不做；改动本文件前先问用户
 README.md[SG6T]: F:面向使用者的项目说明：能力清单、目录职责、两条硬约定与 bun 命令（含测试） | R:code:docs/README.md,code:PRODUCT.md,code:AGENTS.md,code:CHANGELOG.md,code:LICENSE | A:bun run dev,bun run build,bun test,src/lib/,docs/README.md | S:新增或改动文档必须回 docs/README.md 补索引；本文件只做摘要不复述细节
@@ -46,6 +46,7 @@ README.md[SG5T]: F:变更记录目录索引：0001 起各次变更的状态与�
 0014-性能优化-首屏闭包与参数交互.md[SG6S]: F:性能变更记录：首屏闭包减半（四个重库改按需加载）与参数交互掉帧减半，含排除法定位、度量口径与残余限制 | R:code:src/lib/export.ts,code:src/components/PressSheet.tsx,code:src/components/BatchPreviewGrid.tsx,code:src/lib/render.ts | A:0014,首屏闭包,按需加载,预览分辨率 | S:判「首屏是否回归」只看首屏闭包（入口 + 静态 import 链），不看入口 chunk 单文件大小；新增重库先问它属于首屏还是某次动作
 0015-首访引导与示例标注.md[SG6S]: F:首访引导变更记录：一次性上手条、示例数据标注与快捷键可见性，含首访取证、出现纪律与验证记录 | R:code:src/App.tsx,code:src/components/StateLine.tsx,code:src/state/labelStore.ts,code:src/state/persistence.ts | A:0015,首访引导,示例标注,快捷键 | S:新引导的纪律：只在状态行空闲时出现、点掉或到过价值即收起、存本机不再出现；文案与出现条件以本文档为准
 0016-设计台账校正-引用改符号与侧车重生.md[SG6S]: F:设计台账校正记录：引用从行号改「文件 + 符号」的理由与做法、令牌对表、侧车重生与架构现状文档补齐 | R:code:DESIGN.md,code:.impeccable/design.json,code:docs/architecture/0001-渲染核与导出链路.md | A:0016,引用改符号,侧车重生,令牌对表 | S:DESIGN.md 的源码引用一律只写文件与符号（行号会随改动漂移）；判「设计是否漂移」跑 impeccable detect，不要肉眼对行号
+0017-设计系统提取-字号与墨洗令牌化.md[SG6S]: F:设计系统提取记录：字号八级令牌化与墨洗四档变量化的取舍、越界字号收敛、codemod 干跑发现的自伤与验证记录 | R:code:src/theme.ts,code:src/index.css,code:DESIGN.md | A:0017,FONT_PX,--tint-,越界字号 | S:界面字号只用 FONT_PX 的八级、墨洗只用 --tint-* 四档；新增字号只能动 FONT_PX，不在组件里写数字
 
 ===C:/Users/wang-it-think/Desktop/Code/QRStick/docs/decisions/===
 0001-界面语言-印刷工单与印张.md[SG7T]: F:界面语言定为印刷工单与印张：选定过程、落地语法与四条纪律 | R:code:src/theme.ts,code:src/index.css,code:PRODUCT.md,code:src/components/PressSheet.tsx | A:FieldRow,DocketSection,SheetRuler,RegistrationMark,LineMark,drawColorBar | S:状态一律用线型表达而不是颜色；参数按优先级塌缩，恢复默认单独隔离
@@ -55,10 +56,10 @@ README.md[SG4T]: F:关键决策目录索引：决策文档清单与相关代码 
 favicon.svg[CU3T]: F:站点图标 SVG：32×32 的二维码方块与外框，只用墨黑与纸白 | R:code:index.html | A:viewBox,#101010 | S:-
 
 ===C:/Users/wang-it-think/Desktop/Code/QRStick/src/===
-App.tsx[AU7M]: F:应用外壳：顶栏动作条、单张与批量的排布与分栏、首访条位置；导出编排与热键交给 hooks | R:code:src/state/labelStore.ts,code:src/state/useExportActions.ts,code:src/components/Docket.tsx,code:src/components/PressSheet.tsx,code:src/components/BatchPreviewGrid.tsx | A:App,useMediaQuery,EXPORT_ACTION,SHORTCUTS,ACTIONS | S:批量 0 行与导出中同一条门槛（按钮 disabled + 快捷键 enabled=false）；首访条只在状态行空闲时出现，点掉或导出过即收起并记本机；示例标注比对 DEFAULT_CONFIG 而不是硬编码字符串
-index.css[CU5S]: F:全局样式：焦点环、选中文字与 MUI 之外的少量基线规则 | R:code:src/main.tsx,code:src/theme.ts | A::focus-visible,::selection | S:焦点环须用 !important 压过组件库的 outline 归零，否则键盘焦点不可见
+App.tsx[AU7M]: F:应用外壳：顶栏动作条、单张与批量的排布与分栏、首访条位置；导出编排与热键交给 hooks | R:code:src/state/labelStore.ts,code:src/state/useExportActions.ts,code:src/components/Docket.tsx,code:src/components/PressSheet.tsx,code:src/components/BatchPreviewGrid.tsx | A:App,useMediaQuery,EXPORT_ACTION,SHORTCUTS,ACTIONS | S:批量 0 行与导出中同一条门槛（按钮与快捷键）；首访条只在状态行空闲时出现、点掉或导出过即收起并记本机；字号只用 FONT_PX、墨洗只用 --tint-*
+index.css[CU5S]: F:全局样式与调色板变量：墨/纸/台面灰/三原色/发丝线、墨洗四档、两个字体栈，加焦点环、选中文字与上墨动效等 MUI 之外的基线 | R:code:src/main.tsx,code:src/theme.ts | A:--tint-,--rule,::focus-visible,::selection | S:焦点环须用 !important 压过组件库的 outline 归零；墨洗四档只在这里定义，别处只用 var(--tint-*)
 main.tsx[EG5T]: F:应用入口：挂载根节点、套主题与基线样式、以严格模式渲染 App，并挂渲染期错误边界 | R:code:src/App.tsx,code:src/theme.ts,code:src/index.css,code:index.html | A:StrictMode,createRoot,ThemeProvider,CssBaseline,Boundary | S:挂载点 id 由 index.html 提供，改名要两处同步；错误边界只兜渲染期异常，事件回调与 rAF 里的异常必须各自就地收住
-theme.ts[CU6S]: F:设计令牌到 MUI 主题：墨黑纸白与发丝线、字阶、两个字体栈与组件覆盖 | R:code:DESIGN.md,code:.impeccable/design.json,code:src/index.css | A:INK,INK_DEEP,PAPER,GROUND,CYAN,MONO_FONT | S:令牌值必须与 DESIGN.md 一致，超出字阶的字号会被探测器判漂移；死变体优先删变体而不是改令牌
+theme.ts[CU6S]: F:设计令牌到 MUI 主题：墨黑纸白与发丝线、字号阶梯 FONT_PX、两个字体栈与组件覆盖 | R:code:DESIGN.md,code:.impeccable/design.json,code:src/index.css | A:INK,INK_DEEP,PAPER,GROUND,FONT_PX,MONO_FONT | S:令牌值必须与 DESIGN.md 一致；界面字号只走 FONT_PX 的八级，组件不得写裸数字；死变体优先删变体而不是改令牌
 
 ===C:/Users/wang-it-think/Desktop/Code/QRStick/src/components/===
 BatchPreviewGrid.tsx[AU6M]: F:批量预览区：单张突出与多张网格两种排布、列数控制、双击进单张与滚轮换张 | R:code:src/components/PressSheet.tsx,code:src/lib/render.ts,code:src/lib/preview.ts,code:src/lib/batch.ts,code:src/state/labelStore.ts | A:BatchPreviewGrid,THUMB_MAX_PX,previewScaleFor,onStep,buildRowConfig | S:单张突出必须复用 PressSheet 本体；行→配置必须走 lib/batch.ts；缩略图按格子实际显示像素（×DPR、受 THUMB_MAX_PX 封顶）渲染并复用该格画布，离屏即回收
