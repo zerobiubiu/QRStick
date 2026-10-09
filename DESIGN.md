@@ -221,7 +221,7 @@ components:
 - **发丝线 Rule** (`rgba(16,16,16,0.16)`，源码：`src/theme.ts`，导出为 `hairline` = `1px solid ${RULE}`，`src/theme.ts`)：字段行、分段标题带、读数条、单元格的分层线。
 - **强线 Rule Strong** (`rgba(16,16,16,0.34)`，源码：`src/theme.ts`)：控件轮廓——按钮、输入框 fieldset、菜单纸、分段按钮相邻边框、滑杆轨道、未选中复选框（`src/theme.ts`）。
 - **次级墨 Ink Secondary** (`rgba(16,16,16,0.62)`，源码：`src/theme.ts`)：字段名、字段提示、元数据、未选中分段按钮的文字、状态行的空闲读数。
-- **禁用墨 Ink Disabled** (`rgba(16,16,16,0.45)`，源码：`src/theme.ts`)：最轻的一档文字墨，当前只用于批量数据源的折叠提示「还有 N 条…」（`src/components/BatchSource.tsx`）。
+- **禁用墨 Ink Disabled** (`rgba(16,16,16,0.45)`，源码：`src/theme.ts`）：MUI 的 `text.disabled`，只给禁用控件的文字；**不承载可读信息**——0.45 在纸白上只有约 2.8:1，可读信息最低用次级墨（0.62 ≈ 5.7:1）。
 - **墨洗四档**：页脚洗 `rgba(16,16,16,0.02)`（`src/components/Docket.tsx`）、分段标题带 / 行悬停洗 `rgba(16,16,16,0.035)`（`src/components/Docket.tsx`、`src/components/BatchTable.tsx`、`src/components/BatchSource.tsx`）、按钮悬停洗 `rgba(16,16,16,0.04)`（`src/theme.ts`）、当前行洗 `rgba(16,16,16,0.05)`（`src/components/BatchTable.tsx`）。
 - **读数墨**：刻度尺数字 `rgba(16,16,16,0.6)`（`src/components/PressSheet.tsx`）、套准十字底纹 `rgba(16,16,16,0.55)`（`src/components/PressSheet.tsx`）、空内容占位框 `rgba(16,16,16,0.28)`（`src/lib/render.ts`）、色标条上沿 `rgba(16,16,16,0.85)`（`src/lib/render.ts`）、滚动条悬停 `rgba(16,16,16,0.54)`、备用读数墨 `rgba(16,16,16,0.7)`（`src/index.css`）。
 
@@ -272,7 +272,7 @@ components:
 
 **看版台与刻度尺**：台面内边距与刻度带宽度同为 `STRIP_PX = 22px`（`src/components/PressSheet.tsx`），印张在台面居中（`placeContent: center`，`src/components/PressSheet.tsx`），四角套准十字以 `inset: 6px` 钉住（`src/components/PressSheet.tsx`）。每毫米像素数由台面实测尺寸反算，上限 4（`src/components/PressSheet.tsx`）；刻度步长随密度自动降档为 1 / 2 / 5 / 10 mm，标注每 ≥34px 一个（`src/components/PressSheet.tsx`）；`pxPerMm ≤ 0.4` 时整块印张不画（`src/components/PressSheet.tsx`），免得画出一张糊纸。预览画布按台面上的**实际显示像素**渲染（CSS px × DPR），再受 `PREVIEW_MAX_PX = 1800` 封顶；导出永远满 DPI（`src/components/PressSheet.tsx`、`src/lib/preview.ts`）。二维码模块尺寸只在导出网格上决定，这里只是把同一张码位图等比缩放——画得比显示大，浏览器每帧都要二次缩放整张位图，参数连击时每步会多卡 50ms 量级。
 
-**读数条**：印张下沿一行七格（印张 / 分辨率 / 二维码 / 标题 / 版心 / 内容 / 纠错），每格 `6px 12px` 并与左邻共用一条发丝线（`src/components/PressSheet.tsx`，格子定义在 `:119-132`）；窄屏不换行改为横向滚动，`md` 以上才允许换行。纠错一格报**实际**等级（内容过长会回退，回退时写成「L（请求 H）」），与印在纸上的色标条同源。
+**读数条**：印张下沿一行七格（印张 / 分辨率 / 二维码 / 标题 / 版心 / 内容 / 纠错），每格 `6px 12px` 并与左邻共用一条发丝线（`src/components/PressSheet.tsx`，格子定义在 ）；窄屏不换行改为横向滚动，`md` 以上才允许换行。纠错一格报**实际**等级（内容过长会回退，回退时写成「L（请求 H）」），与印在纸上的色标条同源。
 
 **窄屏高度**：批量数据表 340px、单张（非批量）时印张 460px、批量窄屏下的印张 360px（`src/App.tsx`）。这些是显式像素而不是 `auto`——窄屏这张栅格列本身没有可分的剩余高度，必须自带高度；批量数据表还额外带 `flex: '0 0 auto'`，免得被同级内容按 flex 规则压缩（`src/App.tsx` 的注释与取值）。
 
@@ -306,7 +306,7 @@ components:
 
 ## Shapes
 
-**直角是这个世界的物理事实。** `shape: { borderRadius: 0 }`（`src/theme.ts`）并在每个组件上重申：按钮、分段按钮组、输入框、菜单纸、滑杆拇指、复选框（`src/theme.ts`、`:87`、`:96`、`:114`、`:126`、`:134`、`:145`、`:150`）。圆角是屏幕的语法，印件上没有；这条是最先被确立、也最不该被打破的一条。
+**直角是这个世界的物理事实。** `shape: { borderRadius: 0 }`（`src/theme.ts`）并在每个组件上重申：按钮、分段按钮组、输入框、菜单纸、滑杆拇指、复选框（`src/theme.ts`）。圆角是屏幕的语法，印件上没有；这条是最先被确立、也最不该被打破的一条。
 
 **矩形是唯一的形。** 立式滑块拇指 10 × 16（`width: 10, height: 16, marginTop: -5, marginLeft: -5` 让它骑在轨道上居中，`src/theme.ts`）；复选框方角、内边距 5px（`src/theme.ts`）；滚动条 11 × 11，拇指用 `3px` 透明边 + `background-clip: content-box` 收成一根细条（`src/index.css`）。
 
@@ -351,8 +351,8 @@ components:
 - **用途:** 纸张方向、标题对齐、标题位置、粗细、纠错等级、DPI 预设、单张/批量模式（`src/components/Docket.tsx`、`src/App.tsx`）。
 
 ### Fields（联单字段行）
-- **The Field Row:** 参数区唯一的输入形态，`96px minmax(0,1fr)` 两列栅格，列距 12px、行距 4px、内边距 `8px 16px`、下沿发丝线（`src/components/Docket.tsx`，栅格见 `:53-56`）。字段名 11.5px 次级墨，值从第 2 列起排（`:65`）；提示文字占第 2 列、10.5px 次级墨、行高 1.35（`:73`）。
-- **Number Field:** 默认宽 82px（字号格 84、DPI 格 92、静默区 92），等宽字体、内边距上下 6px，右侧可挂单位后缀（10.5px 次级墨，如 `mm` / `DPI` / `pt` / `倍` / `模块`）（`src/components/Docket.tsx`，后缀在 `:212`）。输入即时提交并裁剪到区间，空串不提交（`:197-207`）。
+- **The Field Row:** 参数区唯一的输入形态，`96px minmax(0,1fr)` 两列栅格，列距 12px、行距 4px、内边距 `8px 16px`、下沿发丝线（`src/components/Docket.tsx`，栅格见 ）。字段名 11.5px 次级墨，值从第 2 列起排（）；提示文字占第 2 列、10.5px 次级墨、行高 1.35（）。
+- **Number Field:** 默认宽 82px（字号格 84、DPI 格 92、静默区 92），等宽字体、内边距上下 6px，右侧可挂单位后缀（10.5px 次级墨，如 `mm` / `DPI` / `pt` / `倍` / `模块`）（`src/components/Docket.tsx`，后缀在 ）。输入即时提交并裁剪到区间，空串不提交（）。
 - **Select:** 纸白底、13px、内边距 `6px 9px`（`src/theme.ts`）；字体下拉的每个选项用该字体自己的 `stack` 渲染，所见即所选（`src/components/Docket.tsx`）。
 - **Text Area:** 标题 2–4 行、二维码内容 2–5 行等宽（`src/components/Docket.tsx`）。
 - **Focus:** 聚焦时 fieldset 保持 1px、只把颜色换成墨黑——不加粗、不发光（`src/theme.ts`）。
@@ -368,7 +368,7 @@ components:
 
 ### 联单分段 (DocketSection)
 - **Style:** 一条 `padding: 6px 16px` 的带子，底为 `0.035` 墨洗，上下各一条发丝线，标题 11.5px/700，右侧挂等宽读数（如 `210 × 297`、`纠错 M`、`3 错 · 1 警`）（`src/components/Docket.tsx`）。
-- **分段:** 规格 / 标题 / 二维码 /（批量时）数据 /（有问题时）体检——体检分段只在有 issue 时出现（`src/components/Docket.tsx`）。
+- **分段:** 规格 / 标题 / 二维码 /（批量时）数据 /（有问题时）体检——体检分段只在有 issue 时出现（`src/components/Docket.tsx`）。**语义**：分段小标题是 `h2`（站名是 `h1`），段容器是带 `aria-label` 的 `section`——视觉不变，只让读屏能按标题跳（`src/components/docket/fields.tsx`）。
 - **Footer:** 工单底部固定一行：1.5px 墨线分界 + `0.02` 墨洗，左侧一句「参数改动即时重排印张，没有「应用」这一步。」（10.5px 次级墨），右侧「恢复默认」（`src/components/Docket.tsx`）。
 
 ### 首访上手条 (OnboardStrip)
@@ -383,28 +383,28 @@ components:
 - **Error tail:** 整次导出失败时在行尾补一句「· 导出失败：{原因}」；批量里只失败了几页/几张时相位仍是「已导出」（双线），行尾直接接原因（「· 内容超出二维码容量，已跳过 2 张」），不用「导出失败」这个前缀——产出物是部分成立的。两种都 11px、墨黑，不换颜色（`src/components/StateLine.tsx`）。
 
 ### 批量数据表 (BatchGrid)
-- **Style:** 表头带 `padding: 6px 14px` + `0.035` 墨洗，下沿发丝线；列头行下沿换 1.5px 墨线；表体 12px，单元格只用发丝线分隔（`src/components/BatchTable.tsx`，`:80`、`:108`、`:104`）。
-- **Columns:** 序号（宽 68px、右对齐）+ 标题（`flex: 1`，最小 110px）+ 内容（`flex: 2`，最小 140px）；序号与标题走界面字体，内容走等宽（`src/components/BatchTable.tsx`、`:113`）。
-- **Signature readout:** 表头右侧实时报「第 X–Y 条 / 共 N 条」（10.5px 等宽），数值来自 DataGrid 的渲染上下文，是真实可视范围而不是估算；拿不到可视范围时退回「共 N 条」（`src/components/BatchTable.tsx`、`:83-86`、`:20-37`）。
+- **Style:** 表头带 `padding: 6px 14px` + `0.035` 墨洗，下沿发丝线；列头行下沿换 1.5px 墨线；表体 12px，单元格只用发丝线分隔（`src/components/BatchTable.tsx`）。
+- **Columns:** 序号（宽 68px、右对齐）+ 标题（`flex: 1`，最小 110px）+ 内容（`flex: 2`，最小 140px）；序号与标题走界面字体，内容走等宽（`src/components/BatchTable.tsx`）。
+- **Signature readout:** 表头右侧实时报「第 X–Y 条 / 共 N 条」（10.5px 等宽），数值来自 DataGrid 的渲染上下文，是真实可视范围而不是估算；拿不到可视范围时退回「共 N 条」（`src/components/BatchTable.tsx`）。
 - **Current row:** 内描边 `1px #101010` + `0.05` 墨洗 + 单元格加粗 600，与印张预览联动（`src/components/BatchTable.tsx`）。
 - **Density:** `density="compact"`、隐藏页脚、关闭列菜单与改宽（`src/components/BatchTable.tsx`）。
 
 ### 批量数据源 (BatchSource)
 - **Style:** 与联单分段同构的一条带子（`padding: 6px 16px` + `0.035` 墨洗 + 上下发丝线），三个小号描边按钮：导入 CSV / 下载示例 / 清空数据（`src/components/BatchSource.tsx`）。
-- **Warnings:** 提醒条目挂在一条 `1px dashed rgba(16,16,16,0.34)` 的左边界里，最多显示 4 条，其余折成「还有 N 条…」（`src/components/BatchSource.tsx`、`:120`）。虚线在这里表达「提醒」，与状态行的词汇同源。
+- **Warnings:** 提醒条目挂在一条 `1px dashed rgba(16,16,16,0.34)` 的左边界里，最多显示 4 条，其余折成「还有 N 条…」（`src/components/BatchSource.tsx`）。虚线在这里表达「提醒」，与状态行的词汇同源。
 
 ### 印张台面 (PressSheet)
-- **Stage:** 台面灰底、居中、内边距 22px，四角套准十字以 `inset: 6px` 钉住（`src/components/PressSheet.tsx`，`:198-199`、`:203`）。台面按内容框测量（`clientWidth` 减去左右内边距，`:45-53`），印张栅格再叠 `maxWidth / maxHeight: 100%` 兜底——任何量测误差表现为整体缩小，绝不裁切（`:225-226` 的注释与取值）。
+- **Stage:** 台面灰底、居中、内边距 22px，四角套准十字以 `inset: 6px` 钉住（`src/components/PressSheet.tsx`）。台面按内容框测量（`clientWidth` 减去左右内边距），印张栅格再叠 `maxWidth / maxHeight: 100%` 兜底——任何量测误差表现为整体缩小，绝不裁切（ 的注释与取值）。
 - **Ruler:** 紧贴印张左、上两边，22px 宽，按当前每毫米像素现算刻度（`src/components/PressSheet.tsx`）。刻度数量随印张毫米数与屏幕密度增长（A4 纵向约 250 条线），组件用 `memo` 挡住「参数改动引起的重渲」——刻度只取决于长度与密度。
-- **Paper:** 纸白、直角、唯一允许的投影；画布 `inset: 0` 绝对定位，**同一张画布常驻复用**（参数改动只重绘，不换元素——每次重挂会让合成器重新上传整张位图），每次重排由 `signature` 变化显式把 180ms 上墨动效从头放一遍（`src/components/PressSheet.tsx`）。
-- **Readout Strip:** 七格读数（印张 / 分辨率 / 二维码 / 标题 / 版心 / 内容 / 纠错），每格字段名 10px、数值 11px 等宽、不换行（`src/components/PressSheet.tsx`、`:305-330`）。二维码一格在内容为空时显示「占位（内容为空）」，内容超出二维码容量时显示「占位（内容超出二维码容量）」（`src/components/PressSheet.tsx`）；纠错一格报实际等级（`src/components/PressSheet.tsx`）。
-- **画布分配不出时**：台面不挂空白纸冒充出片结果——把纸与刻度尺短路掉，只在原处留一句「画布太大，浏览器分配不出：降低 DPI、缩小纸张或减小页边距」，用虚线标记 + 11px 等宽（`src/components/PressSheet.tsx`、`:257-264`）。
+- **Paper:** 纸白、直角、唯一允许的投影；画布 `inset: 0` 绝对定位，**同一张画布常驻复用**（参数改动只重绘，不换元素——每次重挂会让合成器重新上传整张位图），每次重排由 `signature` 变化显式把 180ms 上墨动效从头放一遍（`src/components/PressSheet.tsx`）。画布宿主是 `role="img"`，替代文本报一句版面摘要（毫米尺寸 / DPI / 码面边长）——版面信息不能只看得见。
+- **Readout Strip:** 七格读数（印张 / 分辨率 / 二维码 / 标题 / 版心 / 内容 / 纠错），每格字段名 10px、数值 11px 等宽、不换行（`src/components/PressSheet.tsx`）。二维码一格在内容为空时显示「占位（内容为空）」，内容超出二维码容量时显示「占位（内容超出二维码容量）」（`src/components/PressSheet.tsx`）；纠错一格报实际等级（`src/components/PressSheet.tsx`）。
+- **画布分配不出时**：台面不挂空白纸冒充出片结果——把纸与刻度尺短路掉，只在原处留一句「画布太大，浏览器分配不出：降低 DPI、缩小纸张或减小页边距」，用虚线标记 + 11px 等宽（`src/components/PressSheet.tsx`）。
 
 ### 印件上的标记（导出件，不是屏幕辅助线）
-- **裁切标记:** 四角、长 `min(5mm, 页边距 × 0.5)`、厚 `max(1px, DPI/600)`、与版心相距 `max(2 厚, 页边距 × 0.22)`；页边距不足 4mm 时自动忽略并报警（`src/lib/render.ts`、`:400`）。裁切标记默认打开，色标条与页边距参考虚线默认关闭（`src/state/labelStore.ts`），勾选后真的会印进文件（`src/components/Docket.tsx`）。
-- **色标条:** 8 格、每格 3.5mm、高 `min(2.6mm, 页边距 × 0.42)`，上沿一条 `0.85` 墨色细线，右侧接一串真读数（`210×297mm · 300DPI · 模块8px · 33模块 · 纠错M`，字号 5pt）；页边距不足 6mm 时忽略并报警（`src/lib/render.ts`、`:397`）。
+- **裁切标记:** 四角、长 `min(5mm, 页边距 × 0.5)`、厚 `max(1px, DPI/600)`、与版心相距 `max(2 厚, 页边距 × 0.22)`；页边距不足 4mm 时自动忽略并报警（`src/lib/render.ts`）。裁切标记默认打开，色标条与页边距参考虚线默认关闭（`src/state/labelStore.ts`），勾选后真的会印进文件（`src/components/Docket.tsx`）。
+- **色标条:** 8 格、每格 3.5mm、高 `min(2.6mm, 页边距 × 0.42)`，上沿一条 `0.85` 墨色细线，右侧接一串真读数（`210×297mm · 300DPI · 模块8px · 33模块 · 纠错M`，字号 5pt）；页边距不足 6mm 时忽略并报警（`src/lib/render.ts`）。
 - **页边距参考虚线:** 参考蓝虚线标出版心边界（`src/lib/render.ts`）。
-- **占位框:** 内容为空时二维码位置画虚线方框而不是留白或抛错（`src/lib/render.ts`）。
+- **占位框:** 内容为空时二维码位置画虚线方框而不是留白或抛错（`src/lib/render.ts`）；线宽至少 2 个导出像素——按 1px 画再被预览等比缩小时会细到看不见，而这是「内容为空」唯一看得见的状态。
 
 ### 动效
 全站只有一个动效：印张上墨。印张每次重排都以 180ms 的 `cubic-bezier(0.16, 1, 0.3, 1)` 从 `opacity: 0.42 / blur(0.6px)` 收到 `opacity: 1 / blur(0)`，`both` 填充（`src/index.css`）。动画不靠元素重挂，而是 `signature` 变化时显式把动画从头放一遍（`src/components/PressSheet.tsx`），这样预览画布才能常驻复用。它模拟印刷机压下时的一次上墨，给「参数已生效」一个物理信号——因为这个界面没有「应用」按钮，改动必须自己被人看见。`prefers-reduced-motion: reduce` 下该动效被完全关闭（`src/index.css`）；此外没有任何过渡、变换或滚动动画被定义。

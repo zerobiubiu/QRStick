@@ -187,7 +187,7 @@ export default function App() {
           }}
         >
           <Stack direction="row" sx={{ alignItems: 'baseline', gap: 1, minWidth: 0, justifyContent: { xs: 'center', sm: 'flex-start' } }}>
-            <Typography sx={{ fontSize: FONT_PX.wordmark, fontWeight: 700, letterSpacing: '-0.01em' }}>QRStick</Typography>
+            <Typography component="h1" sx={{ fontSize: FONT_PX.wordmark, fontWeight: 700, letterSpacing: '-0.01em', margin: 0 }}>QRStick</Typography>
             <Typography sx={{ fontSize: FONT_PX.label, color: 'text.secondary', display: { xs: 'none', md: 'block' } }}>
               码贴生成器 · 标题 + 内容 → 二维码标签
             </Typography>
@@ -234,7 +234,7 @@ export default function App() {
           overflow: { xs: 'auto', md: 'hidden' },
         }}
       >
-        <Box sx={{ order: { xs: 2, md: 1 }, display: 'flex', minHeight: 0, minWidth: 0 }}>
+        <Box component="section" aria-label="参数工单" sx={{ order: { xs: 2, md: 1 }, display: 'flex', minHeight: 0, minWidth: 0 }}>
           <Docket store={store} compact={compact} issues={issues} confirm={setConfirm} />
         </Box>
 
@@ -247,6 +247,8 @@ export default function App() {
             minWidth: 0,
             height: { xs: mode === 'batch' ? 'auto' : 460, md: 'auto' },
           }}
+          component="section"
+          aria-label="印张预览"
         >
           {showOnboard ? (
             <Stack

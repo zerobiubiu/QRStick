@@ -92,7 +92,7 @@ export function BatchSource({ store, confirm }: { store: LabelStore; confirm: (r
   };
 
   return (
-    <Box component="section">
+    <Box component="section" aria-label="批量数据源">
       <Stack
         direction="row"
         sx={{

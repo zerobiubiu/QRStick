@@ -74,7 +74,7 @@ export async function runImageExport(request: ImageExportRequest): Promise<Image
     throw new Error(`这一批 ${targets.length} 张都没能出图：${summarizeFailures(renderFailures, '张').join('；')}`);
   }
 
-  const base = sanitizeFileName(config.title.text.trim() || 'qrstick');
+  const base = sanitizeFileName((targets[0] ?? config).title.text.trim() || 'qrstick');
   const outcome = await exportImages(pages, options, onProgress);
   // 渲染阶段的失败与编码阶段的失败合起来报，去重后最多三条
   const failureReasons = [...new Set([...summarizeFailures(renderFailures, '张'), ...outcome.failureReasons])].slice(0, 3);

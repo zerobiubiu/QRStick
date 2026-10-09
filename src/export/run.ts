@@ -93,8 +93,9 @@ async function toWordPage(config: LabelConfig): Promise<WordPage | null> {
 export async function runExport(request: ExportRequest, onProgress?: ExportProgress): Promise<ExportOutcome> {
   const { format, config, rows, selectedRow } = request;
   const action = EXPORT_ACTION[format];
-  const base = sanitizeFileName(config.title.text.trim() || 'qrstick');
   const batchConfigs = rows.length ? buildBatch(config, rows) : [];
+  // 文件名基准取「真正要出的那一张」的标题：批量时用第一行的标题，不用单张态的参数
+  const base = sanitizeFileName((batchConfigs[0] ?? config).title.text.trim() || 'qrstick');
 
   if (format === 'png') {
     const position = rows.length ? Math.max(0, rows.findIndex((row) => row.index === selectedRow)) : -1;

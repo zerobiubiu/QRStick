@@ -124,7 +124,7 @@ export function FieldSelect({
 
 export function DocketSection({ title, meta, children }: { title: string; meta?: ReactNode; children: ReactNode }) {
   return (
-    <Box component="section">
+    <Box component="section" aria-label={title}>
       <Stack
         direction="row"
         sx={{
@@ -138,7 +138,7 @@ export function DocketSection({ title, meta, children }: { title: string; meta?:
           borderTop: '1px solid var(--rule)',
         }}
       >
-        <Typography sx={{ fontSize: FONT_PX.label, fontWeight: 700 }}>{title}</Typography>
+        <Typography component="h2" sx={{ fontSize: FONT_PX.label, fontWeight: 700, margin: 0 }}>{title}</Typography>
         {meta ? (
           <Typography sx={{ fontSize: FONT_PX.meta, color: 'text.secondary', fontFamily: MONO_FONT }}>{meta}</Typography>
         ) : null}

@@ -202,7 +202,9 @@ function buildQrRender(
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.strokeStyle = 'rgba(16,16,16,0.28)';
-      ctx.lineWidth = Math.max(1, Math.round(dpi / 300));
+      // 至少 2 个导出像素：占位框是「内容为空」唯一看得见的状态，
+      // 按 1px 画再被预览等比缩小时会细到看不见
+      ctx.lineWidth = Math.max(2, Math.round(dpi / 150));
       ctx.setLineDash([requestedPx / 16, requestedPx / 24]);
       ctx.strokeRect(ctx.lineWidth / 2, ctx.lineWidth / 2, requestedPx - ctx.lineWidth, requestedPx - ctx.lineWidth);
       ctx.setLineDash([]);

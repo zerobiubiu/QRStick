@@ -13,7 +13,7 @@ import { PREVIEW_MAX_PX, previewScaleFor } from '../lib/preview';
 import { useElementSize } from '../lib/useElementSize';
 import { MM_PER_INCH, formatMm } from '../lib/units';
 import type { LabelConfig } from '../lib/types';
-import { INK, MONO_FONT, FONT_PX } from '../theme';
+import { CYAN, INK, MAGENTA, MONO_FONT, FONT_PX, YELLOW } from '../theme';
 
 /** 刻度尺条的高度（像素） */
 const STRIP_PX = 22;
@@ -28,9 +28,9 @@ function RegistrationMark({ size = 17 }: { size?: number }) {
     <svg width={size} height={size} viewBox="0 0 17 17" aria-hidden="true" style={{ display: 'block' }}>
       <circle cx="8.5" cy="8.5" r="4" fill="none" stroke="rgba(16,16,16,0.55)" strokeWidth="0.7" />
       <path d="M8.5 0.5V16.5M0.5 8.5H16.5" stroke="rgba(16,16,16,0.55)" strokeWidth="0.7" />
-      <path d="M8.5 0.5V3" stroke="#0093d0" strokeWidth="1.2" />
-      <path d="M8.5 14V16.5" stroke="#e5007d" strokeWidth="1.2" />
-      <path d="M0.5 8.5H3" stroke="#ffe200" strokeWidth="1.2" />
+      <path d="M8.5 0.5V3" stroke={CYAN} strokeWidth="1.2" />
+      <path d="M8.5 14V16.5" stroke={MAGENTA} strokeWidth="1.2" />
+      <path d="M0.5 8.5H3" stroke={YELLOW} strokeWidth="1.2" />
       <path d="M14 8.5H16.5" stroke={INK} strokeWidth="1.2" />
     </svg>
   );
@@ -308,7 +308,7 @@ export function PressSheet({
               sx={{
                 width: displayWidth,
                 height: displayHeight,
-                bgcolor: '#fff',
+                bgcolor: 'var(--paper)',
                 position: 'relative',
                 boxShadow: '0 1px 1.5px rgba(16,16,16,0.16), 0 18px 34px -18px rgba(16,16,16,0.34)',
               }}
@@ -316,6 +316,8 @@ export function PressSheet({
               <Box
                 ref={attachCanvas}
                 className="sheet-ink"
+                role="img"
+                aria-label={`印张预览：${layout.sheetWidthMm} × ${layout.sheetHeightMm} mm · ${layout.dpi} dpi · 二维码码面 ${layout.qrInkMm.toFixed(1)} mm`}
                 sx={{ position: 'absolute', inset: 0, '& canvas': { display: 'block', width: '100%', height: '100%', objectFit: 'contain' } }}
               />
             </Box>
