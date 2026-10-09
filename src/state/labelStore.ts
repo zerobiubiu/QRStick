@@ -30,7 +30,9 @@ export const DEFAULT_CONFIG: LabelConfig = {
     lineHeight: 1.25,
   },
   content: 'LOC-A-03-12',
-  marks: { cropMarks: false, colorBar: false, marginGuides: false },
+  // 裁切标记默认打开：它是这个世界的签名器件，且标记本来就是印在纸上的东西；
+  // 其余两个标记按需开（都会被印进导出件）
+  marks: { cropMarks: true, colorBar: false, marginGuides: false },
 };
 
 export type AppMode = 'single' | 'batch';

@@ -82,7 +82,7 @@ export function StateLine({ record, flagged, summary }: StateLineProps) {
         {text}
       </Typography>
       {record.error ? (
-        <Typography sx={{ fontSize: 11, color: 'error.main' }}>· {record.error}</Typography>
+        <Typography sx={{ fontSize: 11, color: 'text.primary' }}>· 导出失败：{record.error}</Typography>
       ) : null}
     </Box>
   );

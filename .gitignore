@@ -12,8 +12,10 @@ dist
 dist-ssr
 *.local
 
-# impeccable 的过程产物（方向掷骰、决策页载荷、审阅留痕）不进版本库
-.impeccable/
+# impeccable 的过程产物（方向掷骰、决策页载荷、审阅留痕）不进版本库；
+# 只有机器可读的设计令牌表是长期产物，跟着 DESIGN.md 一起入库
+.impeccable/*
+!.impeccable/design.json
 
 # 本项目只用 bun：其它包管理器的锁文件一律不进版本库
 package-lock.json

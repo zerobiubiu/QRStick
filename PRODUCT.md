@@ -8,7 +8,7 @@ web
 
 ## Stack
 
-Vite + React + MUI + TypeScript（用户指定）；包管理器 npm；构建产物为纯静态站点，部署目标为阿里云 ESA Pages（根路径，无后端）。
+Vite + React + MUI + TypeScript（用户指定）；包管理器 bun（`bun install` / `bun run` / `bunx`，锁文件 `bun.lock`）；构建产物为纯静态站点，部署目标为阿里云 ESA Pages（根路径，无后端）。
 
 ## Users
 

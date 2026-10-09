@@ -1,0 +1,659 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-09T12:16:21",
+  "title": "Design System: QRStick 码贴生成器",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "primary",
+        "displayName": "墨黑 Ink",
+        "canonical": "#101010",
+        "note": "文字、线、实底填充、印张上的墨；同时是套准十字的第四条色版臂。调色板的 error 也是它（theme.ts:40-42）",
+        "tonalRamp": [
+          "#101010",
+          "rgba(16,16,16,0.85)",
+          "rgba(16,16,16,0.70)",
+          "rgba(16,16,16,0.62)",
+          "rgba(16,16,16,0.54)",
+          "rgba(16,16,16,0.45)",
+          "rgba(16,16,16,0.16)",
+          "rgba(16,16,16,0.035)"
+        ],
+        "tonalRampNote": "本项目真实的墨色梯度是 #101010 的 alpha 阶，不是合成灰阶；界面上没有任何彩色状态色"
+      },
+      "cyan": {
+        "role": "secondary",
+        "displayName": "青 Cyan（焦点与选区）",
+        "canonical": "#0093d0",
+        "note": "2px 焦点环、rgba(0,147,208,0.24) 选区底色、套准十字上臂",
+        "tonalRamp": [
+          "#000d1b",
+          "#00293f",
+          "#004869",
+          "#006996",
+          "#008cc7",
+          "#3bb1ef",
+          "#8cd3ff",
+          "#def2ff"
+        ]
+      },
+      "magenta": {
+        "role": "secondary",
+        "displayName": "品红 Magenta",
+        "canonical": "#e5007d",
+        "note": "只做套准十字下臂",
+        "tonalRamp": [
+          "#21000b",
+          "#4b0024",
+          "#7c0040",
+          "#b1005f",
+          "#e80c80",
+          "#ff68a3",
+          "#ffaec8",
+          "#ffe7ee"
+        ]
+      },
+      "yellow": {
+        "role": "secondary",
+        "displayName": "黄 Yellow",
+        "canonical": "#ffe200",
+        "note": "只做套准十字左臂",
+        "tonalRamp": [
+          "#100b00",
+          "#2c2500",
+          "#4c4200",
+          "#6f6200",
+          "#958300",
+          "#bca600",
+          "#e4ca00",
+          "#fff19b"
+        ]
+      },
+      "press-cyan": {
+        "role": "tertiary",
+        "displayName": "过程青 Process Cyan",
+        "canonical": "#00a0e9",
+        "note": "色标条第 1 格；只印在导出件上",
+        "tonalRamp": [
+          "#000d1c",
+          "#002840",
+          "#00476b",
+          "#00689a",
+          "#008bcc",
+          "#29b0fa",
+          "#90d2ff",
+          "#dff1ff"
+        ]
+      },
+      "press-magenta": {
+        "role": "tertiary",
+        "displayName": "过程品红 Process Magenta",
+        "canonical": "#e6007e",
+        "note": "色标条第 2 格",
+        "tonalRamp": [
+          "#21000b",
+          "#4b0024",
+          "#7c0041",
+          "#b1005f",
+          "#e90980",
+          "#ff68a3",
+          "#ffaec8",
+          "#ffe7ee"
+        ]
+      },
+      "press-yellow": {
+        "role": "tertiary",
+        "displayName": "过程黄 Process Yellow",
+        "canonical": "#fff200",
+        "note": "色标条第 3 格",
+        "tonalRamp": [
+          "#0e0c00",
+          "#292600",
+          "#484400",
+          "#6a6400",
+          "#8e8600",
+          "#b3aa00",
+          "#dacf00",
+          "#fff553"
+        ]
+      },
+      "press-black": {
+        "role": "tertiary",
+        "displayName": "过程黑 Process Black",
+        "canonical": "#231815",
+        "note": "色标条第 4 格；后四格另用 #00807a / #7a3f00 / #007a2f / #101010",
+        "tonalRamp": [
+          "#120806",
+          "#2d221f",
+          "#4b3f3b",
+          "#6b5e5a",
+          "#8d7f7b",
+          "#b0a19d",
+          "#d5c5c1",
+          "#fbeae6"
+        ]
+      },
+      "guide-blue": {
+        "role": "tertiary",
+        "displayName": "参考蓝 Guide Blue",
+        "canonical": "rgba(0,160,233,0.55)",
+        "note": "页边距参考虚线，2mm/1.5mm 节奏，只出现在导出件上"
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "纸白 Paper",
+        "canonical": "#ffffff",
+        "note": "工单底、输入框底、印张纸面、数据表底"
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "台面灰 Ground",
+        "canonical": "#f4f4f2",
+        "note": "应用底色与看版台底色"
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "发丝线 Rule",
+        "canonical": "rgba(16,16,16,0.16)",
+        "note": "字段行、分段带、读数条、单元格的分层线；导出为 hairline"
+      },
+      "rule-strong": {
+        "role": "neutral",
+        "displayName": "强线 Rule Strong",
+        "canonical": "rgba(16,16,16,0.34)",
+        "note": "控件轮廓：按钮、输入框 fieldset、菜单纸、分段相邻边框、滑杆轨道、未选中复选框"
+      },
+      "ink-secondary": {
+        "role": "neutral",
+        "displayName": "次级墨 Ink Secondary",
+        "canonical": "rgba(16,16,16,0.62)",
+        "note": "字段名、字段提示、元数据、未选中分段文字、状态行空闲读数"
+      },
+      "ink-disabled": {
+        "role": "neutral",
+        "displayName": "禁用墨 Ink Disabled",
+        "canonical": "rgba(16,16,16,0.45)",
+        "note": "最轻的一档文字墨；当前只用于批量数据源的折叠提示「还有 N 条…」"
+      },
+      "tint-footer": {
+        "role": "neutral",
+        "displayName": "页脚墨洗",
+        "canonical": "rgba(16,16,16,0.02)",
+        "note": "工单底栏底色"
+      },
+      "tint-band": {
+        "role": "neutral",
+        "displayName": "分段带墨洗",
+        "canonical": "rgba(16,16,16,0.035)",
+        "note": "联单分段标题带、数据表表头带、数据行悬停"
+      },
+      "tint-hover": {
+        "role": "neutral",
+        "displayName": "悬停墨洗",
+        "canonical": "rgba(16,16,16,0.04)",
+        "note": "按钮悬停底色"
+      },
+      "tint-current-row": {
+        "role": "neutral",
+        "displayName": "当前行墨洗",
+        "canonical": "rgba(16,16,16,0.05)",
+        "note": "批量数据表当前行，与 1px 墨色内描边同用"
+      },
+      "selection-cyan": {
+        "role": "neutral",
+        "displayName": "选区青",
+        "canonical": "rgba(0,147,208,0.24)",
+        "note": "::selection 底色"
+      }
+    },
+    "typographyMeta": {
+      "wordmark": {
+        "displayName": "站名 Wordmark",
+        "purpose": "唯一 15px 的界面字：顶栏 QRStick。"
+      },
+      "body": {
+        "displayName": "正文 Body",
+        "purpose": "全局正文与输入框文字，13px/1.45，tabular-nums。"
+      },
+      "body-small": {
+        "displayName": "小正文 Body Small",
+        "purpose": "数据表、分段按钮与菜单标签，12px。"
+      },
+      "label": {
+        "displayName": "字段名 Field Label",
+        "purpose": "联单字段行左侧的字段名，11.5px 次级墨。"
+      },
+      "section-title": {
+        "displayName": "分段标题 Section Title",
+        "purpose": "规格/标题/二维码/数据/体检与数据表标题，11.5px/700。"
+      },
+      "meta": {
+        "displayName": "元数据 Meta",
+        "purpose": "字段提示、单位后缀、分段读数、页脚说明，10.5px。"
+      },
+      "micro": {
+        "displayName": "微字 Micro",
+        "purpose": "读数条的字段名，10px/1.2。"
+      },
+      "readout": {
+        "displayName": "读数 Readout",
+        "purpose": "读数条数值、表头读数、状态行文字，11px 等宽。"
+      },
+      "ruler": {
+        "displayName": "刻度 Label",
+        "purpose": "毫米刻度尺的数字，9px 等宽，墨色 0.6。"
+      },
+      "button": {
+        "displayName": "按钮 Button",
+        "purpose": "按钮文字，13px/600（小号按钮为 12px/600）。"
+      },
+      "control": {
+        "displayName": "控件 Control",
+        "purpose": "分段按钮与开关类文字，12px/600。"
+      },
+      "tooltip": {
+        "displayName": "工具提示 Tooltip",
+        "purpose": "墨底纸字的解释性提示，11px。"
+      },
+      "sheet-title": {
+        "displayName": "标签标题 Sheet Title",
+        "purpose": "印张上的标题：磅值 4–400pt，落地像素 = pt/72 × DPI，行高倍数 0.8–2.5。"
+      }
+    },
+    "shadows": [
+      {
+        "name": "sheet-lift",
+        "value": "0 1px 1.5px rgba(16,16,16,0.16), 0 18px 34px -18px rgba(16,16,16,0.34)",
+        "purpose": "印张在看版台上的物理抬升；全系统唯一的投影，其余层级全部由发丝线与墨洗承担"
+      }
+    ],
+    "motion": [
+      {
+        "name": "sheet-ink",
+        "value": "qrstick-ink 180ms cubic-bezier(0.16, 1, 0.3, 1) both",
+        "purpose": "印张每次重排（key 变化）时的一次上墨：opacity 0.42 / blur(0.6px) → 1 / 0，给「参数已生效」一个物理信号"
+      },
+      {
+        "name": "sheet-ink-reduced",
+        "value": "@media (prefers-reduced-motion: reduce) { animation: none }",
+        "purpose": "降低动效偏好下完全关闭；此外全站没有其他过渡、变换或滚动动画"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "600px",
+        "note": "未被代码使用"
+      },
+      {
+        "name": "md",
+        "value": "900px",
+        "note": "工单/印张分栏与单列的分界（theme.breakpoints.down('md')）"
+      },
+      {
+        "name": "lg",
+        "value": "1200px",
+        "note": "批量模式数据表与印张并排的分界（theme.breakpoints.up('lg')）"
+      }
+    ],
+    "inkAlphas": [
+      {
+        "value": "rgba(16,16,16,1)",
+        "usage": "#101010 本体：文字、线、实底填充；调色板 error 亦是它"
+      },
+      {
+        "value": "rgba(16,16,16,0.85)",
+        "usage": "色标条上沿细线（导出件）"
+      },
+      {
+        "value": "rgba(16,16,16,0.70)",
+        "usage": "CSS 变量 --ink-70，备用读数墨"
+      },
+      {
+        "value": "rgba(16,16,16,0.62)",
+        "usage": "次级文字：字段名、提示、元数据、未选中分段"
+      },
+      {
+        "value": "rgba(16,16,16,0.60)",
+        "usage": "刻度尺数字"
+      },
+      {
+        "value": "rgba(16,16,16,0.55)",
+        "usage": "套准十字的圆与基准线"
+      },
+      {
+        "value": "rgba(16,16,16,0.54)",
+        "usage": "CSS 变量 --ink-54，滚动条拇指悬停"
+      },
+      {
+        "value": "rgba(16,16,16,0.45)",
+        "usage": "禁用墨：批量数据源的折叠提示"
+      },
+      {
+        "value": "rgba(16,16,16,0.34)",
+        "usage": "强线：控件轮廓、滑杆轨道、未选中复选框"
+      },
+      {
+        "value": "rgba(16,16,16,0.28)",
+        "usage": "空内容占位框（导出件）"
+      },
+      {
+        "value": "rgba(16,16,16,0.16)",
+        "usage": "发丝线：分层"
+      },
+      {
+        "value": "rgba(16,16,16,0.05)",
+        "usage": "当前行墨洗"
+      },
+      {
+        "value": "rgba(16,16,16,0.04)",
+        "usage": "按钮悬停墨洗"
+      },
+      {
+        "value": "rgba(16,16,16,0.035)",
+        "usage": "分段带 / 表头带 / 行悬停墨洗"
+      },
+      {
+        "value": "rgba(16,16,16,0.02)",
+        "usage": "工单页脚墨洗"
+      }
+    ],
+    "lineForms": [
+      {
+        "name": "solid",
+        "mark": "solid",
+        "value": "strokeWidth 1.2，无虚线",
+        "meaning": "已生效：当前参数正在出这张印张"
+      },
+      {
+        "name": "dashdot",
+        "mark": "7 3 1.5 3",
+        "value": "strokeWidth 1.6, strokeDasharray '7 3 1.5 3'",
+        "meaning": "正在出片：导出进行中，带 第 n / 共 m 页 进度"
+      },
+      {
+        "name": "double",
+        "mark": "two 1.6 strokes at y = 4.5 / 7.5",
+        "value": "两条 strokeWidth 1.6 平行线，标记 34 × 12",
+        "meaning": "已导出：显示文件名、页数、时间"
+      },
+      {
+        "name": "dashed",
+        "mark": "5 3",
+        "value": "strokeWidth 1.2, strokeDasharray '5 3'",
+        "meaning": "有提醒：体检有警；体检清单里的单条问题标记缩窄到 22px"
+      },
+      {
+        "name": "state-colour-policy",
+        "mark": "none",
+        "value": "error: { main: INK }",
+        "meaning": "全站没有彩色状态：错误、提醒、进行中、完成都只用线型 + 文案前缀区分"
+      }
+    ],
+    "pressMarks": [
+      {
+        "name": "crop-marks",
+        "value": "长 min(5mm, 页边距 × 0.5)，厚 max(1px, DPI/600)，距版心 max(2 厚, 页边距 × 0.22)",
+        "purpose": "四角裁切标记，印进导出文件；默认打开；页边距不足 4mm 时忽略并报警"
+      },
+      {
+        "name": "color-bar",
+        "value": "8 格 × 3.5mm，高 min(2.6mm, 页边距 × 0.42)，上沿 1px rgba(16,16,16,0.85)，色序 #00a0e9 / #e6007e / #fff200 / #231815 / #00807a / #7a3f00 / #007a2f / #101010，读数 5pt 等宽",
+        "purpose": "色标条与规格读数（宽×高 mm · DPI · 模块 px · 模块数 · 纠错等级）；默认关闭；页边距不足 6mm 时忽略并报警"
+      },
+      {
+        "name": "margin-guides",
+        "value": "1px rgba(0,160,233,0.55)，虚线 2mm / 1.5mm",
+        "purpose": "标出版心边界的参考虚线（导出件），默认关闭"
+      },
+      {
+        "name": "empty-placeholder",
+        "value": "1px rgba(16,16,16,0.28)，虚线 边长/16 与 边长/24",
+        "purpose": "内容为空时二维码位置的占位框，不抛错、不留白"
+      }
+    ],
+    "layout": {
+      "appShell": "height: 100dvh；顶栏 flex 0 0 auto，下沿 1.5px 墨线",
+      "bodyGrid": "md 以上 '392px minmax(0,1fr)'，以下 'minmax(0,1fr)'；窄屏印张 order 1 / 工单 order 2",
+      "batchGrid": "lg 以上 'minmax(0,1.3fr) minmax(0,1fr)'（数据表 | 印张）",
+      "narrowHeights": {
+        "batchTable": "340px",
+        "sheet": "460px",
+        "batchSheetNarrow": "360px"
+      },
+      "narrowHeightsNote": "显式像素而不是 auto，也不是 dvh/svh——嵌入式浏览器与无头环境对动态视口单位解析不一致",
+      "fieldRow": "grid 96px minmax(0,1fr)，columnGap 12px，rowGap 4px，padding 8px 16px",
+      "sectionBand": "padding 6px 16px（数据表表头 6px 14px），下沿发丝线，底 rgba(16,16,16,0.035)",
+      "docketFooter": "padding 10px 16px，上沿 1.5px 墨线，底 rgba(16,16,16,0.02)",
+      "stage": "padding 与刻度带宽同为 22px；套准十字 inset 6px；印张居中；内容框测量（clientWidth 减内边距）；预览画布最长边 1800px",
+      "ruler": "主刻度 9px、次刻度 4px、strokeWidth 1/0.7、opacity 0.75/0.4；步长 1/2/5/10mm，标注间距 ≥34px；pxPerMm 上限 4，≤0.4 时不画印张",
+      "spacingVocabulary": "MUI 8px 单位；sx 取值 0.25/0.5/0.6/0.75/1/1.25/1.5/1.75/2（= 2/4/4.8/6/8/10/12/14/16px）",
+      "defaults": "A4 纵向 300 DPI，页边距 12mm，二维码 60mm 纠错 M，标题 32pt 加粗居中在码上方，裁切标记默认打开"
+    }
+  },
+  "components": [
+    {
+      "name": "描边按钮 Outlined Button",
+      "kind": "button",
+      "refersTo": "button-outlined",
+      "description": "默认按钮形态：直角、1px 强线轮廓、纸白上的墨字。工单里的导入 / 下载 / 恢复默认都用它。",
+      "html": "<button class=\"ds-btn-outlined\">恢复默认</button>",
+      "css": ".ds-btn-outlined { font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0; color: #101010; background: transparent; border: 1px solid rgba(16,16,16,0.34); border-radius: 0; min-height: 26px; padding: 0 10px; cursor: pointer; }\n.ds-btn-outlined:hover { border-color: #101010; background: rgba(16,16,16,0.04); }\n.ds-btn-outlined:focus-visible { outline: 2px solid #0093d0; outline-offset: 1px; }"
+    },
+    {
+      "name": "实底按钮 Contained Button",
+      "kind": "button",
+      "refersTo": "button-contained",
+      "description": "主按钮：墨黑实底纸白字。全站只有「付印 PDF」用它，主按钮的位置留给最终产出。",
+      "html": "<button class=\"ds-btn-contained\">付印 PDF</button>",
+      "css": ".ds-btn-contained { font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0; color: #ffffff; background: #101010; border: 1px solid #101010; border-radius: 0; min-height: 26px; padding: 0 10px; cursor: pointer; }\n.ds-btn-contained:hover { background: #000000; border-color: #000000; }\n.ds-btn-contained:focus-visible { outline: 2px solid #0093d0; outline-offset: 1px; }"
+    },
+    {
+      "name": "文字按钮 Text Button",
+      "kind": "button",
+      "refersTo": "button-text",
+      "description": "展开类开关（更多规格 / 收起更多规格）：透明边、内边距 8px，悬停时边框转墨色。",
+      "html": "<button class=\"ds-btn-text\">更多规格（静默区 / 印刷标记）</button>",
+      "css": ".ds-btn-text { font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0; color: rgba(16,16,16,0.62); background: transparent; border: 1px solid transparent; border-radius: 0; min-height: 26px; padding: 0 8px; cursor: pointer; }\n.ds-btn-text:hover { border-color: #101010; background: rgba(16,16,16,0.04); }\n.ds-btn-text:focus-visible { outline: 2px solid #0093d0; outline-offset: 1px; }"
+    },
+    {
+      "name": "数字格 / 下拉格 Field Input",
+      "kind": "input",
+      "refersTo": "input-text",
+      "description": "联单的值格：纸白底、1px 强线、6px 9px 内边距、直角；数字走等宽并带单位后缀，聚焦只换线色不加粗。",
+      "html": "<span class=\"ds-input\"><input class=\"ds-input-control\" type=\"number\" value=\"300\" aria-label=\"分辨率（DPI）\"><span class=\"ds-input-suffix\">DPI</span></span>\n<select class=\"ds-select\" aria-label=\"字体\"><option>黑体（无衬线）</option></select>",
+      "css": ".ds-input { display: inline-flex; align-items: center; background: #ffffff; border: 1px solid rgba(16,16,16,0.34); border-radius: 0; padding: 6px 9px; }\n.ds-input-control { width: 100%; min-width: 0; border: 0; outline: none; background: transparent; color: #101010; font-family: 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', Menlo, monospace; font-size: 13px; }\n.ds-input-suffix { font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', sans-serif; font-size: 10.5px; color: rgba(16,16,16,0.62); margin-left: 4px; }\n.ds-input:hover { border-color: #101010; }\n.ds-input:focus-within { border-color: #101010; outline: 2px solid #0093d0; outline-offset: 1px; }\n.ds-select { background: #ffffff; color: #101010; font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', sans-serif; font-size: 13px; border: 1px solid rgba(16,16,16,0.34); border-radius: 0; padding: 6px 9px; }\n.ds-select:hover { border-color: #101010; }\n.ds-select:focus-visible { border-color: #101010; outline: 2px solid #0093d0; outline-offset: 1px; }"
+    },
+    {
+      "name": "分段按钮 Segmented Control",
+      "kind": "chip",
+      "refersTo": "segment",
+      "description": "互斥选项拼成一条连续带子：相邻边框重叠 -1px，选中态反白（墨黑底纸白字），不靠颜色或阴影。",
+      "html": "<span class=\"ds-segment\" role=\"group\" aria-label=\"纸张方向\"><button class=\"ds-segment-item\" aria-pressed=\"true\">纵向</button><button class=\"ds-segment-item\" aria-pressed=\"false\">横向</button></span>",
+      "css": ".ds-segment { display: inline-flex; border-radius: 0; }\n.ds-segment-item { font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0; color: rgba(16,16,16,0.62); background: transparent; border: 1px solid rgba(16,16,16,0.34); border-radius: 0; padding: 5px 10px; cursor: pointer; }\n.ds-segment-item + .ds-segment-item { margin-left: -1px; }\n.ds-segment-item:hover { border-color: #101010; }\n.ds-segment-item[aria-pressed=\"true\"] { background: #101010; color: #ffffff; }\n.ds-segment-item[aria-pressed=\"true\"]:hover { background: #000000; }\n.ds-segment-item:focus-visible { outline: 2px solid #0093d0; outline-offset: 1px; position: relative; z-index: 1; }"
+    },
+    {
+      "name": "联单字段行 Field Row",
+      "kind": "custom",
+      "refersTo": "field-row",
+      "description": "全站唯一的参数输入形态：96px 字段名列 + 值列，下沿发丝线，提示挂第二列；字段名永远从同一列起排。",
+      "html": "<div class=\"ds-field-row\">\n  <span class=\"ds-field-label\">纸张</span>\n  <span class=\"ds-field-value\"><select class=\"ds-select-inline\" aria-label=\"纸张\"><option>A4 210 × 297 mm</option></select></span>\n  <span class=\"ds-field-hint\">决定导出像素密度；打印用 300 DPI 起步</span>\n</div>",
+      "css": ".ds-field-row { display: grid; grid-template-columns: 96px minmax(0, 1fr); column-gap: 12px; row-gap: 4px; align-items: center; padding: 8px 16px; border-bottom: 1px solid rgba(16,16,16,0.16); background: #ffffff; }\n.ds-field-label { font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', sans-serif; font-size: 11.5px; color: rgba(16,16,16,0.62); }\n.ds-field-value { min-width: 0; }\n.ds-field-hint { grid-column: 2; font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', sans-serif; font-size: 10.5px; line-height: 1.35; color: rgba(16,16,16,0.36); }\n.ds-select-inline { width: 100%; background: #ffffff; color: #101010; font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', sans-serif; font-size: 13px; border: 1px solid rgba(16,16,16,0.34); border-radius: 0; padding: 6px 9px; }"
+    },
+    {
+      "name": "联单分段 Docket Section",
+      "kind": "custom",
+      "refersTo": "docket-section",
+      "description": "参数按段组织：标题带 6px 16px、0.035 墨洗、上下发丝线，右侧挂等宽读数；破坏性动作留在工单底部单独一行。",
+      "html": "<section class=\"ds-docket\">\n  <header class=\"ds-docket-head\"><span class=\"ds-docket-title\">规格</span><span class=\"ds-docket-meta\">210 × 297</span></header>\n  <div class=\"ds-docket-body\"><!-- 字段行 --></div>\n  <footer class=\"ds-docket-foot\"><span class=\"ds-docket-note\">参数改动即时重排印张，没有「应用」这一步。</span><button class=\"ds-btn-outlined\">恢复默认</button></footer>\n</section>",
+      "css": ".ds-docket-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 6px 16px; background: rgba(16,16,16,0.035); border-top: 1px solid rgba(16,16,16,0.16); border-bottom: 1px solid rgba(16,16,16,0.16); }\n.ds-docket-title { font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', sans-serif; font-size: 11.5px; font-weight: 700; color: #101010; }\n.ds-docket-meta { font-family: 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', Menlo, monospace; font-size: 10.5px; color: rgba(16,16,16,0.62); }\n.ds-docket-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 16px; background: rgba(16,16,16,0.02); border-top: 1.5px solid #101010; }\n.ds-docket-note { font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', sans-serif; font-size: 10.5px; color: rgba(16,16,16,0.62); }"
+    },
+    {
+      "name": "线型状态行 Line-form State Line",
+      "kind": "custom",
+      "refersTo": "state-line",
+      "description": "状态只用线的形态说话：实线已生效 / 点划线出片中 / 双线已导出 / 虚线有提醒。全站没有彩色状态——错误与提醒都保持墨色，只靠线型与文案前缀区分。行本身是通栏：上沿发丝线、6px 14px 内边距、11px 等宽文字。",
+      "html": "<div class=\"ds-state-line\">\n  <svg width=\"34\" height=\"12\" viewBox=\"0 0 34 12\" aria-hidden=\"true\"><line x1=\"1\" y1=\"6\" x2=\"33\" y2=\"6\" stroke=\"#101010\" stroke-width=\"1.2\"></line></svg>\n  <span class=\"ds-state-text\">2480 × 3508 px · 8 px/模块 · 纠错 M</span>\n</div>\n<div class=\"ds-state-legend\">\n  <div class=\"ds-state-line ds-state-line-plain\"><svg width=\"34\" height=\"12\" viewBox=\"0 0 34 12\" aria-hidden=\"true\"><line x1=\"1\" y1=\"6\" x2=\"33\" y2=\"6\" stroke=\"#101010\" stroke-width=\"1.6\" stroke-dasharray=\"7 3 1.5 3\"></line></svg><span class=\"ds-state-text\">正在出片</span></div>\n  <div class=\"ds-state-line ds-state-line-plain\"><svg width=\"34\" height=\"12\" viewBox=\"0 0 34 12\" aria-hidden=\"true\"><line x1=\"1\" y1=\"4.5\" x2=\"33\" y2=\"4.5\" stroke=\"#101010\" stroke-width=\"1.6\"></line><line x1=\"1\" y1=\"7.5\" x2=\"33\" y2=\"7.5\" stroke=\"#101010\" stroke-width=\"1.6\"></line></svg><span class=\"ds-state-text\">已导出</span></div>\n  <div class=\"ds-state-line ds-state-line-plain\"><svg width=\"34\" height=\"12\" viewBox=\"0 0 34 12\" aria-hidden=\"true\"><line x1=\"1\" y1=\"6\" x2=\"33\" y2=\"6\" stroke=\"#101010\" stroke-width=\"1.2\" stroke-dasharray=\"5 3\"></line></svg><span class=\"ds-state-text\">有提醒</span></div>\n</div>",
+      "css": ".ds-state-line { display: flex; align-items: center; gap: 10px; padding: 6px 14px; background: #ffffff; border-top: 1px solid rgba(16,16,16,0.16); }\n.ds-state-line-plain { border-top: 0; padding: 4px 0; }\n.ds-state-text { font-family: 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', Menlo, monospace; font-size: 11px; color: #101010; }\n.ds-state-legend { display: block; padding: 6px 14px; background: #ffffff; }"
+    },
+    {
+      "name": "印张台面 Sheet Stage",
+      "kind": "custom",
+      "refersTo": "sheet",
+      "description": "台面灰底 + 四角四色套准十字（inset 6px）+ 贴着纸边的毫米刻度尺 + 纸白印张；台面按内容框测量、栅格叠 maxWidth/maxHeight 兜底，量测误差只表现为整体缩小绝不裁切；印张是全系统唯一允许投影的元素，并在每次重排时上墨一次。",
+      "html": "<div class=\"ds-stage\">\n  <svg class=\"ds-reg ds-reg-tl\" width=\"17\" height=\"17\" viewBox=\"0 0 17 17\" aria-hidden=\"true\"><circle cx=\"8.5\" cy=\"8.5\" r=\"4\" fill=\"none\" stroke=\"rgba(16,16,16,0.55)\" stroke-width=\"0.7\"></circle><path d=\"M8.5 0.5V16.5M0.5 8.5H16.5\" stroke=\"rgba(16,16,16,0.55)\" stroke-width=\"0.7\"></path><path d=\"M8.5 0.5V3\" stroke=\"#0093d0\" stroke-width=\"1.2\"></path><path d=\"M8.5 14V16.5\" stroke=\"#e5007d\" stroke-width=\"1.2\"></path><path d=\"M0.5 8.5H3\" stroke=\"#ffe200\" stroke-width=\"1.2\"></path><path d=\"M14 8.5H16.5\" stroke=\"#101010\" stroke-width=\"1.2\"></path></svg>\n  <svg class=\"ds-reg ds-reg-tr\" width=\"17\" height=\"17\" viewBox=\"0 0 17 17\" aria-hidden=\"true\"><circle cx=\"8.5\" cy=\"8.5\" r=\"4\" fill=\"none\" stroke=\"rgba(16,16,16,0.55)\" stroke-width=\"0.7\"></circle><path d=\"M8.5 0.5V16.5M0.5 8.5H16.5\" stroke=\"rgba(16,16,16,0.55)\" stroke-width=\"0.7\"></path><path d=\"M8.5 0.5V3\" stroke=\"#0093d0\" stroke-width=\"1.2\"></path><path d=\"M8.5 14V16.5\" stroke=\"#e5007d\" stroke-width=\"1.2\"></path><path d=\"M0.5 8.5H3\" stroke=\"#ffe200\" stroke-width=\"1.2\"></path><path d=\"M14 8.5H16.5\" stroke=\"#101010\" stroke-width=\"1.2\"></path></svg>\n  <svg class=\"ds-reg ds-reg-bl\" width=\"17\" height=\"17\" viewBox=\"0 0 17 17\" aria-hidden=\"true\"><circle cx=\"8.5\" cy=\"8.5\" r=\"4\" fill=\"none\" stroke=\"rgba(16,16,16,0.55)\" stroke-width=\"0.7\"></circle><path d=\"M8.5 0.5V16.5M0.5 8.5H16.5\" stroke=\"rgba(16,16,16,0.55)\" stroke-width=\"0.7\"></path><path d=\"M8.5 0.5V3\" stroke=\"#0093d0\" stroke-width=\"1.2\"></path><path d=\"M8.5 14V16.5\" stroke=\"#e5007d\" stroke-width=\"1.2\"></path><path d=\"M0.5 8.5H3\" stroke=\"#ffe200\" stroke-width=\"1.2\"></path><path d=\"M14 8.5H16.5\" stroke=\"#101010\" stroke-width=\"1.2\"></path></svg>\n  <svg class=\"ds-reg ds-reg-br\" width=\"17\" height=\"17\" viewBox=\"0 0 17 17\" aria-hidden=\"true\"><circle cx=\"8.5\" cy=\"8.5\" r=\"4\" fill=\"none\" stroke=\"rgba(16,16,16,0.55)\" stroke-width=\"0.7\"></circle><path d=\"M8.5 0.5V16.5M0.5 8.5H16.5\" stroke=\"rgba(16,16,16,0.55)\" stroke-width=\"0.7\"></path><path d=\"M8.5 0.5V3\" stroke=\"#0093d0\" stroke-width=\"1.2\"></path><path d=\"M8.5 14V16.5\" stroke=\"#e5007d\" stroke-width=\"1.2\"></path><path d=\"M0.5 8.5H3\" stroke=\"#ffe200\" stroke-width=\"1.2\"></path><path d=\"M14 8.5H16.5\" stroke=\"#101010\" stroke-width=\"1.2\"></path></svg>\n  <div class=\"ds-sheet-wrap\">\n    <svg class=\"ds-ruler-x\" width=\"170\" height=\"22\" aria-hidden=\"true\"><line x1=\"0.0\" y1=\"22\" x2=\"0.0\" y2=\"13\" stroke=\"#101010\" stroke-width=\"1\" opacity=\"0.75\"></line><text x=\"2.5\" y=\"8\" font-size=\"9\" font-family=\"'Cascadia Mono', Consolas, 'DejaVu Sans Mono', Menlo, monospace\" fill=\"rgba(16,16,16,0.6)\">0</text><line x1=\"8.5\" y1=\"22\" x2=\"8.5\" y2=\"18\" stroke=\"#101010\" stroke-width=\"0.7\" opacity=\"0.4\"></line><line x1=\"17.0\" y1=\"22\" x2=\"17.0\" y2=\"18\" stroke=\"#101010\" stroke-width=\"0.7\" opacity=\"0.4\"></line><line x1=\"25.5\" y1=\"22\" x2=\"25.5\" y2=\"18\" stroke=\"#101010\" stroke-width=\"0.7\" opacity=\"0.4\"></line><line x1=\"34.0\" y1=\"22\" x2=\"34.0\" y2=\"13\" stroke=\"#101010\" stroke-width=\"1\" opacity=\"0.75\"></line><text x=\"36.5\" y=\"8\" font-size=\"9\" font-family=\"'Cascadia Mono', Consolas, 'DejaVu Sans Mono', Menlo, monospace\" fill=\"rgba(16,16,16,0.6)\">4</text><line x1=\"42.5\" y1=\"22\" x2=\"42.5\" y2=\"18\" stroke=\"#101010\" stroke-width=\"0.7\" opacity=\"0.4\"></line><line x1=\"51.0\" y1=\"22\" x2=\"51.0\" y2=\"18\" stroke=\"#101010\" stroke-width=\"0.7\" opacity=\"0.4\"></line><line x1=\"59.5\" y1=\"22\" x2=\"59.5\" y2=\"18\" stroke=\"#101010\" stroke-width=\"0.7\" opacity=\"0.4\"></line><line x1=\"68.0\" y1=\"22\" x2=\"68.0\" y2=\"13\" stroke=\"#101010\" stroke-width=\"1\" opacity=\"0.75\"></line><text x=\"70.5\" y=\"8\" font-size=\"9\" font-family=\"'Cascadia Mono', Consolas, 'DejaVu Sans Mono', Menlo, monospace\" fill=\"rgba(16,16,16,0.6)\">8</text><line x1=\"76.5\" y1=\"22\" x2=\"76.5\" y2=\"18\" stroke=\"#101010\" stroke-width=\"0.7\" opacity=\"0.4\"></line><line x1=\"85.0\" y1=\"22\" x2=\"85.0\" y2=\"18\" stroke=\"#101010\" stroke-width=\"0.7\" opacity=\"0.4\"></line><line x1=\"93.5\" y1=\"22\" x2=\"93.5\" y2=\"18\" stroke=\"#101010\" stroke-width=\"0.7\" opacity=\"0.4\"></line><line x1=\"102.0\" y1=\"22\" x2=\"102.0\" y2=\"13\" stroke=\"#101010\" stroke-width=\"1\" opacity=\"0.75\"></line><text x=\"104.5\" y=\"8\" font-size=\"9\" font-family=\"'Cascadia Mono', Consolas, 'DejaVu Sans Mono', Menlo, monospace\" fill=\"rgba(16,16,16,0.6)\">12</text><line x1=\"110.5\" y1=\"22\" x2=\"110.5\" y2=\"18\" stroke=\"#101010\" stroke-width=\"0.7\" opacity=\"0.4\"></line><line x1=\"119.0\" y1=\"22\" x2=\"119.0\" y2=\"18\" stroke=\"#101010\" stroke-width=\"0.7\" opacity=\"0.4\"></line><line x1=\"127.5\" y1=\"22\" x2=\"127.5\" y2=\"18\" stroke=\"#101010\" stroke-width=\"0.7\" opacity=\"0.4\"></line><line x1=\"136.0\" y1=\"22\" x2=\"136.0\" y2=\"13\" stroke=\"#101010\" stroke-width=\"1\" opacity=\"0.75\"></line><text x=\"138.5\" y=\"8\" font-size=\"9\" font-family=\"'Cascadia Mono', Consolas, 'DejaVu Sans Mono', Menlo, monospace\" fill=\"rgba(16,16,16,0.6)\">16</text><line x1=\"144.5\" y1=\"22\" x2=\"144.5\" y2=\"18\" stroke=\"#101010\" stroke-width=\"0.7\" opacity=\"0.4\"></line><line x1=\"153.0\" y1=\"22\" x2=\"153.0\" y2=\"18\" stroke=\"#101010\" stroke-width=\"0.7\" opacity=\"0.4\"></line><line x1=\"161.5\" y1=\"22\" x2=\"161.5\" y2=\"18\" stroke=\"#101010\" stroke-width=\"0.7\" opacity=\"0.4\"></line><line x1=\"170.0\" y1=\"22\" x2=\"170.0\" y2=\"13\" stroke=\"#101010\" stroke-width=\"1\" opacity=\"0.75\"></line><text x=\"172.5\" y=\"8\" font-size=\"9\" font-family=\"'Cascadia Mono', Consolas, 'DejaVu Sans Mono', Menlo, monospace\" fill=\"rgba(16,16,16,0.6)\">20</text></svg>\n    <div class=\"ds-sheet\"><div class=\"ds-sheet-ink\"><span class=\"ds-sheet-placeholder\"></span></div></div>\n  </div>\n</div>",
+      "css": ".ds-stage { position: relative; display: grid; place-content: center; padding: 22px; background: #f4f4f2; }\n.ds-reg { position: absolute; display: block; }\n.ds-reg-tl { top: 6px; left: 6px; }\n.ds-reg-tr { top: 6px; right: 6px; }\n.ds-reg-bl { bottom: 6px; left: 6px; }\n.ds-reg-br { bottom: 6px; right: 6px; }\n.ds-sheet-wrap { display: grid; grid-template-columns: 22px auto; grid-template-rows: 22px auto; }\n.ds-ruler-x { display: block; }\n.ds-sheet { position: relative; width: 170px; height: 240px; background: #ffffff; box-shadow: 0 1px 1.5px rgba(16,16,16,0.16), 0 18px 34px -18px rgba(16,16,16,0.34); }\n.ds-sheet-ink { position: absolute; inset: 0; animation: qrstick-ink 180ms cubic-bezier(0.16, 1, 0.3, 1) both; }\n.ds-sheet-placeholder { position: absolute; left: 50%; top: 50%; width: 110px; height: 110px; margin: -55px 0 0 -55px; border: 1px dashed rgba(16,16,16,0.28); }\n@keyframes qrstick-ink { from { opacity: 0.42; filter: blur(0.6px); } to { opacity: 1; filter: blur(0); } }\n@media (prefers-reduced-motion: reduce) { .ds-sheet-ink { animation: none; } }"
+    },
+    {
+      "name": "批量数据表 Batch Table",
+      "kind": "custom",
+      "refersTo": "data-grid",
+      "description": "批量出码的数据表：表头带报「第 X–Y 条 / 共 N 条」真实可视范围，列头下沿 1.5px 墨线，序号右对齐等宽，当前行用内描边 + 0.05 墨洗，与印张预览联动。",
+      "html": "<div class=\"ds-table\">\n  <div class=\"ds-table-band\"><span class=\"ds-table-title\">数据</span><span class=\"ds-table-readout\">第 3–14 条 / 共 42 条</span></div>\n  <div class=\"ds-table-head\"><span class=\"ds-col-index\">序号</span><span class=\"ds-col-text\">标题</span><span class=\"ds-col-mono\">内容</span></div>\n  <div class=\"ds-table-row ds-table-row-current\"><span class=\"ds-col-index\">3</span><span class=\"ds-col-text\">库位 A-03-12</span><span class=\"ds-col-mono\">LOC-A-03-12</span></div>\n  <div class=\"ds-table-row\"><span class=\"ds-col-index\">4</span><span class=\"ds-col-text\">库位 A-03-13</span><span class=\"ds-col-mono\">LOC-A-03-13</span></div>\n</div>",
+      "css": ".ds-table { background: #ffffff; font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', sans-serif; }\n.ds-table-band { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 6px 14px; background: rgba(16,16,16,0.035); border-bottom: 1px solid rgba(16,16,16,0.16); }\n.ds-table-title { font-size: 11.5px; font-weight: 700; color: #101010; }\n.ds-table-readout { font-family: 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', Menlo, monospace; font-size: 10.5px; color: rgba(16,16,16,0.62); }\n.ds-table-head, .ds-table-row { display: flex; gap: 12px; padding: 6px 14px; }\n.ds-table-head { font-size: 11px; font-weight: 700; color: #101010; border-bottom: 1.5px solid #101010; }\n.ds-table-row { font-size: 12px; color: #101010; border-bottom: 1px solid rgba(16,16,16,0.16); cursor: pointer; }\n.ds-table-row:hover { background: rgba(16,16,16,0.035); }\n.ds-table-row-current { outline: 1px solid #101010; outline-offset: -1px; background: rgba(16,16,16,0.05); font-weight: 600; }\n.ds-col-index { width: 68px; text-align: right; font-family: 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', Menlo, monospace; }\n.ds-col-mono { flex: 2; font-family: 'Cascadia Mono', Consolas, 'DejaVu Sans Mono', Menlo, monospace; }\n.ds-col-text { flex: 1; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "印刷工单与印张",
+    "overview": "界面是一张待付印的印张摊在看版台上，台面灰底、四角钉着四色套准十字，贴着纸边是一把按当前屏幕密度现算的毫米刻度尺；左边夹着一张联单工单，每个参数都是「字段名 : 值」的一格，按规格 / 标题 / 二维码 / 数据 / 体检分段。这不是贴上去的皮：产品真实的机制就是「参数 → 印张 → 交付文件」，工单与印张正好是这个对应关系。\n\n整套系统只有两种材料——墨（#101010）与纸（#ffffff），加一块台面灰（#f4f4f2）。层级全部由 1 物理像素的发丝线、墨的透明度梯度、以及三条 1.5px 重线分界承担；没有圆角、没有卡片、没有阴影堆叠。印刷三原色只在极小面积上出现：套准十字的四条色版臂、焦点环、选中底色。数字一律等宽对齐，尺寸一律带单位（mm / DPI / pt），因为这套界面最终要落到实物上。\n\n密度是车间密度：正文 13px，元数据 10.5–11px，读数条一行六格，字段行上下各 8px 内边距、按钮与分段最小高 26px、数字格内边距 6px 9px。参数改动即时重排印张，没有「应用」这一步；破坏性动作（恢复默认）被隔离到工单最底部并附说明。窄屏时参数与读数先让位，印张与导出永不被挤掉——优先级塌缩是这个世界的秩序。",
+    "keyCharacteristics": [
+      "直角是唯一的形：全局 borderRadius: 0，滑块拇指是 10 × 16 的立式矩形，复选框方角。",
+      "发丝线承担全部层级：1px solid rgba(16,16,16,0.16) 分层，1px solid rgba(16,16,16,0.34) 描边控件，1.5px solid #101010 只画三条边界重线。",
+      "状态只用线型：实线已生效 / 点划线出片中 / 双线已导出 / 虚线有提醒，全站没有彩色状态。",
+      "颜色是标记而不是装饰：三原色与色标条都按毫米级面积出现，界面主体永远是墨黑 / 纸白。",
+      "数字等宽 + 单位标注：读数、序号、型号一律等宽字体与 tabular-nums，每个尺寸写明 mm / DPI / pt。",
+      "零网络资源：不引网络字体、无插图、无位图（唯一的图形是 SVG 刻线与套准十字），离线可出正确的图。"
+    ],
+    "rules": [
+      {
+        "name": "The Three-Ink Rule",
+        "zh": "三原色只做标记",
+        "body": "青 / 品红 / 黄永远不做文字色、不做背景色、不做边框色，只出现在套准十字色版臂、焦点环、选中底色、色标条。",
+        "section": "colors"
+      },
+      {
+        "name": "The Four-Wash Rule",
+        "zh": "墨洗只有四档",
+        "body": "背景层次只能用 0.02 / 0.035 / 0.04 / 0.05 四个墨洗，选哪一档由职责决定（页脚 / 分段带 / 悬停 / 当前行）；需要更深的底就用实底墨黑。",
+        "section": "colors"
+      },
+      {
+        "name": "The No-Grey Hex Rule",
+        "zh": "灰不出现",
+        "body": "所有中间调都是 #101010 的 alpha，不引入灰色 hex；屏幕上唯一非墨非纸的颜色就是三原色标记与只印在纸面上的过程色。",
+        "section": "colors"
+      },
+      {
+        "name": "The No-Colour-State Rule",
+        "zh": "状态不着色",
+        "body": "这套系统里不存在彩色状态：调色板的 error 就是墨黑，错误、提醒、进行中、完成全靠线型加文案前缀区分；任何新状态先回答「它的线型是什么」。",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Rule",
+        "zh": "数字必等宽",
+        "body": "会被比对、核对、抄写的数字用等宽字体并叠 tabular-nums；比例字体的数字只允许出现在正文叙述里。",
+        "section": "typography"
+      },
+      {
+        "name": "The Installed-Fonts Rule",
+        "zh": "只用装好的字体",
+        "body": "不引任何网络字体；标签字体必须是操作者机器上装好的字体，否则离线导出的标签会换字。",
+        "section": "typography"
+      },
+      {
+        "name": "The One Ramp Rule",
+        "zh": "字号只走八级",
+        "body": "界面字号只取 15 / 13 / 12 / 11.5 / 11 / 10.5 / 10 / 9 八级；标签标题的磅值是唯一的例外。",
+        "section": "typography"
+      },
+      {
+        "name": "The No-Case Rule",
+        "zh": "不改字形",
+        "body": "textTransform: none、letterSpacing: 0；强调靠字重与墨色浓度，唯一例外是站名的 -0.01em。",
+        "section": "typography"
+      },
+      {
+        "name": "The Priority-Collapse Rule",
+        "zh": "优先级塌缩",
+        "body": "空间不够时按顺序牺牲低优先级参数、读数横滑、参数区下沉；印张与导出按钮在任何屏宽下都在场。",
+        "section": "layout"
+      },
+      {
+        "name": "The Millimetre Rule",
+        "zh": "毫米是版面真相",
+        "body": "一切尺寸以毫米书写、按 DPI 换算成整数像素落地、再回读成毫米显示；屏幕缩放只影响预览，不影响导出。",
+        "section": "layout"
+      },
+      {
+        "name": "The Isolated Destructive Rule",
+        "zh": "破坏性动作隔离",
+        "body": "「恢复默认」单独占工单底部一行，带 1.5px 墨线与说明，不放在参数中间。",
+        "section": "layout"
+      },
+      {
+        "name": "The Hairline Rule",
+        "zh": "发丝线承担层级",
+        "body": "分区、分隔、描边一律用 1px 线；需要更强分隔就加粗到 1.5px 墨黑，绝不加阴影。",
+        "section": "elevation"
+      },
+      {
+        "name": "The Single-Shadow Rule",
+        "zh": "唯一投影",
+        "body": "全站只有印张可以投影，理由是纸在台面上的物理抬升；悬停、聚焦、选中一律靠线型或底色，不靠抬高。",
+        "section": "elevation"
+      },
+      {
+        "name": "The Heavy-Rule Rule",
+        "zh": "重线分界",
+        "body": "1.5px 墨黑线只画三条边界：顶栏下沿、工单底栏上沿、数据表表头下沿。",
+        "section": "elevation"
+      },
+      {
+        "name": "The Right-Angle Rule",
+        "zh": "直角",
+        "body": "任何圆角都是错误的，包括拇指、复选框、提示条与滚动条；例外为零。",
+        "section": "shapes"
+      },
+      {
+        "name": "The Line-Form Rule",
+        "zh": "形态即状态",
+        "body": "状态必须是线的形态，四种线型含义固定，不可发明第五种；需要新状态先问它能否落进已有四态。",
+        "section": "shapes"
+      },
+      {
+        "name": "The Overlap Rule",
+        "zh": "拼合不叠线",
+        "body": "相邻同级元素共用一条边框（分段按钮 -1px 重叠、读数格共用左线），不许出现两条并排的 1px 线冒充 2px。",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "**Do** 用 1px 发丝线分层（rgba(16,16,16,0.16)）、1px 强线描边控件（0.34）、1.5px 墨线只画三条单据边界。",
+      "**Do** 让每个参数都长成「字段名 : 值」的一格（96px 字段列 + 值列），新参数先问它属于哪一段（规格 / 标题 / 二维码 / 数据 / 体检）。",
+      "**Do** 把数字写成等宽（Cascadia Mono 栈）并带上单位：mm、DPI、pt、模块、倍。",
+      "**Do** 用四种线型表达状态（实线 / 点划线 / 双线 / 虚线），需要图形时优先加一条线而不是一个图标。",
+      "**Do** 给选中态用反白（墨黑底 + 纸白字）或内描边，让灰度打印照样分得清。",
+      "**Do** 保留键盘焦点环 2px solid #0093d0 + 1px 偏移——青色的这一处用途不可省略。",
+      "**Do** 让参数改动即时生效并让印张上墨一次；破坏性动作放到工单底部单独一行。",
+      "**Do** 在 prefers-reduced-motion: reduce 下关掉动效（唯一动效已就关）。",
+      "**Do** 批量表头钉住可见范围读数「第 X–Y 条 / 共 N 条」，拿不到范围时退回「共 N 条」，用真实的渲染上下文而不是估算。",
+      "**Do** 把预览与导出走同一条渲染路径、同一份毫米 + DPI 参数：屏幕上看到的就是打印出来的。"
+    ],
+    "donts": [
+      "**Don't** 使用任何圆角（borderRadius 必须为 0，包括拇指、复选框、提示条、滚动条）。",
+      "**Don't** 做卡片：不要加第二层纸、不要嵌套容器；分区只用发丝线 + 一档墨洗（0.02 / 0.035 / 0.04 / 0.05）。",
+      "**Don't** 加第二个投影。唯一允许的投影属于看版台上的印张。",
+      "**Don't** 给状态上色：错误 / 提醒 / 进行中 / 完成都只用线型加文案前缀，连调色板的 error 也是墨黑。",
+      "**Don't** 把青 / 品红 / 黄用作文字色、背景色或边框色——它们只做标记。",
+      "**Don't** 发明新的墨色 hex 或新的墨洗档位；需要新的中间调就从 #101010 的既有 alpha 里取。",
+      "**Don't** 引入网络字体、图标字体或位图插图；界面唯一的图形是 SVG 刻线（刻度尺、套准十字、线型标记）。",
+      "**Don't** 给界面做做旧纹理、做旧纸纹或引用旧字形——纸白 + 墨黑要停在现代工单的克制上。",
+      "**Don't** 用大写变形或加字距来「强调」文字（textTransform: none、letterSpacing: 0）。",
+      "**Don't** 引入 theme 里未被消费的字号变体（h1 / h2 / h3 / body1 / body2 / caption 当前没有任何界面在用）。",
+      "**Don't** 加「应用」按钮或任何待提交状态：参数即时重排是这个产品的机制本身。",
+      "**Don't** 把「恢复默认」挪回参数区中间，或去掉它旁边的说明。",
+      "**Don't** 让参数区或读数条把印张挤掉：窄屏按优先级塌缩，印张与导出按钮永远在场。"
+    ]
+  }
+}

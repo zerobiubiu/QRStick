@@ -135,16 +135,28 @@ export default function App() {
           <Docket store={store} compact={compact} issues={issues} />
         </Box>
 
-        <Box sx={{ order: { xs: 1, md: 2 }, display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0 }}>
+        <Box
+          sx={{
+            order: { xs: 1, md: 2 },
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+            minWidth: 0,
+            // 窄屏这张列本身没有可分的剩余高度，必须自带高度：
+            // 单张时给印张一个明确的台面；批量时让内容自己撑（数据表 + 预览各自带高度）
+            height: { xs: mode === 'batch' ? 'auto' : 460, md: 'auto' },
+          }}
+        >
           {mode === 'batch' ? (
             <Box
               sx={{
-                flex: { lg: 1 },
+                // 窄屏是单列 auto 行，分不到剩余高度：给数据表一个明确高度，
+                // 并禁止它被同级内容压缩（flex-shrink 默认会把固定高度吃掉）
+                flex: { xs: '0 0 auto', lg: 1 },
                 minHeight: 0,
                 display: 'grid',
                 gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.3fr) minmax(0, 1fr)' },
-                // 窄屏是单列 auto 行，分不到剩余高度：给数据表一个明确高度，别让它塌成 0
-                height: { xs: '38dvh', lg: 'auto' },
+                height: { xs: 340, lg: 'auto' },
               }}
             >
               <BatchGrid rows={rows} selectedRow={selectedRow} onSelect={setSelectedRow} />
@@ -155,22 +167,13 @@ export default function App() {
               ) : null}
             </Box>
           ) : (
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                minHeight: 0,
-                flex: { md: 1 },
-                // 同理：窄屏的印张要自带高度，否则台面量到 0 就不画了
-                height: { xs: '58dvh', md: 'auto' },
-              }}
-            >
+            <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
               <PressSheet config={previewConfig} layout={previewLayout} signature={previewSignature} />
             </Box>
           )}
 
           {mode === 'batch' && !wide ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', height: 360, borderTop: '1px solid var(--rule)' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', height: 360, flex: '0 0 auto', borderTop: '1px solid var(--rule)' }}>
               <PressSheet config={previewConfig} layout={previewLayout} signature={previewSignature} />
             </Box>
           ) : null}

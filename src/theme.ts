@@ -35,11 +35,11 @@ export const theme = createTheme({
     text: {
       primary: INK,
       secondary: 'rgba(16,16,16,0.62)',
-      disabled: 'rgba(16,16,16,0.36)',
+      disabled: 'rgba(16,16,16,0.45)',
     },
-    error: { main: '#c0143c' },
-    warning: { main: '#9a5b00' },
-    success: { main: '#0f6b3a' },
+    // 状态一律由线型（实线/虚线/点划线/双线）承担，颜色回到墨黑；
+    // 这里只为满足 MUI 调色板形状保留 error，不再有离palette的红/黄/绿
+    error: { main: INK },
   },
   shape: { borderRadius: 0 },
   typography: {

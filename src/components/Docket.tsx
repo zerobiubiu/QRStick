@@ -70,7 +70,7 @@ export function FieldRow({
         <FieldLabelId.Provider value={labelId}>{children}</FieldLabelId.Provider>
       </Box>
       {hint ? (
-        <Typography component="span" sx={{ gridColumn: '2', fontSize: 10.5, color: 'text.disabled', lineHeight: 1.35 }}>
+        <Typography component="span" sx={{ gridColumn: '2', fontSize: 10.5, color: 'text.secondary', lineHeight: 1.35 }}>
           {hint}
         </Typography>
       ) : null}
@@ -530,9 +530,34 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
               onChange={(errorCorrectionLevel) => patchQr({ errorCorrectionLevel })}
             />
           </FieldRow>
+          <FieldRow label="印刷标记" align="start" hint="标记会印进导出文件，不是屏幕上的辅助线">
+            <Stack sx={{ gap: 0 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox checked={config.marks.cropMarks} onChange={(event) => patchMarks({ cropMarks: event.target.checked })} />
+                }
+                label="四角裁切标记"
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox checked={config.marks.colorBar} onChange={(event) => patchMarks({ colorBar: event.target.checked })} />
+                }
+                label="色标条与规格读数"
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={config.marks.marginGuides}
+                    onChange={(event) => patchMarks({ marginGuides: event.target.checked })}
+                  />
+                }
+                label="页边距参考虚线"
+              />
+            </Stack>
+          </FieldRow>
           <Box sx={{ px: 2, py: 0.75 }}>
             <Button size="small" variant="text" onClick={() => setMoreOpen((open) => !open)} sx={{ color: 'text.secondary' }}>
-              {moreOpen ? '收起更多规格' : '更多规格（静默区 / 印刷标记）'}
+              {moreOpen ? '收起更多规格' : '更多规格（静默区）'}
             </Button>
           </Box>
           <Collapse in={moreOpen} unmountOnExit>
@@ -546,31 +571,6 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
                 width={92}
                 onCommit={(quietZoneModules) => patchQr({ quietZoneModules: Math.round(quietZoneModules) })}
               />
-            </FieldRow>
-            <FieldRow label="印刷标记" align="start" hint="标记会印进导出文件，不是屏幕上的辅助线">
-              <Stack sx={{ gap: 0 }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox checked={config.marks.cropMarks} onChange={(event) => patchMarks({ cropMarks: event.target.checked })} />
-                  }
-                  label="四角裁切标记"
-                />
-                <FormControlLabel
-                  control={
-                    <Checkbox checked={config.marks.colorBar} onChange={(event) => patchMarks({ colorBar: event.target.checked })} />
-                  }
-                  label="色标条与规格读数"
-                />
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={config.marks.marginGuides}
-                      onChange={(event) => patchMarks({ marginGuides: event.target.checked })}
-                    />
-                  }
-                  label="页边距参考虚线"
-                />
-              </Stack>
             </FieldRow>
           </Collapse>
         </DocketSection>
@@ -588,7 +588,7 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
                   <LineMark form={issue.level === 'error' ? 'double' : 'dashed'} width={22} />
                 </Box>
                 <Typography
-                  sx={{ fontSize: 11.5, lineHeight: 1.5, color: issue.level === 'error' ? 'error.main' : 'text.primary' }}
+                  sx={{ fontSize: 11.5, lineHeight: 1.5, color: 'text.primary' }}
                 >
                   {issue.message}
                 </Typography>

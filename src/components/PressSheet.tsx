@@ -41,9 +41,13 @@ function useMeasuredBox() {
 
   useEffect(() => {
     if (!node) return;
+    // 量内容框：clientWidth 含内边距，而印张只摆在内容框里——
+    // 多量进 44px 内边距，纸面就会溢出到台面外被裁掉（毫米尺整条被切）
     const measure = () => {
-      const rect = node.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0) setBox({ width: rect.width, height: rect.height });
+      const style = getComputedStyle(node);
+      const width = node.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      const height = node.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+      if (width > 0 && height > 0) setBox({ width, height });
     };
     measure();
     const observer = new ResizeObserver(measure);
@@ -212,7 +216,16 @@ export function PressSheet({ config, layout, signature }: { config: LabelConfig;
         </Box>
 
         {pxPerMm > 0.4 ? (
-          <Box sx={{ display: 'grid', gridTemplateColumns: `${STRIP_PX}px auto`, gridTemplateRows: `${STRIP_PX}px auto` }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: `${STRIP_PX}px auto`,
+              gridTemplateRows: `${STRIP_PX}px auto`,
+              // 兜底：任何量测误差都表现为整体缩小，绝不裁切
+              maxWidth: '100%',
+              maxHeight: '100%',
+            }}
+          >
             <Box />
             <SheetRuler axis="x" lengthPx={displayWidth} pxPerMm={pxPerMm} />
             <SheetRuler axis="y" lengthPx={displayHeight} pxPerMm={pxPerMm} />

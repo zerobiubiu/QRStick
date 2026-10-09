@@ -16,20 +16,14 @@ interface RowSpan {
   last: number;
 }
 
-const FIRST_ROW_SPAN: RowSpan = { first: 0, last: 0 };
-
-/**
- * 读当前可见行范围。DataGrid 把渲染上下文挂在 virtualizer 的状态上，
- * 类型来自 @mui/x-virtualizer 的映射类型；这里按运行时形状校验后取值，
- * 库内部换形状时只会退回全量范围，不会崩。
- */
-function readVisibleSpan(state: GridState): RowSpan {
+/** 未知跨度：宁可只说「共 N 条」，也不报一个具体的、错的区间 */
+function readVisibleSpan(state: GridState): RowSpan | null {
   const virtual = state.virtualization as unknown as { renderContext?: unknown };
   const context = virtual?.renderContext;
-  if (!context || typeof context !== 'object') return FIRST_ROW_SPAN;
+  if (!context || typeof context !== 'object') return null;
   const firstRowIndex = 'firstRowIndex' in context ? context.firstRowIndex : undefined;
   const lastRowIndex = 'lastRowIndex' in context ? context.lastRowIndex : undefined;
-  if (typeof firstRowIndex !== 'number' || typeof lastRowIndex !== 'number') return FIRST_ROW_SPAN;
+  if (typeof firstRowIndex !== 'number' || typeof lastRowIndex !== 'number') return null;
   return { first: firstRowIndex, last: lastRowIndex };
 }
 
@@ -51,12 +45,12 @@ export function BatchGrid({
   selectedRow: number;
   onSelect: (index: number) => void;
 }) {
-  const [span, setSpan] = useState<RowSpan>(FIRST_ROW_SPAN);
+  const [span, setSpan] = useState<RowSpan | null>(null);
 
   // 行数不变就不重渲染：滚动时 onStateChange 每帧都会来
   const handleStateChange = useCallback((state: GridState) => {
     const next = readVisibleSpan(state);
-    setSpan((prev) => (prev.first === next.first && prev.last === next.last ? prev : next));
+    setSpan((prev) => (prev && next && prev.first === next.first && prev.last === next.last ? prev : next));
   }, []);
 
   const columns = useMemo<GridColDef<BatchRow>[]>(
@@ -69,8 +63,9 @@ export function BatchGrid({
   );
 
   const total = rows.length;
-  const first = total ? Math.min(span.first + 1, total) : 0;
-  const last = total ? Math.max(first, Math.min(span.last + 1, total)) : 0;
+  const first = span && total ? Math.min(span.first + 1, total) : 0;
+  const last = span && total ? Math.max(first, Math.min(span.last + 1, total)) : 0;
+  const guideWords = span && total ? `第 ${first}–${last} 条 / 共 ${total} 条` : `共 ${total} 条`;
 
   return (
     <Stack sx={{ minHeight: 0, flex: 1, bgcolor: 'var(--paper)' }}>
@@ -87,9 +82,7 @@ export function BatchGrid({
         }}
       >
         <Typography sx={{ fontSize: 11.5, fontWeight: 700 }}>数据</Typography>
-        <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary' }}>
-          第 {first}–{last} 条 / 共 {total} 条
-        </Typography>
+        <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary' }}>{guideWords}</Typography>
       </Stack>
       <Box sx={{ flex: 1, minHeight: 0 }}>
         <DataGrid<BatchRow>
