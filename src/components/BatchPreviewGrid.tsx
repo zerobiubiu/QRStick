@@ -1,48 +1,55 @@
 /**
- * 批量模式的多图预览：单张突出 / 多张网格两种排布，区域内独立滚动。
+ * 批量模式的预览区：单张突出（复用 PressSheet 本体）/ 多张网格。
  *
- * 三处关键行为：
- *  - **数据绑定稳**：每格内容完全由「当前 rows 里那一行」推导（标题 + 内容 + config 指纹），
- *    不缓存过期缩略图——改内容、排序、删行之后图片必然跟着变，不会出现图文错位；
- *  - **懒渲染**：格子进入视口附近才渲染画布，离开就释放，因此几百行也不会把内存吃满；
- *  - **失败隔离**：某一格渲染失败只影响那一格，并在格子里写清是第几行出错。
+ * 三条纪律：
+ *  - **单张预览与单张制作模式是同一个组件**：调用 PressSheet，缩放、读数条、刻度尺、套准十字全都一致，
+ *    不存在「两套预览各写一遍」的视觉差异；批量单张只是把它的 config 换成当前选中行；
+ *  - **不裁切、不变形**：每格的画布按标签自身宽高比落进媒体框（`object-fit: contain`），
+ *    网格列宽用 `minmax(0, 1fr)`，卡片不能被内容撑破；
+ *  - **位置记忆**：网格滚动位置存在 ref 里（跨排布切换存活），返回网格时恢复到原来的浏览位置。
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Box, Button, Stack, Typography } from '@mui/material';
-import { layoutLabel, renderLabel } from '../lib/render';
+import { Box, Button, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { PressSheet } from './PressSheet';
+import { layoutLabel, renderLabel, type LabelLayout } from '../lib/render';
 import { THUMB_MAX_PX, previewScaleFor } from '../lib/preview';
-import { formatMm } from '../lib/units';
-import type { BatchRow, LabelConfig, PreviewLayout } from '../lib/types';
+import type { BatchRow, LabelConfig } from '../lib/types';
+import type { LabelStore } from '../state/labelStore';
 import { INK, MONO_FONT } from '../theme';
 
 /** 超过这个张数只渲染前 N 张预览（导出不受影响） */
 const PREVIEW_CAP = 200;
+/** 估范围用的单格高度（像素）：只为「第 X–Y 张」这个读数服务 */
+const TILE_STRIDE_PX = 240;
 
 function buildRowConfig(config: LabelConfig, row: BatchRow): LabelConfig {
   return { ...config, title: { ...config.title, text: row.title }, content: row.content };
 }
 
+/** 网格里的一格：媒体框按此行标签的自身宽高比，画布 object-fit 放入 → 不拉伸、不裁切 */
 function Tile({
   row,
   config,
   fingerprint,
   selected,
   onSelect,
+  onOpen,
 }: {
   row: BatchRow;
   config: LabelConfig;
   fingerprint: string;
   selected: boolean;
   onSelect: (index: number) => void;
+  onOpen: (index: number) => void;
 }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const holderRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [error, setError] = useState('');
   const aspect = useMemo(() => {
-    const layout = layoutLabel(config);
+    const layout = layoutLabel(buildRowConfig(config, row));
     return `${layout.sheetWidthMm} / ${layout.sheetHeightMm}`;
-  }, [config]);
+  }, [config, row]);
 
   useEffect(() => {
     const node = wrapperRef.current;
@@ -81,25 +88,40 @@ function Tile({
   return (
     <Box
       ref={wrapperRef}
-      onMouseDown={() => onSelect(row.index)}
+      role="button"
+      tabIndex={0}
+      aria-label={`第 ${row.index} 行预览${selected ? '（当前）' : ''}`}
+      onClick={() => onSelect(row.index)}
+      onDoubleClick={() => onOpen(row.index)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onSelect(row.index);
+        }
+      }}
       sx={{
         display: 'flex',
         flexDirection: 'column',
         gap: 0.5,
         p: 0.75,
+        minWidth: 0,
         bgcolor: 'var(--paper)',
         border: `1px solid ${selected ? INK : 'var(--rule)'}`,
         cursor: 'pointer',
+        '&:hover': { borderColor: INK },
       }}
     >
-      <Box sx={{ position: 'relative', width: '100%', aspectRatio: aspect, bgcolor: 'var(--ground)' }}>
+      <Box sx={{ position: 'relative', width: '100%', aspectRatio: aspect, bgcolor: 'var(--ground)', overflow: 'hidden' }}>
         {error ? (
           <Stack sx={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', px: 1 }}>
-            <Typography sx={{ fontSize: 10.5, color: 'text.primary', textAlign: 'center' }}>第 {row.index} 行渲染失败</Typography>
+            <Typography sx={{ fontSize: 10.5, textAlign: 'center' }}>第 {row.index} 行渲染失败</Typography>
             <Typography sx={{ fontSize: 10, color: 'text.secondary', textAlign: 'center' }}>{error}</Typography>
           </Stack>
         ) : (
-          <Box ref={holderRef} sx={{ position: 'absolute', inset: 0, '& canvas': { display: 'block', width: '100%', height: '100%' } }} />
+          <Box
+            ref={holderRef}
+            sx={{ position: 'absolute', inset: 0, '& canvas': { display: 'block', width: '100%', height: '100%', objectFit: 'contain' } }}
+          />
         )}
         {!visible && !error ? (
           <Stack sx={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}>
@@ -107,7 +129,7 @@ function Tile({
           </Stack>
         ) : null}
       </Box>
-      <Stack direction="row" sx={{ alignItems: 'baseline', justifyContent: 'space-between', gap: 0.5 }}>
+      <Stack direction="row" sx={{ alignItems: 'baseline', justifyContent: 'space-between', gap: 0.5, minWidth: 0 }}>
         <Typography
           sx={{
             fontSize: 10.5,
@@ -116,6 +138,7 @@ function Tile({
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
+            minWidth: 0,
           }}
         >
           {row.title || '（无标题）'}
@@ -129,41 +152,53 @@ function Tile({
 }
 
 export function BatchPreviewGrid({
-  rows,
-  config,
-  selectedIndex,
-  onSelect,
-  layout,
-  onLayoutChange,
+  store,
+  baseConfig,
+  selectedConfig,
+  selectedLayout,
+  selectedSignature,
 }: {
-  rows: BatchRow[];
-  config: LabelConfig;
-  selectedIndex: number;
-  onSelect: (index: number) => void;
-  layout: PreviewLayout;
-  onLayoutChange: (layout: PreviewLayout) => void;
+  store: LabelStore;
+  /** 网格里每一行都基于它改标题/内容 */
+  baseConfig: LabelConfig;
+  /** 单张预览用当前选中行的配置（与单张制作模式同一路径） */
+  selectedConfig: LabelConfig;
+  selectedLayout: LabelLayout;
+  selectedSignature: string;
 }) {
-  const [scrollTop, setScrollTop] = useState(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const fingerprint = useMemo(() => JSON.stringify(config), [config]);
+  const { rows, selectedRow, previewLayout, previewZoom, previewColumns } = store;
+  const fingerprint = useMemo(() => JSON.stringify(baseConfig), [baseConfig]);
   const shown = rows.slice(0, PREVIEW_CAP);
-  const selectedRow = rows.find((row) => row.index === selectedIndex) ?? rows[0] ?? null;
-  const selectedLayout = useMemo(() => (selectedRow ? layoutLabel(buildRowConfig(config, selectedRow)) : null), [config, selectedRow]);
+  const selectedExists = rows.some((row) => row.index === selectedRow);
+
+  // 网格滚动位置：存 ref（跨排布切换存活），返回网格时恢复
+  const scrollMemory = useRef(0);
+  const [rangeBucket, setRangeBucket] = useState(0);
+  const attachScroller = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return;
+    node.scrollTop = scrollMemory.current;
+  }, []);
+
+  const openSingle = useCallback(
+    (index: number) => {
+      store.setSelectedRow(index);
+      store.setPreviewLayout('single');
+    },
+    [store],
+  );
 
   const step = useCallback(
     (delta: number) => {
       if (!rows.length) return;
-      const position = Math.max(0, rows.findIndex((row) => row.index === selectedIndex));
+      const position = Math.max(0, rows.findIndex((row) => row.index === selectedRow));
       const next = rows[Math.min(rows.length - 1, Math.max(0, position + delta))];
-      if (next) onSelect(next.index);
+      if (next) store.setSelectedRow(next.index);
     },
-    [onSelect, rows, selectedIndex],
+    [rows, selectedRow, store],
   );
 
-  // 可见范围读数：按格子高度估个区间即可，不用为了一个读数再测一遍 DOM
-  const perRow = 3;
-  const firstVisible = rows.length ? Math.min(rows.length, Math.floor(scrollTop / 220) * perRow + 1) : 0;
-  const lastVisible = rows.length ? Math.min(rows.length, firstVisible + perRow * 2) : 0;
+  const firstVisible = rows.length ? Math.min(rows.length, rangeBucket * 3 + 1) : 0;
+  const lastVisible = rows.length ? Math.min(rows.length, firstVisible + 5) : 0;
 
   return (
     <Stack sx={{ minHeight: 0, flex: 1, bgcolor: 'var(--paper)' }}>
@@ -180,14 +215,18 @@ export function BatchPreviewGrid({
           flexWrap: 'wrap',
         }}
       >
-        <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
+        <Stack direction="row" sx={{ alignItems: 'center', gap: 1, minWidth: 0 }}>
           <Typography sx={{ fontSize: 11.5, fontWeight: 700 }}>预览</Typography>
-          <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary' }}>
+          <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary', whiteSpace: 'nowrap' }}>
             {rows.length ? `${rows.length} 张` : '无数据'}
           </Typography>
+          <Typography sx={{ fontSize: 10.5, color: 'text.secondary', whiteSpace: 'nowrap', display: { xs: 'none', md: 'block' } }}>
+            双击缩略图看单张
+          </Typography>
         </Stack>
-        <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
-          {layout === 'single' && selectedRow ? (
+
+        <Stack direction="row" sx={{ alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+          {previewLayout === 'single' && selectedExists ? (
             <>
               <Button size="small" variant="text" onClick={() => step(-1)} sx={{ minHeight: 22 }}>
                 ‹ 上一张
@@ -197,25 +236,47 @@ export function BatchPreviewGrid({
               </Button>
             </>
           ) : (
-            <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary', whiteSpace: 'nowrap' }}>
-              第 {firstVisible}–{lastVisible} 张 / 共 {rows.length}
-            </Typography>
+            <Stack direction="row" sx={{ alignItems: 'center', gap: 0.75 }}>
+              <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>列数</Typography>
+              <ToggleButtonGroup
+                exclusive
+                size="small"
+                value={previewColumns}
+                aria-label="预览网格列数"
+                onChange={(_event, next: typeof previewColumns | null) => {
+                  if (next !== null) store.setPreviewColumns(next);
+                }}
+              >
+                {(['auto', 2, 3, 4, 5] as const).map((option) => (
+                  <ToggleButton key={String(option)} value={option} sx={{ px: 1, py: 0.25, fontSize: 10.5 }}>
+                    {option === 'auto' ? '自动' : option}
+                  </ToggleButton>
+                ))}
+              </ToggleButtonGroup>
+              <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary', whiteSpace: 'nowrap' }}>
+                第 {firstVisible}–{lastVisible} 张 / 共 {rows.length}
+              </Typography>
+            </Stack>
           )}
+
           <Stack direction="row" sx={{ alignItems: 'center', gap: 0.75 }}>
             <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>排布</Typography>
-            {(['single', 'grid'] as PreviewLayout[]).map((option) => (
-              <Button
-                key={option}
-                size="small"
-                variant={layout === option ? 'contained' : 'outlined'}
-                aria-pressed={layout === option}
-                aria-label={option === 'single' ? '预览排布：单张突出' : '预览排布：多张网格'}
-                onClick={() => onLayoutChange(option)}
-                sx={{ minHeight: 22, borderRadius: 0, minWidth: 72 }}
-              >
-                {option === 'single' ? '单张突出' : '多张网格'}
-              </Button>
-            ))}
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={previewLayout}
+              aria-label="预览排布"
+              onChange={(_event, next: typeof previewLayout | null) => {
+                if (next !== null) store.setPreviewLayout(next);
+              }}
+            >
+              <ToggleButton value="single" sx={{ px: 1, py: 0.25, fontSize: 10.5 }}>
+                单张突出
+              </ToggleButton>
+              <ToggleButton value="grid" sx={{ px: 1, py: 0.25, fontSize: 10.5 }}>
+                多张网格
+              </ToggleButton>
+            </ToggleButtonGroup>
           </Stack>
         </Stack>
       </Stack>
@@ -227,29 +288,24 @@ export function BatchPreviewGrid({
             先导入数据或新增一行；每来一行，这里就多一张对应的标签
           </Typography>
         </Stack>
-      ) : layout === 'single' && selectedRow ? (
-        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
-          <Box sx={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
-            <Box sx={{ width: '100%', maxWidth: 520, maxHeight: '100%', aspectRatio: '210 / 297' }}>
-              <Tile row={selectedRow} config={config} fingerprint={fingerprint} selected onSelect={onSelect} />
-            </Box>
-          </Box>
-          {selectedLayout ? (
-            <Stack direction="row" sx={{ gap: 1.5, px: 1.5, py: 0.75, borderTop: '1px solid var(--rule)', flexWrap: 'wrap' }}>
-              <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary' }}>
-                第 {selectedRow.index} 行 · {selectedRow.title || '（无标题）'}
-              </Typography>
-              <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary' }}>
-                {formatMm(selectedLayout.sheetWidthMm)} × {formatMm(selectedLayout.sheetHeightMm)} mm · 外框{' '}
-                {selectedLayout.qrActualMm.toFixed(1)} mm · 码面 {selectedLayout.qrInkMm.toFixed(1)} mm
-              </Typography>
-            </Stack>
-          ) : null}
-        </Box>
+      ) : previewLayout === 'single' && selectedExists ? (
+        // 与单张制作模式完全同源：同一个 PressSheet（缩放、读数条、刻度尺、套准十字）
+        <PressSheet
+          config={selectedConfig}
+          layout={selectedLayout}
+          signature={selectedSignature}
+          zoom={previewZoom}
+          onZoomChange={store.setPreviewZoom}
+        />
       ) : (
         <Box
-          ref={scrollRef}
-          onScroll={(event) => setScrollTop((event.target as HTMLElement).scrollTop)}
+          ref={attachScroller}
+          onScroll={(event) => {
+            const top = event.currentTarget.scrollTop;
+            scrollMemory.current = top;
+            const bucket = Math.floor(top / TILE_STRIDE_PX);
+            setRangeBucket((prev) => (prev === bucket ? prev : bucket));
+          }}
           sx={{ flex: 1, minHeight: 0, overflow: 'auto', p: 1, bgcolor: 'var(--ground)' }}
         >
           {rows.length > PREVIEW_CAP ? (
@@ -260,7 +316,9 @@ export function BatchPreviewGrid({
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(168px, 1fr))',
+              // 自动：按可用宽度铺；固定列数：每列 1fr（minmax(0) 防内容撑破）
+              gridTemplateColumns:
+                previewColumns === 'auto' ? 'repeat(auto-fill, minmax(148px, 1fr))' : `repeat(${previewColumns}, minmax(0, 1fr))`,
               gap: 1,
               alignContent: 'start',
             }}
@@ -269,10 +327,11 @@ export function BatchPreviewGrid({
               <Tile
                 key={row.index}
                 row={row}
-                config={config}
+                config={baseConfig}
                 fingerprint={fingerprint}
-                selected={row.index === selectedIndex}
-                onSelect={onSelect}
+                selected={row.index === selectedRow}
+                onSelect={store.setSelectedRow}
+                onOpen={openSingle}
               />
             ))}
           </Box>

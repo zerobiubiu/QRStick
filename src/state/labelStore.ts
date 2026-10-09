@@ -12,6 +12,7 @@ import type {
   MarksConfig,
   PageConfig,
   PresetScope,
+  PreviewColumns,
   PreviewLayout,
   QrConfig,
   StitchOptions,
@@ -25,9 +26,11 @@ const ROWS_KEY = 'qrstick.rows.v1';
 const PRESETS_KEY = 'qrstick.presets.v1';
 const VIEW_KEY = 'qrstick.view.v1';
 
-/** 批量模式的界面状态（预览排布 / 分栏比例 / 列宽）：跟着模式切换走，不能丢 */
-interface ViewState {
+/** 单张预览的缩放：1 = 适应窗口；大于 1 按倍数放大（容器内滚动，不裁切） */
+export interface ViewState {
   previewLayout: PreviewLayout;
+  previewZoom: number;
+  previewColumns: PreviewColumns;
   splitRatio: number;
   columnWidths: Record<string, number>;
   imageExport: ImageExportOptions;
@@ -35,6 +38,8 @@ interface ViewState {
 
 export const DEFAULT_VIEW: ViewState = {
   previewLayout: 'grid',
+  previewZoom: 1,
+  previewColumns: 'auto',
   splitRatio: 0.5,
   columnWidths: { index: 64, title: 190, content: 240, select: 44, handle: 40, actions: 40 },
   imageExport: {
@@ -54,6 +59,8 @@ function loadView(): ViewState {
     const saved = JSON.parse(raw) as Partial<ViewState>;
     return {
       previewLayout: saved.previewLayout === 'single' ? 'single' : 'grid',
+      previewZoom: typeof saved.previewZoom === 'number' && saved.previewZoom >= 1 ? Math.min(3, saved.previewZoom) : 1,
+      previewColumns: ['auto', 2, 3, 4, 5].includes(saved.previewColumns as never) ? (saved.previewColumns as PreviewColumns) : 'auto',
       splitRatio: typeof saved.splitRatio === 'number' ? Math.min(0.75, Math.max(0.25, saved.splitRatio)) : DEFAULT_VIEW.splitRatio,
       columnWidths: { ...DEFAULT_VIEW.columnWidths, ...saved.columnWidths },
       imageExport: {
@@ -208,6 +215,12 @@ export interface LabelStore {
   /** 批量模式的预览排布（模式切换不丢） */
   previewLayout: PreviewLayout;
   setPreviewLayout: (layout: PreviewLayout) => void;
+  /** 单张预览缩放：1 = 适应窗口，>1 放大并在区域内滚动 */
+  previewZoom: number;
+  setPreviewZoom: (zoom: number) => void;
+  /** 多图网格每行几列 */
+  previewColumns: PreviewColumns;
+  setPreviewColumns: (columns: PreviewColumns) => void;
   /** 表格与预览的分栏比例（0.25–0.75），拖拽调整并持久化 */
   splitRatio: number;
   setSplitRatio: (ratio: number) => void;
@@ -351,6 +364,14 @@ export function useLabelStore(): LabelStore {
   }, []);
 
   const setPreviewLayout = useCallback((previewLayout: PreviewLayout) => setView((v) => ({ ...v, previewLayout })), []);
+  const setPreviewZoom = useCallback(
+    (previewZoom: number) => setView((v) => ({ ...v, previewZoom: Math.min(3, Math.max(1, previewZoom)) })),
+    [],
+  );
+  const setPreviewColumns = useCallback(
+    (previewColumns: PreviewColumns) => setView((v) => ({ ...v, previewColumns })),
+    [],
+  );
   const setSplitRatio = useCallback(
     (splitRatio: number) => setView((v) => ({ ...v, splitRatio: Math.min(0.75, Math.max(0.25, splitRatio)) })),
     [],
@@ -453,6 +474,10 @@ export function useLabelStore(): LabelStore {
     setSelectedIds,
     previewLayout: view.previewLayout,
     setPreviewLayout,
+    previewZoom: view.previewZoom,
+    setPreviewZoom,
+    previewColumns: view.previewColumns,
+    setPreviewColumns,
     splitRatio: view.splitRatio,
     setSplitRatio,
     columnWidths: view.columnWidths,

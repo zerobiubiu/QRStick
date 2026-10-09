@@ -62,6 +62,9 @@ export interface ImageExportOptions {
 /** 批量模式的预览排布：单张突出 / 多张网格 */
 export type PreviewLayout = 'single' | 'grid';
 
+/** 多图网格每行几列；auto = 按可用宽度自适应 */
+export type PreviewColumns = 'auto' | 2 | 3 | 4 | 5;
+
 /** 页面（印张）参数 */
 export interface PageConfig {
   /** 预设 id，见 units.ts 的 PAGE_PRESETS；'custom' 表示自定义宽高 */

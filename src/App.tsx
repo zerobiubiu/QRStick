@@ -49,7 +49,6 @@ export default function App() {
     setRecord,
     setMode,
     imageExport,
-    previewLayout,
     splitRatio,
     setSplitRatio,
   } = store;
@@ -354,18 +353,23 @@ export default function App() {
                 }}
               >
                 <BatchPreviewGrid
-                  rows={rows}
-                  config={previewConfig}
-                  selectedIndex={selectedRow}
-                  onSelect={store.setSelectedRow}
-                  layout={previewLayout}
-                  onLayoutChange={store.setPreviewLayout}
+                  store={store}
+                  baseConfig={config}
+                  selectedConfig={previewConfig}
+                  selectedLayout={previewLayoutInfo}
+                  selectedSignature={previewSignature}
                 />
               </Box>
             </Box>
           ) : (
             <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
-              <PressSheet config={previewConfig} layout={previewLayoutInfo} signature={previewSignature} />
+              <PressSheet
+                config={previewConfig}
+                layout={previewLayoutInfo}
+                signature={previewSignature}
+                zoom={store.previewZoom}
+                onZoomChange={store.setPreviewZoom}
+              />
             </Box>
           )}
 

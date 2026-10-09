@@ -6,7 +6,7 @@
  * 刻度尺的刻度不是装饰：它按印张在当前屏幕上每毫米多少像素现算，读数就是真实尺寸。
  */
 import { useCallback, useMemo } from 'react';
-import { Box, Stack, Typography } from '@mui/material';
+import { Box, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { renderLabel, type LabelLayout } from '../lib/render';
 import { useElementSize } from '../lib/useElementSize';
 import { formatMm } from '../lib/units';
@@ -16,6 +16,8 @@ import { INK, MONO_FONT } from '../theme';
 /** 预览画布的最长边；超过就等比降采样，导出永远用满 DPI */
 const STAGE_MAX_PX = 1800;
 const STRIP_PX = 22;
+/** 可选的缩放倍数：1 = 适应窗口 */
+const ZOOM_STEPS = [1, 1.5, 2, 3];
 
 /** 套准十字：四个色版各出一根，印张世界的签名细节 */
 function RegistrationMark({ size = 17 }: { size?: number }) {
@@ -120,7 +122,20 @@ function Readout({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function PressSheet({ config, layout, signature }: { config: LabelConfig; layout: LabelLayout; signature: string }) {
+export function PressSheet({
+  config,
+  layout,
+  signature,
+  zoom,
+  onZoomChange,
+}: {
+  config: LabelConfig;
+  layout: LabelLayout;
+  signature: string;
+  /** 缩放倍数：1 = 适应窗口；>1 放大并在台面内滚动 */
+  zoom: number;
+  onZoomChange: (zoom: number) => void;
+}) {
   const { box: stage, attach: attachStage } = useMeasuredBox();
 
   const rendered = useMemo(() => {
@@ -139,7 +154,8 @@ export function PressSheet({ config, layout, signature }: { config: LabelConfig;
     [rendered],
   );
 
-  const pxPerMm = Math.min(
+  // 适应窗口的基准比例：把印张按最长边放进台面
+  const fitPxPerMm = Math.min(
     4,
     Math.max(
       0,
@@ -149,6 +165,8 @@ export function PressSheet({ config, layout, signature }: { config: LabelConfig;
       ),
     ),
   );
+  // 缩放是相对「适应窗口」的倍数：放大后台面内滚动，绝不裁切、绝不拉伸（等比）
+  const pxPerMm = fitPxPerMm > 0 ? Math.min(12, fitPxPerMm * zoom) : 0;
   const displayWidth = layout.sheetWidthMm * pxPerMm;
   const displayHeight = layout.sheetHeightMm * pxPerMm;
   const qrReadout =
@@ -165,9 +183,10 @@ export function PressSheet({ config, layout, signature }: { config: LabelConfig;
           flex: 1,
           minHeight: 0,
           display: 'grid',
-          placeContent: 'center',
+          // 放大后从左上排起并允许滚动（看得全，而不是被裁掉）
+          placeContent: zoom > 1 ? 'start' : 'center',
           p: `${STRIP_PX}px`,
-          overflow: 'hidden',
+          overflow: zoom > 1 ? 'auto' : 'hidden',
         }}
       >
         <Box sx={{ position: 'absolute', inset: 6, pointerEvents: 'none' }}>
@@ -212,7 +231,7 @@ export function PressSheet({ config, layout, signature }: { config: LabelConfig;
                 ref={attachCanvas}
                 key={signature}
                 className="sheet-ink"
-                sx={{ position: 'absolute', inset: 0, '& canvas': { display: 'block', width: '100%', height: '100%' } }}
+                sx={{ position: 'absolute', inset: 0, '& canvas': { display: 'block', width: '100%', height: '100%', objectFit: 'contain' } }}
               />
             </Box>
           </Box>
@@ -239,6 +258,38 @@ export function PressSheet({ config, layout, signature }: { config: LabelConfig;
         <Readout label="标题" value={`${layout.titleLines.length} 行 · ${config.title.fontSizePt} pt`} />
         <Readout label="版心" value={`${formatMm(layout.contentWidthPx / (layout.dpi / 25.4))} × ${formatMm(layout.contentHeightPx / (layout.dpi / 25.4))} mm`} />
         <Readout label="内容" value={`${config.content.length} 字符`} />
+        <Box
+          sx={{
+            ml: 'auto',
+            px: 1.5,
+            py: 0.6,
+            borderLeft: '1px solid var(--rule)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            flex: '0 0 auto',
+          }}
+        >
+          <Typography sx={{ fontSize: 10, color: 'text.secondary' }}>缩放</Typography>
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={zoom}
+            aria-label="预览缩放"
+            onChange={(_event, next: number | null) => {
+              if (next !== null) onZoomChange(next);
+            }}
+          >
+            {ZOOM_STEPS.map((step) => (
+              <ToggleButton key={step} value={step} sx={{ px: 1, py: 0.25, fontSize: 10.5 }}>
+                {step === 1 ? '适应' : `×${step}`}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+          <Typography sx={{ fontSize: 10, fontFamily: MONO_FONT, color: 'text.secondary', whiteSpace: 'nowrap' }}>
+            {pxPerMm > 0 ? `${pxPerMm.toFixed(2)} px/mm` : '—'}
+          </Typography>
+        </Box>
       </Stack>
     </Box>
   );
