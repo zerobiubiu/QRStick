@@ -16,7 +16,7 @@ import { THUMB_MAX_PX, previewScaleFor } from '../lib/preview';
 import { buildRowConfig } from '../lib/batch';
 import type { BatchRow, LabelConfig } from '../lib/types';
 import type { LabelStore } from '../state/labelStore';
-import { INK, MONO_FONT } from '../theme';
+import { INK, MONO_FONT, FONT_PX } from '../theme';
 
 /** 超过这个张数只渲染前 N 张预览（导出不受影响） */
 const PREVIEW_CAP = 200;
@@ -189,21 +189,21 @@ function Tile({
               border: '1px dashed var(--rule-strong)',
             }}
           >
-            <Typography sx={{ fontSize: 10.5, textAlign: 'center' }}>第 {row.index} 行出不了片</Typography>
-            <Typography sx={{ fontSize: 10, fontFamily: MONO_FONT, color: 'text.secondary', textAlign: 'center', lineHeight: 1.35 }}>
+            <Typography sx={{ fontSize: FONT_PX.meta, textAlign: 'center' }}>第 {row.index} 行出不了片</Typography>
+            <Typography sx={{ fontSize: FONT_PX.micro, fontFamily: MONO_FONT, color: 'text.secondary', textAlign: 'center', lineHeight: 1.35 }}>
               {error}
             </Typography>
           </Stack>
         ) : !visible ? (
           <Stack sx={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}>
-            <Typography sx={{ fontSize: 10, color: 'text.secondary' }}>第 {row.index} 行待渲染</Typography>
+            <Typography sx={{ fontSize: FONT_PX.micro, color: 'text.secondary' }}>第 {row.index} 行待渲染</Typography>
           </Stack>
         ) : null}
       </Box>
       <Stack direction="row" sx={{ alignItems: 'baseline', justifyContent: 'space-between', gap: 0.5, minWidth: 0 }}>
         <Typography
           sx={{
-            fontSize: 10.5,
+            fontSize: FONT_PX.meta,
             fontFamily: MONO_FONT,
             fontWeight: selected ? 700 : 400,
             overflow: 'hidden',
@@ -214,7 +214,7 @@ function Tile({
         >
           {row.title || '（无标题）'}
         </Typography>
-        <Typography sx={{ fontSize: 10, fontFamily: MONO_FONT, color: 'text.secondary', flex: '0 0 auto' }}>
+        <Typography sx={{ fontSize: FONT_PX.micro, fontFamily: MONO_FONT, color: 'text.secondary', flex: '0 0 auto' }}>
           #{row.index}
         </Typography>
       </Stack>
@@ -286,17 +286,17 @@ export function BatchPreviewGrid({
           gap: 1,
           px: 1.5,
           py: 0.5,
-          bgcolor: 'rgba(16,16,16,0.035)',
+          bgcolor: 'var(--tint-band)',
           borderBottom: '1px solid var(--rule)',
           flexWrap: 'wrap',
         }}
       >
         <Stack direction="row" sx={{ alignItems: 'center', gap: 1, minWidth: 0 }}>
-          <Typography sx={{ fontSize: 11.5, fontWeight: 700 }}>预览</Typography>
-          <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary', whiteSpace: 'nowrap' }}>
+          <Typography sx={{ fontSize: FONT_PX.label, fontWeight: 700 }}>预览</Typography>
+          <Typography sx={{ fontSize: FONT_PX.meta, fontFamily: MONO_FONT, color: 'text.secondary', whiteSpace: 'nowrap' }}>
             {rows.length ? `${rows.length} 张` : '无数据'}
           </Typography>
-          <Typography sx={{ fontSize: 10.5, color: 'text.secondary', whiteSpace: 'nowrap', display: { xs: 'none', md: 'block' } }}>
+          <Typography sx={{ fontSize: FONT_PX.meta, color: 'text.secondary', whiteSpace: 'nowrap', display: { xs: 'none', md: 'block' } }}>
             双击缩略图看单张
           </Typography>
         </Stack>
@@ -305,7 +305,7 @@ export function BatchPreviewGrid({
           {previewLayout === 'single' && selectedExists ? (
             <>
               <Typography
-                sx={{ fontSize: 10.5, color: 'text.secondary', whiteSpace: 'nowrap', display: { xs: 'none', md: 'block' } }}
+                sx={{ fontSize: FONT_PX.meta, color: 'text.secondary', whiteSpace: 'nowrap', display: { xs: 'none', md: 'block' } }}
               >
                 滚轮切换上下张
               </Typography>
@@ -318,7 +318,7 @@ export function BatchPreviewGrid({
             </>
           ) : (
             <Stack direction="row" sx={{ alignItems: 'center', gap: 0.75 }}>
-              <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>列数</Typography>
+              <Typography sx={{ fontSize: FONT_PX.meta, color: 'text.secondary' }}>列数</Typography>
               <ToggleButtonGroup
                 exclusive
                 size="small"
@@ -329,19 +329,19 @@ export function BatchPreviewGrid({
                 }}
               >
                 {(['auto', 2, 3, 4, 5] as const).map((option) => (
-                  <ToggleButton key={String(option)} value={option} sx={{ px: 1, py: 0.25, fontSize: 10.5 }}>
+                  <ToggleButton key={String(option)} value={option} sx={{ px: 1, py: 0.25, fontSize: FONT_PX.meta }}>
                     {option === 'auto' ? '自动' : option}
                   </ToggleButton>
                 ))}
               </ToggleButtonGroup>
-              <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary', whiteSpace: 'nowrap' }}>
+              <Typography sx={{ fontSize: FONT_PX.meta, fontFamily: MONO_FONT, color: 'text.secondary', whiteSpace: 'nowrap' }}>
                 第 {firstVisible}–{lastVisible} 张 / 共 {rows.length}
               </Typography>
             </Stack>
           )}
 
           <Stack direction="row" sx={{ alignItems: 'center', gap: 0.75 }}>
-            <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>排布</Typography>
+            <Typography sx={{ fontSize: FONT_PX.meta, color: 'text.secondary' }}>排布</Typography>
             <ToggleButtonGroup
               exclusive
               size="small"
@@ -351,10 +351,10 @@ export function BatchPreviewGrid({
                 if (next !== null) store.setPreviewLayout(next);
               }}
             >
-              <ToggleButton value="single" sx={{ px: 1, py: 0.25, fontSize: 10.5 }}>
+              <ToggleButton value="single" sx={{ px: 1, py: 0.25, fontSize: FONT_PX.meta }}>
                 单张突出
               </ToggleButton>
-              <ToggleButton value="grid" sx={{ px: 1, py: 0.25, fontSize: 10.5 }}>
+              <ToggleButton value="grid" sx={{ px: 1, py: 0.25, fontSize: FONT_PX.meta }}>
                 多张网格
               </ToggleButton>
             </ToggleButtonGroup>
@@ -364,8 +364,8 @@ export function BatchPreviewGrid({
 
       {rows.length === 0 ? (
         <Stack sx={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 0.5, py: 3 }}>
-          <Typography sx={{ fontSize: 12.5 }}>还没有可预览的标签</Typography>
-          <Typography sx={{ fontSize: 11, color: 'text.secondary', textAlign: 'center' }}>
+          <Typography sx={{ fontSize: FONT_PX.small }}>还没有可预览的标签</Typography>
+          <Typography sx={{ fontSize: FONT_PX.readout, color: 'text.secondary', textAlign: 'center' }}>
             先导入数据或新增一行；每来一行，这里就多一张对应的标签
           </Typography>
         </Stack>
@@ -391,7 +391,7 @@ export function BatchPreviewGrid({
           sx={{ flex: 1, minHeight: 0, overflow: 'auto', p: 1, bgcolor: 'var(--ground)' }}
         >
           {rows.length > PREVIEW_CAP ? (
-            <Typography sx={{ fontSize: 10.5, color: 'text.secondary', px: 0.5, pb: 1 }}>
+            <Typography sx={{ fontSize: FONT_PX.meta, color: 'text.secondary', px: 0.5, pb: 1 }}>
               仅预览前 {PREVIEW_CAP} 张（导出的仍是全部 {rows.length} 张）
             </Typography>
           ) : null}

@@ -4,7 +4,7 @@ import { Button, CssBaseline, Stack, ThemeProvider, Typography } from '@mui/mate
 import './index.css';
 import App from './App';
 import { LineMark } from './components/StateLine';
-import { MONO_FONT, theme } from './theme';
+import { MONO_FONT, theme, FONT_PX } from './theme';
 
 /**
  * 兜底错误边界：渲染期抛出的异常绝不能让整页白屏（曾经有一次内容超出二维码容量，整棵树被卸掉）。
@@ -32,8 +32,8 @@ class Boundary extends Component<{ children: ReactNode }, { message: string | nu
       <Stack sx={{ minHeight: '100vh', alignItems: 'center', justifyContent: 'center', gap: 1.25, px: 3, bgcolor: 'var(--ground)' }}>
         <Stack sx={{ maxWidth: 480, gap: 0.75 }}>
           <LineMark form="dashed" width={22} />
-          <Typography sx={{ fontSize: 12.5 }}>界面出错了：{this.state.message}</Typography>
-          <Typography sx={{ fontSize: 11, fontFamily: MONO_FONT, color: 'text.secondary', lineHeight: 1.5 }}>
+          <Typography sx={{ fontSize: FONT_PX.small }}>界面出错了：{this.state.message}</Typography>
+          <Typography sx={{ fontSize: FONT_PX.readout, fontFamily: MONO_FONT, color: 'text.secondary', lineHeight: 1.5 }}>
             参数与数据都存在本机，重新载入不会丢；要是还出错，请照着上面这句话记下来。
           </Typography>
         </Stack>

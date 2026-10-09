@@ -4,7 +4,7 @@
 import { Box, Checkbox, FormControlLabel, Slider, Stack, Typography } from '@mui/material';
 import type { ImageExportMode, ImageExportOptions, ImageFormat, StitchPlacement } from '../../lib/types';
 import type { AppMode } from '../../state/types';
-import { MONO_FONT } from '../../theme';
+import { MONO_FONT, FONT_PX } from '../../theme';
 import { DocketSection, FieldRow, NumberField, Segmented } from './fields';
 
 export function ExportSection({
@@ -55,7 +55,7 @@ export function ExportSection({
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => onPatch({ background: event.target.value })}
                 sx={{ width: 44, height: 26, p: 0, border: '1px solid var(--rule-strong)', bgcolor: 'transparent' }}
               />
-              <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary' }}>
+              <Typography sx={{ fontSize: FONT_PX.meta, fontFamily: MONO_FONT, color: 'text.secondary' }}>
                 {imageExport.background}
               </Typography>
             </Stack>

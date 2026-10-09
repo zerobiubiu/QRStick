@@ -13,7 +13,7 @@ import { PREVIEW_MAX_PX, previewScaleFor } from '../lib/preview';
 import { useElementSize } from '../lib/useElementSize';
 import { MM_PER_INCH, formatMm } from '../lib/units';
 import type { LabelConfig } from '../lib/types';
-import { INK, MONO_FONT } from '../theme';
+import { INK, MONO_FONT, FONT_PX } from '../theme';
 
 /** 刻度尺条的高度（像素） */
 const STRIP_PX = 22;
@@ -79,7 +79,7 @@ const SheetRuler = memo(function SheetRuler({ axis, lengthPx, pxPerMm }: { axis:
               opacity={tick.major ? 0.75 : 0.4}
             />
             {tick.label ? (
-              <text x={tick.position + 2.5} y={8} fontSize="9" fontFamily={MONO_FONT} fill="rgba(16,16,16,0.6)">
+              <text x={tick.position + 2.5} y={8} fontSize={FONT_PX.ruler} fontFamily={MONO_FONT} fill="rgba(16,16,16,0.6)">
                 {tick.label}
               </text>
             ) : null}
@@ -106,7 +106,7 @@ const SheetRuler = memo(function SheetRuler({ axis, lengthPx, pxPerMm }: { axis:
             <text
               x={1}
               y={tick.position - 3}
-              fontSize="9"
+              fontSize={FONT_PX.ruler}
               fontFamily={MONO_FONT}
               fill="rgba(16,16,16,0.6)"
               transform={`rotate(-90 1 ${tick.position - 3})`}
@@ -123,8 +123,8 @@ const SheetRuler = memo(function SheetRuler({ axis, lengthPx, pxPerMm }: { axis:
 const Readout = memo(function Readout({ label, value }: { label: string; value: string }) {
   return (
     <Box sx={{ px: 1.5, py: 0.75, borderLeft: '1px solid var(--rule)', minWidth: 0, flex: '0 0 auto' }}>
-      <Typography sx={{ fontSize: 10, color: 'text.secondary', lineHeight: 1.2 }}>{label}</Typography>
-      <Typography sx={{ fontSize: 11, fontFamily: MONO_FONT, lineHeight: 1.45, whiteSpace: 'nowrap' }}>{value}</Typography>
+      <Typography sx={{ fontSize: FONT_PX.micro, color: 'text.secondary', lineHeight: 1.2 }}>{label}</Typography>
+      <Typography sx={{ fontSize: FONT_PX.readout, fontFamily: MONO_FONT, lineHeight: 1.45, whiteSpace: 'nowrap' }}>{value}</Typography>
     </Box>
   );
 });
@@ -286,7 +286,7 @@ export function PressSheet({
           // 出不了图时说人话：台面上给一句原因与出路，而不是一张空白纸
           <Stack sx={{ maxWidth: 340, gap: 0.75 }}>
             <LineMark form="dashed" width={22} />
-            <Typography sx={{ fontSize: 11, fontFamily: MONO_FONT, color: 'text.secondary', lineHeight: 1.5 }}>
+            <Typography sx={{ fontSize: FONT_PX.readout, fontFamily: MONO_FONT, color: 'text.secondary', lineHeight: 1.5 }}>
               画布太大，浏览器分配不出：降低 DPI、缩小纸张或减小页边距
             </Typography>
           </Stack>
@@ -364,7 +364,7 @@ export function PressSheet({
             flex: '0 0 auto',
           }}
         >
-          <Typography sx={{ fontSize: 10, color: 'text.secondary' }}>缩放</Typography>
+          <Typography sx={{ fontSize: FONT_PX.micro, color: 'text.secondary' }}>缩放</Typography>
           <ToggleButtonGroup
             exclusive
             size="small"
@@ -375,12 +375,12 @@ export function PressSheet({
             }}
           >
             {ZOOM_STEPS.map((step) => (
-              <ToggleButton key={step} value={step} sx={{ px: 1, py: 0.25, fontSize: 10.5 }}>
+              <ToggleButton key={step} value={step} sx={{ px: 1, py: 0.25, fontSize: FONT_PX.meta }}>
                 {step === 1 ? '适应' : `×${step}`}
               </ToggleButton>
             ))}
           </ToggleButtonGroup>
-          <Typography sx={{ fontSize: 10, fontFamily: MONO_FONT, color: 'text.secondary', whiteSpace: 'nowrap' }}>
+          <Typography sx={{ fontSize: FONT_PX.micro, fontFamily: MONO_FONT, color: 'text.secondary', whiteSpace: 'nowrap' }}>
             {pxPerMm > 0 ? `${pxPerMm.toFixed(2)} px/mm` : '—'}
           </Typography>
         </Box>

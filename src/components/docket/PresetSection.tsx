@@ -10,7 +10,7 @@ import type { PresetScope } from '../../lib/types';
 import type { LabelPreset } from '../../state/types';
 import type { PresetFileEntry } from '../../lib/presetFile';
 import { usePresetTransfer } from '../../state/usePresetTransfer';
-import { MONO_FONT } from '../../theme';
+import { MONO_FONT, FONT_PX } from '../../theme';
 import type { ConfirmRequest } from '../ConfirmDialog';
 import { DocketSection, FieldRow, Segmented } from './fields';
 
@@ -82,7 +82,7 @@ export function PresetSection({
 
       {notice ? (
         <Box sx={{ px: 2, py: 0.75, borderBottom: '1px solid var(--rule)' }}>
-          <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary' }}>{notice}</Typography>
+          <Typography sx={{ fontSize: FONT_PX.meta, fontFamily: MONO_FONT, color: 'text.secondary' }}>{notice}</Typography>
         </Box>
       ) : null}
 
@@ -117,7 +117,7 @@ export function PresetSection({
         ))
       ) : (
         <Box sx={{ px: 2, py: 0.75 }}>
-          <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>
+          <Typography sx={{ fontSize: FONT_PX.meta, color: 'text.secondary' }}>
             还没有预设：同一种标签每天都要出的话，把现在这套存下来；也可以导入别人导出的预设文件。
           </Typography>
         </Box>

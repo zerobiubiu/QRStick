@@ -45,7 +45,7 @@ import { CSS } from '@dnd-kit/utilities';
 import type { BatchRow } from '../lib/types';
 import type { LabelStore } from '../state/labelStore';
 import { useElementSize } from '../lib/useElementSize';
-import { INK, MONO_FONT } from '../theme';
+import { INK, MONO_FONT, FONT_PX } from '../theme';
 
 /** 固定行高：窗口化渲染与拖拽测量都按它算 */
 const ROW_H = 44;
@@ -58,7 +58,7 @@ const MIN_WIDTH: Record<string, number> = { index: 52, title: 96, content: 120 }
 const RESIZABLE = ['index', 'title', 'content'];
 
 const HEAD_CELL: CSSProperties = {
-  fontSize: 11,
+  fontSize: FONT_PX.readout,
   fontWeight: 700,
   padding: '6px 8px',
   borderBottom: `1.5px solid ${INK}`,
@@ -96,7 +96,7 @@ function SortableRow({ row, checked, current, onToggle, onSelect, onEdit, onRequ
     transform: CSS.Translate.toString(transform),
     transition,
     opacity: isDragging ? 0.35 : 1,
-    background: current ? 'rgba(16,16,16,0.05)' : undefined,
+    background: current ? 'var(--tint-current)' : undefined,
     height: ROW_H,
     // 选中行：描边表达，不用彩色底
     outline: current ? `1px solid ${INK}` : undefined,
@@ -126,7 +126,7 @@ function SortableRow({ row, checked, current, onToggle, onSelect, onEdit, onRequ
           slotProps={{ input: { 'aria-label': `选择第 ${row.index} 行` } }}
         />
       </TableCell>
-      <TableCell sx={{ fontFamily: MONO_FONT, fontSize: 12, padding: '0 8px', borderBottom: '1px solid var(--rule)' }}>
+      <TableCell sx={{ fontFamily: MONO_FONT, fontSize: FONT_PX.small, padding: '0 8px', borderBottom: '1px solid var(--rule)' }}>
         {row.index}
       </TableCell>
       <TableCell sx={{ padding: 0, borderBottom: '1px solid var(--rule)' }}>
@@ -246,24 +246,24 @@ export function BatchTable({ store, onRequestDelete }: { store: LabelStore; onRe
           gap: 1,
           px: 1.5,
           py: 0.5,
-          bgcolor: 'rgba(16,16,16,0.035)',
+          bgcolor: 'var(--tint-band)',
           borderBottom: '1px solid var(--rule)',
           flexWrap: 'wrap',
         }}
       >
         <Stack direction="row" sx={{ alignItems: 'center', gap: 1, minWidth: 0, flexWrap: 'wrap' }}>
-          <Typography sx={{ fontSize: 11.5, fontWeight: 700 }}>数据</Typography>
+          <Typography sx={{ fontSize: FONT_PX.label, fontWeight: 700 }}>数据</Typography>
           <Button size="small" variant="text" onClick={store.addRow} sx={{ minHeight: 22, color: 'text.secondary' }}>
             ＋ 新增一行
           </Button>
-          <Typography sx={{ fontSize: 10.5, color: 'text.secondary', whiteSpace: 'nowrap' }}>
+          <Typography sx={{ fontSize: FONT_PX.meta, color: 'text.secondary', whiteSpace: 'nowrap' }}>
             拖动左侧手柄排序 · 表头右缘拖拽改列宽
           </Typography>
         </Stack>
         <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
           {selectedIds.length ? (
             <>
-              <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary', whiteSpace: 'nowrap' }}>
+              <Typography sx={{ fontSize: FONT_PX.meta, fontFamily: MONO_FONT, color: 'text.secondary', whiteSpace: 'nowrap' }}>
                 已选 {selectedIds.length} 行
               </Typography>
               <Button size="small" variant="outlined" onClick={() => onRequestDelete(selectedIds)}>
@@ -274,7 +274,7 @@ export function BatchTable({ store, onRequestDelete }: { store: LabelStore; onRe
               </Button>
             </>
           ) : null}
-          <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary', whiteSpace: 'nowrap' }}>
+          <Typography sx={{ fontSize: FONT_PX.meta, fontFamily: MONO_FONT, color: 'text.secondary', whiteSpace: 'nowrap' }}>
             第 {firstVisible}–{lastVisible} 条 / 共 {rows.length} 条
           </Typography>
         </Stack>
@@ -282,8 +282,8 @@ export function BatchTable({ store, onRequestDelete }: { store: LabelStore; onRe
 
       {rows.length === 0 ? (
         <Stack sx={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 0.5, py: 3 }}>
-          <Typography sx={{ fontSize: 12.5 }}>还没有数据</Typography>
-          <Typography sx={{ fontSize: 11, color: 'text.secondary', textAlign: 'center' }}>
+          <Typography sx={{ fontSize: FONT_PX.small }}>还没有数据</Typography>
+          <Typography sx={{ fontSize: FONT_PX.readout, color: 'text.secondary', textAlign: 'center' }}>
             在上方「批量数据源」里导入 CSV / Excel / 粘贴数据，或点「＋ 新增一行」手填
           </Typography>
         </Stack>
@@ -390,10 +390,10 @@ export function BatchTable({ store, onRequestDelete }: { store: LabelStore; onRe
                 <Table size="small" sx={{ tableLayout: 'fixed', width: 320, bgcolor: 'var(--paper)', boxShadow: '0 6px 18px rgba(16,16,16,0.18)' }}>
                   <TableBody>
                     <TableRow>
-                      <TableCell sx={{ fontFamily: MONO_FONT, fontSize: 12, borderBottom: '1px solid var(--rule)' }}>
+                      <TableCell sx={{ fontFamily: MONO_FONT, fontSize: FONT_PX.small, borderBottom: '1px solid var(--rule)' }}>
                         {activeRow.index}
                       </TableCell>
-                      <TableCell sx={{ fontSize: 12, borderBottom: '1px solid var(--rule)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      <TableCell sx={{ fontSize: FONT_PX.small, borderBottom: '1px solid var(--rule)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                         {activeRow.title || '（无标题）'}
                       </TableCell>
                     </TableRow>

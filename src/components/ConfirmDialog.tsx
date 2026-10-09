@@ -5,7 +5,7 @@
  * 超过 8 条折叠成「等共 N 项」，避免出现「你确定吗？」这种说不出对象的确认。
  */
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
-import { INK, MONO_FONT } from '../theme';
+import { INK, MONO_FONT, FONT_PX } from '../theme';
 
 export interface ConfirmRequest {
   /** 对话框标题，例如「删除 3 行数据」 */
@@ -30,17 +30,17 @@ export function ConfirmDialog({ request, onClose }: { request: ConfirmRequest | 
       slotProps={{ paper: { sx: { borderRadius: 0, border: `1px solid ${INK}` } } }}
       aria-labelledby="confirm-title"
     >
-      <DialogTitle id="confirm-title" sx={{ fontSize: 14, fontWeight: 700, pb: 1 }}>
+      <DialogTitle id="confirm-title" sx={{ fontSize: FONT_PX.body, fontWeight: 700, pb: 1 }}>
         {request?.title ?? ''}
       </DialogTitle>
       <DialogContent sx={{ pt: 0 }}>
-        <Typography sx={{ fontSize: 12, color: 'text.secondary', mb: 1 }}>{request?.detail ?? ''}</Typography>
+        <Typography sx={{ fontSize: FONT_PX.small, color: 'text.secondary', mb: 1 }}>{request?.detail ?? ''}</Typography>
         <Stack sx={{ borderTop: '1px solid var(--rule)' }}>
           {shown.map((item, index) => (
             <Typography
               key={`${index}-${item}`}
               sx={{
-                fontSize: 11.5,
+                fontSize: FONT_PX.label,
                 fontFamily: MONO_FONT,
                 py: 0.4,
                 borderBottom: '1px solid var(--rule)',
@@ -53,7 +53,7 @@ export function ConfirmDialog({ request, onClose }: { request: ConfirmRequest | 
             </Typography>
           ))}
           {request && request.items.length > shown.length ? (
-            <Typography sx={{ fontSize: 10.5, color: 'text.secondary', py: 0.4 }}>
+            <Typography sx={{ fontSize: FONT_PX.meta, color: 'text.secondary', py: 0.4 }}>
               等共 {request.items.length} 项
             </Typography>
           ) : null}

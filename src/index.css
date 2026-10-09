@@ -11,6 +11,11 @@
   --ink-54: rgba(16, 16, 16, 0.54);
   --rule: rgba(16, 16, 16, 0.16);
   --rule-strong: rgba(16, 16, 16, 0.34);
+  /* 墨洗四档（DESIGN.md 的 The Four-Wash Rule）：只有这四档，按职责选，不按喜好挑 */
+  --tint-footer: rgba(16, 16, 16, 0.02);
+  --tint-band: rgba(16, 16, 16, 0.035);
+  --tint-hover: rgba(16, 16, 16, 0.04);
+  --tint-current: rgba(16, 16, 16, 0.05);
   --paper: #ffffff;
   --ground: #f4f4f2;
   --cyan: #0093d0;

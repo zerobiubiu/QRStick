@@ -228,7 +228,7 @@ components:
 ### Named Rules
 **The Three-Ink Rule（三原色只做标记）.** 青 / 品红 / 黄永远不做文字色、不做背景色、不做边框色。它们只出现在：套准十字的四条色版臂（各 1.2px 宽、2.5px 长的短线）、焦点环、选中底色、色标条。检验方法：把界面截成灰度图，若某处原色消失后信息就丢了，说明它被当成了装饰以外的用途——那是错的用法。
 
-**The Four-Wash Rule（墨洗只有四档）.** 背景层次只能用 `0.02 / 0.035 / 0.04 / 0.05` 这四个墨洗，选哪一档由元素职责决定（页脚 / 分段带 / 悬停 / 当前行），不按喜好挑选。需要更深的底就用实底墨黑（那意味着它是主按钮或选中态），需要更浅就退回纸白。
+**The Four-Wash Rule（墨洗只有四档）.** 背景层次只能用 `0.02 / 0.035 / 0.04 / 0.05` 这四个墨洗，选哪一档由元素职责决定（页脚 / 分段带 / 悬停 / 当前行），不按喜好挑选。**代码侧是 `src/index.css` 的 `--tint-footer / --tint-band / --tint-hover / --tint-current`**（`var()` 在 MUI 的 `sx` 与主题覆盖里都能用），组件与主题都不再写这四个裸值。需要更深的底就用实底墨黑（那意味着它是主按钮或选中态），需要更浅就退回纸白。
 
 **The No-Grey Hex Rule（灰不出现）.** 所有中间调都是 `#101010` 的 alpha，不引入灰色 hex 值。屏幕上唯一非墨非纸的颜色就是三原色标记，以及只印在纸面上的过程色。
 
@@ -247,12 +247,12 @@ components:
 - **Wordmark** (700, 15px, letter-spacing -0.01em)：站名 `QRStick` 一处（`src/App.tsx`），相邻 11.5px 次级墨副题。
 - **Section Title** (700, 11.5px)：联单分段标题（规格 / 标题 / 二维码 / 数据 / 体检）与数据表标题（`src/components/Docket.tsx`、`src/components/BatchTable.tsx`）。
 - **Body** (400, 13px, line-height 1.45, tabular-nums)：全局正文与输入框文字（`src/theme.ts`、`src/index.css`）。
-- **Body Small** (400, 12px)：数据表（`src/components/BatchTable.tsx`）、分段按钮与菜单标签（`src/theme.ts`、`src/theme.ts`）。
+- **Body Small** (400, 12px)：数据表（`src/components/BatchTable.tsx`）、分段按钮与菜单标签（`src/theme.ts`）。
 - **Field Label** (400, 11.5px, 次级墨)：联单字段名（`src/components/Docket.tsx`）。
 - **Readout** (400, 11px, 等宽)：读数条数值、表头读数、状态行文字（`src/components/PressSheet.tsx`、`src/components/BatchTable.tsx`、`src/components/StateLine.tsx`）。
-- **Meta** (400, 10.5px, line-height 1.35)：字段提示（次级墨）、单位后缀、分段标题右侧读数、页脚说明（`src/components/Docket.tsx`、`src/components/Docket.tsx`、`src/components/Docket.tsx`、`src/components/Docket.tsx`）。
+- **Meta** (400, 10.5px, line-height 1.35)：字段提示（次级墨）、单位后缀、分段标题右侧读数、页脚说明（`src/components/Docket.tsx`）。
 - **Micro** (400, 10px, line-height 1.2)：读数条的字段名（`src/components/PressSheet.tsx`）。
-- **Ruler** (400, 9px, 等宽, 读数墨 0.6)：毫米刻度尺的数字（`src/components/PressSheet.tsx`、`src/components/PressSheet.tsx`）。
+- **Ruler** (400, 9px, 等宽, 读数墨 0.6)：毫米刻度尺的数字（`src/components/PressSheet.tsx`）。
 - **Sheet Title** (700 或 400, 4–400pt，默认 32pt)：印张上的标题，字号是磅、落地像素 = `pt / 72 × DPI`，行高倍数 0.8–2.5（默认 1.25）（`src/lib/units.ts`、`src/lib/render.ts`、`src/state/labelStore.ts`）。
 
 ### Named Rules
@@ -260,30 +260,30 @@ components:
 
 **The Installed-Fonts Rule（只用装好的字体）.** 不引任何网络字体（`src/lib/fonts.ts` 的注释就是这条纪律）。标签字体必须是操作者机器上装好的字体，因为 PDF / Word 要在离线环境里渲染出正确的字——选一个下不到的字体，导出的标签就会换字。
 
-**The One Ramp Rule（字号只走八级）.** 界面字号只取 15 / 13 / 12 / 11.5 / 11 / 10.5 / 10 / 9 这八级，从不即兴加值；标签标题的磅值是唯一的例外，因为它是印件参数不是界面字号。
+**The One Ramp Rule（字号只走八级）.** 界面字号只取 15 / 13 / 12 / 11.5 / 11 / 10.5 / 10 / 9 这八级，从不即兴加值；标签标题的磅值是唯一的例外，因为它是印件参数不是界面字号。**代码侧由 `src/theme.ts` 的 `FONT_PX` 提供这八级**，组件写 `fontSize: FONT_PX.meta` 而不是裸数字——裸数字会让这条律变成没人执行的约定（历史上真混进过 12.5 与 14，靠人眼与探测器都没抓到）。
 
-**The No-Case Rule（不改字形）.** `textTransform: none`、`letterSpacing: 0`（`src/theme.ts`、`src/theme.ts`）——中文不需要大写变形，字距交给字体本身。唯一例外是站名的 `-0.01em`。
+**The No-Case Rule（不改字形）.** `textTransform: none`、`letterSpacing: 0`（`src/theme.ts`）——中文不需要大写变形，字距交给字体本身。唯一例外是站名的 `-0.01em`。
 
 ## Layout
 
-**外壳**：`height: 100dvh` 的纵向 flex，顶栏 `flex: 0 0 auto`（`src/App.tsx`），主体是 CSS Grid——`md`（MUI 默认断点 900px）以上 `392px minmax(0,1fr)`（左侧工单固定宽、右侧印张吃掉剩余），`md` 以下单列 `minmax(0,1fr)`（`src/App.tsx`）。窄屏时顺序反转：印张 `order: 1` 在上，工单 `order: 2` 在下（`src/App.tsx`、`src/App.tsx`）。
+**外壳**：`height: 100dvh` 的纵向 flex，顶栏 `flex: 0 0 auto`（`src/App.tsx`），主体是 CSS Grid——`md`（MUI 默认断点 900px）以上 `392px minmax(0,1fr)`（左侧工单固定宽、右侧印张吃掉剩余），`md` 以下单列 `minmax(0,1fr)`（`src/App.tsx`）。窄屏时顺序反转：印张 `order: 1` 在上，工单 `order: 2` 在下（`src/App.tsx`）。
 
-**间距语汇**：MUI 的 8px 单位，`sx` 只取 `0.25 / 0.5 / 0.6 / 0.75 / 1 / 1.25 / 1.5 / 1.75 / 2` 这些倍数（= 2 / 4 / 4.8 / 6 / 8 / 10 / 12 / 14 / 16px）。最常出现的三档：字段行内边距 `8px 16px`、分段标题带 `6px 16px`、工单页脚 `10px 16px`（`src/components/Docket.tsx`、`src/components/Docket.tsx`、`src/components/Docket.tsx`）。字段行是 `96px minmax(0,1fr)` 的两列栅格，列距 12px、行距 4px（`src/components/Docket.tsx`）——字段名的宽度固定，值永远从同一列起排，这是联单的对齐。
+**间距语汇**：MUI 的 8px 单位，`sx` 只取 `0.25 / 0.5 / 0.6 / 0.75 / 1 / 1.25 / 1.5 / 1.75 / 2` 这些倍数（= 2 / 4 / 4.8 / 6 / 8 / 10 / 12 / 14 / 16px）。最常出现的三档：字段行内边距 `8px 16px`、分段标题带 `6px 16px`、工单页脚 `10px 16px`（`src/components/Docket.tsx`）。字段行是 `96px minmax(0,1fr)` 的两列栅格，列距 12px、行距 4px（`src/components/Docket.tsx`）——字段名的宽度固定，值永远从同一列起排，这是联单的对齐。
 
-**看版台与刻度尺**：台面内边距与刻度带宽度同为 `STRIP_PX = 22px`（`src/components/PressSheet.tsx`、`src/components/PressSheet.tsx`、`src/components/PressSheet.tsx`），印张在台面居中（`placeContent: center`，`src/components/PressSheet.tsx`），四角套准十字以 `inset: 6px` 钉住（`src/components/PressSheet.tsx`）。每毫米像素数由台面实测尺寸反算，上限 4（`src/components/PressSheet.tsx`）；刻度步长随密度自动降档为 1 / 2 / 5 / 10 mm，标注每 ≥34px 一个（`src/components/PressSheet.tsx`）；`pxPerMm ≤ 0.4` 时整块印张不画（`src/components/PressSheet.tsx`），免得画出一张糊纸。预览画布按台面上的**实际显示像素**渲染（CSS px × DPR），再受 `PREVIEW_MAX_PX = 1800` 封顶；导出永远满 DPI（`src/components/PressSheet.tsx`、`src/lib/preview.ts`）。二维码模块尺寸只在导出网格上决定，这里只是把同一张码位图等比缩放——画得比显示大，浏览器每帧都要二次缩放整张位图，参数连击时每步会多卡 50ms 量级。
+**看版台与刻度尺**：台面内边距与刻度带宽度同为 `STRIP_PX = 22px`（`src/components/PressSheet.tsx`），印张在台面居中（`placeContent: center`，`src/components/PressSheet.tsx`），四角套准十字以 `inset: 6px` 钉住（`src/components/PressSheet.tsx`）。每毫米像素数由台面实测尺寸反算，上限 4（`src/components/PressSheet.tsx`）；刻度步长随密度自动降档为 1 / 2 / 5 / 10 mm，标注每 ≥34px 一个（`src/components/PressSheet.tsx`）；`pxPerMm ≤ 0.4` 时整块印张不画（`src/components/PressSheet.tsx`），免得画出一张糊纸。预览画布按台面上的**实际显示像素**渲染（CSS px × DPR），再受 `PREVIEW_MAX_PX = 1800` 封顶；导出永远满 DPI（`src/components/PressSheet.tsx`、`src/lib/preview.ts`）。二维码模块尺寸只在导出网格上决定，这里只是把同一张码位图等比缩放——画得比显示大，浏览器每帧都要二次缩放整张位图，参数连击时每步会多卡 50ms 量级。
 
 **读数条**：印张下沿一行七格（印张 / 分辨率 / 二维码 / 标题 / 版心 / 内容 / 纠错），每格 `6px 12px` 并与左邻共用一条发丝线（`src/components/PressSheet.tsx`，格子定义在 `:119-132`）；窄屏不换行改为横向滚动，`md` 以上才允许换行。纠错一格报**实际**等级（内容过长会回退，回退时写成「L（请求 H）」），与印在纸上的色标条同源。
 
-**窄屏高度**：批量数据表 340px、单张（非批量）时印张 460px、批量窄屏下的印张 360px（`src/App.tsx`、`src/App.tsx`、`src/App.tsx`）。这些是显式像素而不是 `auto`——窄屏这张栅格列本身没有可分的剩余高度，必须自带高度；批量数据表还额外带 `flex: '0 0 auto'`，免得被同级内容按 flex 规则压缩（`src/App.tsx`、`src/App.tsx` 的注释与取值）。
+**窄屏高度**：批量数据表 340px、单张（非批量）时印张 460px、批量窄屏下的印张 360px（`src/App.tsx`）。这些是显式像素而不是 `auto`——窄屏这张栅格列本身没有可分的剩余高度，必须自带高度；批量数据表还额外带 `flex: '0 0 auto'`，免得被同级内容按 flex 规则压缩（`src/App.tsx` 的注释与取值）。
 
-**批量布局**：`lg`（MUI 默认断点 1200px）以上数据表与印张并排 `minmax(0,1.3fr) minmax(0,1fr)`，报表更宽；`lg` 以下印张掉到数据表下方（`src/App.tsx`、`src/App.tsx`）。
+**批量布局**：`lg`（MUI 默认断点 1200px）以上数据表与印张并排 `minmax(0,1.3fr) minmax(0,1fr)`，报表更宽；`lg` 以下印张掉到数据表下方（`src/App.tsx`）。
 
 **默认印张**：A4 纵向、300 DPI、页边距 12mm、二维码 60mm、纠错 M、标题 32pt 加粗居中在码上方、**四角裁切标记默认打开**（色标条与参考虚线默认关）（`src/state/labelStore.ts`）。
 
 ### Named Rules
 **The Priority-Collapse Rule（优先级塌缩）.** 空间不够时按顺序牺牲：低优先级参数收进「更多规格」（窄屏默认收起，`src/components/Docket.tsx`）→ 读数条改为横滑（`src/components/PressSheet.tsx`）→ 参数区下沉。印张与导出按钮在任何屏宽下都不被挤掉，因为它们是这个工具的全部产出。
 
-**The Millimetre Rule（毫米是版面真相）.** 一切版面尺寸以毫米书写、按 DPI 换算成整数像素落地，再回读成毫米显示（`src/lib/units.ts`、`src/lib/units.ts`、`src/lib/render.ts`）。界面里出现的每个尺寸都带单位；屏幕缩放（`scale`）只影响预览，不影响导出。
+**The Millimetre Rule（毫米是版面真相）.** 一切版面尺寸以毫米书写、按 DPI 换算成整数像素落地，再回读成毫米显示（`src/lib/units.ts`、`src/lib/render.ts`）。界面里出现的每个尺寸都带单位；屏幕缩放（`scale`）只影响预览，不影响导出。
 
 **The Isolated Destructive Rule（破坏性动作隔离）.** 「恢复默认」不放在参数中间，它单独占工单底部一行，带 1.5px 墨线分界与一句说明（`src/components/Docket.tsx`）。
 
@@ -359,7 +359,7 @@ components:
 
 ### Slider
 - **Style:** 墨黑轨道与拇指，轨道底为强线 `rgba(16,16,16,0.34)`（不透明），拇指是 10 × 16 直角矩形，上下内边距 10px（`src/theme.ts`）。
-- **Role:** 永远与一个数字格成对出现，滑杆给手感、数字给精度；滑杆的显示区间比数字格的最大值窄（如字号数字 4–400pt，滑杆只到 160pt）（`src/components/Docket.tsx`、`src/components/Docket.tsx`）。
+- **Role:** 永远与一个数字格成对出现，滑杆给手感、数字给精度；滑杆的显示区间比数字格的最大值窄（如字号数字 4–400pt，滑杆只到 160pt）（`src/components/Docket.tsx`）。
 
 ### Checkbox、Menu、Tooltip
 - **Checkbox:** 小号、直角、内边距 5px；未选中用强线墨色（`rgba(16,16,16,0.34)`），选中用墨黑（`src/theme.ts`）；标签 12px、左边距 -6px 抵消 MUI 内边距（`src/theme.ts`）。

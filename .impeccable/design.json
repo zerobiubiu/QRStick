@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-09T18:18:36.405Z",
+  "generatedAt": "2026-10-09T18:35:50.790Z",
   "title": "Design System: QRStick 码贴生成器",
   "extensions": {
     "colorMeta": {
@@ -545,7 +545,7 @@
       },
       {
         "name": "The Four-Wash Rule（墨洗只有四档）",
-        "body": "背景层次只能用 `0.02 / 0.035 / 0.04 / 0.05` 这四个墨洗，选哪一档由元素职责决定（页脚 / 分段带 / 悬停 / 当前行），不按喜好挑选。需要更深的底就用实底墨黑（那意味着它是主按钮或选中态），需要更浅就退回纸白。",
+        "body": "背景层次只能用 `0.02 / 0.035 / 0.04 / 0.05` 这四个墨洗，选哪一档由元素职责决定（页脚 / 分段带 / 悬停 / 当前行），不按喜好挑选。**代码侧是 `src/index.css` 的 `--tint-footer / --tint-band / --tint-hover / --tint-current`**（`var()` 在 MUI 的 `sx` 与主题覆盖里都能用），组件与主题都不再写这四个裸值。需要更深的底就用实底墨黑（那意味着它是主按钮或选中态），需要更浅就退回纸白。",
         "section": "colors"
       },
       {
@@ -570,12 +570,12 @@
       },
       {
         "name": "The One Ramp Rule（字号只走八级）",
-        "body": "界面字号只取 15 / 13 / 12 / 11.5 / 11 / 10.5 / 10 / 9 这八级，从不即兴加值；标签标题的磅值是唯一的例外，因为它是印件参数不是界面字号。",
+        "body": "界面字号只取 15 / 13 / 12 / 11.5 / 11 / 10.5 / 10 / 9 这八级，从不即兴加值；标签标题的磅值是唯一的例外，因为它是印件参数不是界面字号。**代码侧由 `src/theme.ts` 的 `FONT_PX` 提供这八级**，组件写 `fontSize: FONT_PX.meta` 而不是裸数字——裸数字会让这条律变成没人执行的约定（历史上真混进过 12.5 与 14，靠人眼与探测器都没抓到）。",
         "section": "typography"
       },
       {
         "name": "The No-Case Rule（不改字形）",
-        "body": "`textTransform: none`、`letterSpacing: 0`（`src/theme.ts`、`src/theme.ts`）——中文不需要大写变形，字距交给字体本身。唯一例外是站名的 `-0.01em`。",
+        "body": "`textTransform: none`、`letterSpacing: 0`（`src/theme.ts`）——中文不需要大写变形，字距交给字体本身。唯一例外是站名的 `-0.01em`。",
         "section": "typography"
       },
       {
@@ -585,7 +585,7 @@
       },
       {
         "name": "The Millimetre Rule（毫米是版面真相）",
-        "body": "一切版面尺寸以毫米书写、按 DPI 换算成整数像素落地，再回读成毫米显示（`src/lib/units.ts`、`src/lib/units.ts`、`src/lib/render.ts`）。界面里出现的每个尺寸都带单位；屏幕缩放（`scale`）只影响预览，不影响导出。",
+        "body": "一切版面尺寸以毫米书写、按 DPI 换算成整数像素落地，再回读成毫米显示（`src/lib/units.ts`、`src/lib/render.ts`）。界面里出现的每个尺寸都带单位；屏幕缩放（`scale`）只影响预览，不影响导出。",
         "section": "layout"
       },
       {

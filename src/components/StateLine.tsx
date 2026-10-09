@@ -6,7 +6,7 @@
  */
 import { Box, Tooltip, Typography } from '@mui/material';
 import type { ExportRecord } from '../state/types';
-import { INK, MONO_FONT } from '../theme';
+import { INK, MONO_FONT, FONT_PX } from '../theme';
 
 interface StateLineProps {
   record: ExportRecord;
@@ -86,7 +86,7 @@ export function StateLine({ record, flagged, summary, reason }: StateLineProps) 
         <LineMark form={form} />
         <Typography
           sx={{
-            fontSize: 11,
+            fontSize: FONT_PX.readout,
             color: record.phase === 'idle' && !flagged ? 'text.secondary' : 'text.primary',
             fontFamily: MONO_FONT,
           }}
@@ -94,10 +94,10 @@ export function StateLine({ record, flagged, summary, reason }: StateLineProps) 
           {text}
         </Typography>
         {record.note ? (
-          <Typography sx={{ fontSize: 11, color: 'text.primary', whiteSpace: 'nowrap' }}>· {record.note}</Typography>
+          <Typography sx={{ fontSize: FONT_PX.readout, color: 'text.primary', whiteSpace: 'nowrap' }}>· {record.note}</Typography>
         ) : null}
         {record.error ? (
-          <Typography sx={{ fontSize: 11, color: 'text.primary' }}>
+          <Typography sx={{ fontSize: FONT_PX.readout, color: 'text.primary' }}>
             {record.phase === 'done' ? `· ${record.error}` : `· 导出失败：${record.error}`}
           </Typography>
         ) : null}
@@ -106,7 +106,7 @@ export function StateLine({ record, flagged, summary, reason }: StateLineProps) 
           <Typography
             sx={{
               ml: 'auto',
-              fontSize: 10.5,
+              fontSize: FONT_PX.meta,
               color: 'text.secondary',
               fontFamily: MONO_FONT,
               whiteSpace: 'nowrap',

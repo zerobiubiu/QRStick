@@ -16,7 +16,7 @@ import { PaperSection } from './docket/PaperSection';
 import { PresetSection } from './docket/PresetSection';
 import { QrSection } from './docket/QrSection';
 import { TitleSection } from './docket/TitleSection';
-import { INK, MONO_FONT, PAPER } from '../theme';
+import { INK, MONO_FONT, PAPER, FONT_PX } from '../theme';
 
 export function Docket({
   store,
@@ -71,11 +71,11 @@ export function Docket({
       </Box>
 
       {/* 体检常驻底栏：它是提醒的唯一解释处，不能停在滚动区最底部 */}
-      <Box sx={{ mt: 'auto', borderTop: `1.5px solid ${INK}`, bgcolor: 'rgba(16,16,16,0.02)' }}>
+      <Box sx={{ mt: 'auto', borderTop: `1.5px solid ${INK}`, bgcolor: 'var(--tint-footer)' }}>
         {/* 体检只列状态行没在说的那些：首条已经在状态行上，同屏不重复 */}
         {issues.length > 1 ? (
           <Box sx={{ borderBottom: '1px solid var(--rule)', maxHeight: 140, overflowY: 'auto', px: 2, py: 0.75 }}>
-            <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary', mb: 0.25 }}>
+            <Typography sx={{ fontSize: FONT_PX.meta, fontFamily: MONO_FONT, color: 'text.secondary', mb: 0.25 }}>
               体检 · {issues.filter((item) => item.level === 'error').length} 错 ·{' '}
               {issues.filter((item) => item.level === 'warn').length} 警（首条见右下状态行）
             </Typography>
@@ -84,13 +84,13 @@ export function Docket({
                 <Box sx={{ pt: 0.75 }}>
                   <LineMark form={issue.level === 'error' ? 'double' : 'dashed'} width={22} />
                 </Box>
-                <Typography sx={{ fontSize: 11.5, lineHeight: 1.45, color: 'text.primary' }}>{issue.message}</Typography>
+                <Typography sx={{ fontSize: FONT_PX.label, lineHeight: 1.45, color: 'text.primary' }}>{issue.message}</Typography>
               </Stack>
             ))}
           </Box>
         ) : null}
         <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 2, px: 2, py: 1.25 }}>
-          <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>
+          <Typography sx={{ fontSize: FONT_PX.meta, color: 'text.secondary' }}>
             参数改动即时重排印张，没有「应用」这一步。
           </Typography>
           <Tooltip title="恢复到出厂的默认参数；批量数据不会被删除">

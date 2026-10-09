@@ -8,7 +8,7 @@
 import { createContext, useContext, useId, useState, type ReactNode } from 'react';
 import { Box, MenuItem, Select, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { clamp } from '../../lib/units';
-import { MONO_FONT } from '../../theme';
+import { MONO_FONT, FONT_PX } from '../../theme';
 
 /** 字段名到控件的无障碍连线：FieldRow 生成 id，控件用 aria-labelledby 指回来 */
 const FieldLabelId = createContext<string | undefined>(undefined);
@@ -41,7 +41,7 @@ export function FieldRow({
       <Typography
         id={labelId}
         component="span"
-        sx={{ fontSize: 11.5, color: 'text.secondary', pt: align === 'start' ? 0.75 : 0 }}
+        sx={{ fontSize: FONT_PX.label, color: 'text.secondary', pt: align === 'start' ? 0.75 : 0 }}
       >
         {label}
       </Typography>
@@ -49,7 +49,7 @@ export function FieldRow({
         <FieldLabelId.Provider value={labelId}>{children}</FieldLabelId.Provider>
       </Box>
       {hint ? (
-        <Typography component="span" sx={{ gridColumn: '2', fontSize: 10.5, color: 'text.secondary', lineHeight: 1.35 }}>
+        <Typography component="span" sx={{ gridColumn: '2', fontSize: FONT_PX.meta, color: 'text.secondary', lineHeight: 1.35 }}>
           {hint}
         </Typography>
       ) : null}
@@ -133,14 +133,14 @@ export function DocketSection({ title, meta, children }: { title: string; meta?:
           gap: 1,
           px: 2,
           py: 0.75,
-          bgcolor: 'rgba(16,16,16,0.035)',
+          bgcolor: 'var(--tint-band)',
           borderBottom: '1px solid var(--rule)',
           borderTop: '1px solid var(--rule)',
         }}
       >
-        <Typography sx={{ fontSize: 11.5, fontWeight: 700 }}>{title}</Typography>
+        <Typography sx={{ fontSize: FONT_PX.label, fontWeight: 700 }}>{title}</Typography>
         {meta ? (
-          <Typography sx={{ fontSize: 10.5, color: 'text.secondary', fontFamily: MONO_FONT }}>{meta}</Typography>
+          <Typography sx={{ fontSize: FONT_PX.meta, color: 'text.secondary', fontFamily: MONO_FONT }}>{meta}</Typography>
         ) : null}
       </Stack>
       {children}
@@ -203,7 +203,7 @@ export function NumberField({
           input: {
             style: { fontFamily: MONO_FONT, paddingBlock: 6 },
             endAdornment: suffix ? (
-              <Typography component="span" sx={{ fontSize: 10.5, color: 'text.secondary', ml: 0.5, whiteSpace: 'nowrap' }}>
+              <Typography component="span" sx={{ fontSize: FONT_PX.meta, color: 'text.secondary', ml: 0.5, whiteSpace: 'nowrap' }}>
                 {suffix}
               </Typography>
             ) : undefined,
@@ -212,7 +212,7 @@ export function NumberField({
         sx={{ width }}
       />
       {notice ? (
-        <Typography sx={{ fontSize: 10, fontFamily: MONO_FONT, color: 'text.secondary', whiteSpace: 'nowrap' }}>
+        <Typography sx={{ fontSize: FONT_PX.micro, fontFamily: MONO_FONT, color: 'text.secondary', whiteSpace: 'nowrap' }}>
           {notice}
         </Typography>
       ) : null}

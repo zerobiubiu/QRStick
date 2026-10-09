@@ -24,7 +24,7 @@ import { useSplitDrag } from './lib/useSplitDrag';
 import { useLabelStore } from './state/labelStore';
 import { useExportActions, type TopAction } from './state/useExportActions';
 import { type AppMode } from './state/types';
-import { theme, MONO_FONT } from './theme';
+import { theme, MONO_FONT, FONT_PX } from './theme';
 import type { LabelConfig } from './lib/types';
 
 const ACTIONS: TopAction[] = ['image', 'pdf', 'word'];
@@ -160,7 +160,7 @@ export default function App() {
       }}
       sx={{
         bgcolor: 'var(--paper)',
-        '& .MuiToggleButton-root': { minHeight: 34, px: 2.5, fontSize: 13, fontWeight: 700, letterSpacing: '0.02em' },
+        '& .MuiToggleButton-root': { minHeight: 34, px: 2.5, fontSize: FONT_PX.body, fontWeight: 700, letterSpacing: '0.02em' },
       }}
     >
       <ToggleButton value="single">单张</ToggleButton>
@@ -187,8 +187,8 @@ export default function App() {
           }}
         >
           <Stack direction="row" sx={{ alignItems: 'baseline', gap: 1, minWidth: 0, justifyContent: { xs: 'center', sm: 'flex-start' } }}>
-            <Typography sx={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em' }}>QRStick</Typography>
-            <Typography sx={{ fontSize: 11.5, color: 'text.secondary', display: { xs: 'none', md: 'block' } }}>
+            <Typography sx={{ fontSize: FONT_PX.wordmark, fontWeight: 700, letterSpacing: '-0.01em' }}>QRStick</Typography>
+            <Typography sx={{ fontSize: FONT_PX.label, color: 'text.secondary', display: { xs: 'none', md: 'block' } }}>
               码贴生成器 · 标题 + 内容 → 二维码标签
             </Typography>
           </Stack>
@@ -219,7 +219,7 @@ export default function App() {
       </Paper>
 
       <Box sx={{ flex: '0 0 auto', px: 2, py: 0.5, bgcolor: 'var(--paper)', borderBottom: '1px solid var(--rule)' }}>
-        <Typography sx={{ fontSize: 10.5, color: 'text.secondary', fontFamily: MONO_FONT, lineHeight: 1.5 }}>
+        <Typography sx={{ fontSize: FONT_PX.meta, color: 'text.secondary', fontFamily: MONO_FONT, lineHeight: 1.5 }}>
           {exportBrief}
         </Typography>
       </Box>
@@ -262,7 +262,7 @@ export default function App() {
               }}
             >
               <LineMark form="dashed" width={22} />
-              <Typography sx={{ fontSize: 10.5, color: 'text.secondary', minWidth: 0, lineHeight: 1.45 }}>
+              <Typography sx={{ fontSize: FONT_PX.meta, color: 'text.secondary', minWidth: 0, lineHeight: 1.45 }}>
                 示例标签：把工单里的标题与内容换成你的，点「付印 PDF」出来的就是能直接打印的 A4 标签
               </Typography>
               <Button size="small" variant="text" onClick={dismissOnboard} sx={{ ml: 'auto', flex: '0 0 auto' }}>

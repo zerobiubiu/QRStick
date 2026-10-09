@@ -10,7 +10,7 @@ import { DATA_FORMAT_LABEL, buildSampleCsv, parseDataFile, parsePastedText, type
 import { saveBlob } from '../lib/download';
 import type { ConfirmRequest } from './ConfirmDialog';
 import type { LabelStore } from '../state/labelStore';
-import { MONO_FONT } from '../theme';
+import { MONO_FONT, FONT_PX } from '../theme';
 
 export function BatchSource({ store, confirm }: { store: LabelStore; confirm: (request: ConfirmRequest) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -100,13 +100,13 @@ export function BatchSource({ store, confirm }: { store: LabelStore; confirm: (r
           justifyContent: 'space-between',
           px: 2,
           py: 0.75,
-          bgcolor: 'rgba(16,16,16,0.035)',
+          bgcolor: 'var(--tint-band)',
           borderTop: '1px solid var(--rule)',
           borderBottom: '1px solid var(--rule)',
         }}
       >
-        <Typography sx={{ fontSize: 11.5, fontWeight: 700 }}>批量数据源</Typography>
-        <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary' }}>
+        <Typography sx={{ fontSize: FONT_PX.label, fontWeight: 700 }}>批量数据源</Typography>
+        <Typography sx={{ fontSize: FONT_PX.meta, fontFamily: MONO_FONT, color: 'text.secondary' }}>
           {rows.length ? `${rows.length} 条` : '未导入'}
         </Typography>
       </Stack>
@@ -187,13 +187,13 @@ export function BatchSource({ store, confirm }: { store: LabelStore; confirm: (r
           </Stack>
         ) : null}
 
-        <Typography sx={{ fontSize: 10.5, color: 'text.secondary', lineHeight: 1.5 }}>
+        <Typography sx={{ fontSize: FONT_PX.meta, color: 'text.secondary', lineHeight: 1.5 }}>
           CSV / TSV / TXT / JSON / XLSX 都能读；分隔符自动嗅探，Excel 另存的 GBK 自动识别。老式 .xls 请先另存为 xlsx
           或 csv。数据只存在这台机器上，改动自动保存；表格里可直接改标题与内容、增删行。
         </Typography>
 
         {batch ? (
-          <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary', lineHeight: 1.5 }}>
+          <Typography sx={{ fontSize: FONT_PX.meta, fontFamily: MONO_FONT, color: 'text.secondary', lineHeight: 1.5 }}>
             {batch.fileName} · {DATA_FORMAT_LABEL[batch.format]} · {batch.encoding.toUpperCase()} ·{' '}
             {batch.hasHeader ? '有表头' : '无表头'}
             {batch.warnings.length ? ` · ${batch.warnings.length} 条提醒` : ''}
@@ -201,7 +201,7 @@ export function BatchSource({ store, confirm }: { store: LabelStore; confirm: (r
         ) : null}
 
         {rowsStorageError ? (
-          <Typography sx={{ fontSize: 10.5, color: 'text.primary', lineHeight: 1.5 }}>
+          <Typography sx={{ fontSize: FONT_PX.meta, color: 'text.primary', lineHeight: 1.5 }}>
             · 本机存储写入失败：本次改动不会保留（{rowsStorageError}）。请清理浏览器存储，或换一个非隐私窗口再来。
           </Typography>
         ) : null}
@@ -209,7 +209,7 @@ export function BatchSource({ store, confirm }: { store: LabelStore; confirm: (r
         {batch?.warnings.length ? (
           <Box sx={{ borderLeft: '1px dashed var(--rule-strong)', pl: 1 }}>
             {(warningsOpen ? batch.warnings : batch.warnings.slice(0, 4)).map((warning, index) => (
-              <Typography key={index} sx={{ fontSize: 10.5, color: 'text.secondary', lineHeight: 1.5 }}>
+              <Typography key={index} sx={{ fontSize: FONT_PX.meta, color: 'text.secondary', lineHeight: 1.5 }}>
                 {warning}
               </Typography>
             ))}
@@ -225,7 +225,7 @@ export function BatchSource({ store, confirm }: { store: LabelStore; confirm: (r
                   }
                 }}
                 sx={{
-                  fontSize: 10.5,
+                  fontSize: FONT_PX.meta,
                   color: 'text.secondary',
                   lineHeight: 1.5,
                   cursor: 'pointer',
@@ -239,7 +239,7 @@ export function BatchSource({ store, confirm }: { store: LabelStore; confirm: (r
           </Box>
         ) : null}
 
-        {error ? <Typography sx={{ fontSize: 10.5, color: 'text.primary' }}>· {error}</Typography> : null}
+        {error ? <Typography sx={{ fontSize: FONT_PX.meta, color: 'text.primary' }}>· {error}</Typography> : null}
       </Stack>
     </Box>
   );

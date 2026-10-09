@@ -24,6 +24,22 @@ export const UI_FONT =
   "'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', sans-serif";
 export const MONO_FONT = "'Cascadia Mono', Consolas, 'DejaVu Sans Mono', Menlo, monospace";
 
+/**
+ * 界面字号阶梯：只走这八级（DESIGN.md 的 The One Ramp Rule）。
+ * 组件一律引这里的名字而不是写裸数字——裸数字会让「八级」变成一句没人执行的约定，
+ * 也让越阶的值（历史上出现过 12.5 与 14）混进来。
+ */
+export const FONT_PX = {
+  wordmark: 15,
+  body: 13,
+  small: 12,
+  label: 11.5,
+  readout: 11,
+  meta: 10.5,
+  micro: 10,
+  ruler: 9,
+} as const;
+
 /** 发丝线：1 物理像素的界内线 */
 export const hairline = `1px solid ${RULE}`;
 
@@ -68,7 +84,7 @@ export const theme = createTheme({
           paddingInline: 14,
           border: `1px solid ${RULE_STRONG}`,
           color: INK,
-          '&:hover': { borderColor: INK, background: 'rgba(16,16,16,0.04)' },
+          '&:hover': { borderColor: INK, background: 'var(--tint-hover)' },
         },
         contained: {
           borderColor: INK,
