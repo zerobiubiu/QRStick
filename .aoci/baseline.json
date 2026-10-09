@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created_at": "2026-10-09T15:22:23Z",
-  "updated_at": "2026-10-09T16:07:19Z",
+  "updated_at": "2026-10-09T16:35:28Z",
   "files": {
     ".gitattributes": {
       "role": "index",
@@ -65,15 +65,15 @@
     },
     "README.md": {
       "role": "index",
-      "sha256": "7cc58df78a39e647e54bd812ace7ebf50a7753551d72b1d0fc4e62f9f7906e12",
-      "size": 2789,
-      "normalized_sha256": "7cc58df78a39e647e54bd812ace7ebf50a7753551d72b1d0fc4e62f9f7906e12"
+      "sha256": "aee4b6e4d38199a73ed2bb2248c15f7ddd58615003418611936d7d92458a6db2",
+      "size": 2867,
+      "normalized_sha256": "aee4b6e4d38199a73ed2bb2248c15f7ddd58615003418611936d7d92458a6db2"
     },
     "aoci.code.txt": {
       "role": "index",
-      "sha256": "187ce2e049978939e5a3d1b84004ae318fb085f9c68a8a70810fcbcbf6a5a9fe",
-      "size": 26507,
-      "normalized_sha256": "187ce2e049978939e5a3d1b84004ae318fb085f9c68a8a70810fcbcbf6a5a9fe"
+      "sha256": "a3c16c9933113076472dfffcef015f24ce79854aa05671b54dc665ae481f1c4b",
+      "size": 27057,
+      "normalized_sha256": "a3c16c9933113076472dfffcef015f24ce79854aa05671b54dc665ae481f1c4b"
     },
     "aoci.meta.txt": {
       "role": "index",
@@ -95,9 +95,9 @@
     },
     "docs/README.md": {
       "role": "index",
-      "sha256": "d2ff5f8759c45cceb9e071853d1ebbb06a51ebbd359930e8477ae86ff1132447",
-      "size": 3980,
-      "normalized_sha256": "d2ff5f8759c45cceb9e071853d1ebbb06a51ebbd359930e8477ae86ff1132447"
+      "sha256": "5aaa25c40835aae010a7eb377588f82d93a872ba7e8b0f711b03a2eb51d6275a",
+      "size": 4241,
+      "normalized_sha256": "5aaa25c40835aae010a7eb377588f82d93a872ba7e8b0f711b03a2eb51d6275a"
     },
     "docs/architecture/0001-渲染核与导出链路.md": {
       "role": "index",
@@ -177,11 +177,17 @@
       "size": 6394,
       "normalized_sha256": "b42106e8fd5b3c4f96d8a80b3228abdc41dd41c1ee16ff6832c9c4f62ebc6d2d"
     },
+    "docs/changes/0012-架构优化-组件复用与模块边界.md": {
+      "role": "index",
+      "sha256": "cc766c4244c815aa6ab41f15e4d1b0577e2c64e6c3f6124074d81b8175aa86d2",
+      "size": 9418,
+      "normalized_sha256": "cc766c4244c815aa6ab41f15e4d1b0577e2c64e6c3f6124074d81b8175aa86d2"
+    },
     "docs/changes/README.md": {
       "role": "index",
-      "sha256": "d4b4b64e7eb231fc0394c4a596e991e374d4db6530da4faab2a6c58530591e3d",
-      "size": 2034,
-      "normalized_sha256": "d4b4b64e7eb231fc0394c4a596e991e374d4db6530da4faab2a6c58530591e3d"
+      "sha256": "da170ae107bec8213647d090bd4dd009953f83f38c89aa6c047a2d8004f4ee93",
+      "size": 2285,
+      "normalized_sha256": "da170ae107bec8213647d090bd4dd009953f83f38c89aa6c047a2d8004f4ee93"
     },
     "docs/decisions/0001-界面语言-印刷工单与印张.md": {
       "role": "index",
@@ -208,9 +214,9 @@
     },
     "package.json": {
       "role": "index",
-      "sha256": "eb035d479575a51d5f233a3d454cf3e12bf878e12eb8866e528f50cfaaa92f21",
-      "size": 981,
-      "normalized_sha256": "eb035d479575a51d5f233a3d454cf3e12bf878e12eb8866e528f50cfaaa92f21"
+      "sha256": "3e7fc6c02c1c7d81a98636212dadb2221b2496dfc38db3d370ed1257f711093a",
+      "size": 1005,
+      "normalized_sha256": "3e7fc6c02c1c7d81a98636212dadb2221b2496dfc38db3d370ed1257f711093a"
     },
     "public/favicon.svg": {
       "role": "index",
@@ -451,6 +457,24 @@
       "sha256": "b2db061d0b3423d4ef68379d08204af10c824415ca71da348de03afbc1e93d38",
       "size": 5479,
       "normalized_sha256": "b2db061d0b3423d4ef68379d08204af10c824415ca71da348de03afbc1e93d38"
+    },
+    "tests/batch.test.ts": {
+      "role": "observe",
+      "sha256": "c9fe4d1dc7ef456ac33a6e7a3dc7fd27b66d4dba57330d97f4217d554af1599e",
+      "size": 2795,
+      "normalized_sha256": "c9fe4d1dc7ef456ac33a6e7a3dc7fd27b66d4dba57330d97f4217d554af1599e"
+    },
+    "tests/fields.test.tsx": {
+      "role": "observe",
+      "sha256": "d88666c54155a8f9c4521c63cedeff57da1eaffe8d945ed1a7426012047e8ac7",
+      "size": 2665,
+      "normalized_sha256": "d88666c54155a8f9c4521c63cedeff57da1eaffe8d945ed1a7426012047e8ac7"
+    },
+    "tests/persistence.test.ts": {
+      "role": "observe",
+      "sha256": "c6b266fa55940050f0dc759f0dc0965c2b2f4fdbcaf3c4cbbead117cacb109ab",
+      "size": 3915,
+      "normalized_sha256": "c6b266fa55940050f0dc759f0dc0965c2b2f4fdbcaf3c4cbbead117cacb109ab"
     },
     "tsconfig.app.json": {
       "role": "index",

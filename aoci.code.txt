@@ -9,10 +9,10 @@ CHANGELOG.md[SV5T]: F:语义化版本变更日志：只有被发布程序的行�
 DESIGN.md[CU7L]: F:设计令牌与视觉语法唯一事实来源：调色板、字阶、间距、组件语法与拒绝清单 | R:code:.impeccable/design.json,code:src/theme.ts | A:colors,typography,ink,cyan | S:代码里的字号与颜色超出本文件字阶即被判漂移；死变体优先删变体而不是改本文件
 LICENSE[SG2T]: F:MIT 许可证原文：允许自由使用、修改与分发，须保留版权声明 | R:code:package.json | A:MIT | S:-
 PRODUCT.md[SU6T]: F:产品与用户上下文：使用者、场景、定位与约束，impeccable 的约定输入 | R:code:docs/decisions/0001-界面语言-印刷工单与印张.md | A:Users,Positioning,Constraints | S:未定事项（多标签拼版）本期不做；改动本文件前先问用户
-README.md[SG6T]: F:面向使用者的项目说明：能力清单、目录职责、两条硬约定与 bun 命令 | R:code:docs/README.md,code:PRODUCT.md,code:AGENTS.md,code:CHANGELOG.md,code:LICENSE | A:bun run dev,bun run build,src/lib/,docs/README.md | S:新增或改动文档必须回 docs/README.md 补索引；本文件只做摘要不复述细节
+README.md[SG6T]: F:面向使用者的项目说明：能力清单、目录职责、两条硬约定与 bun 命令（含测试） | R:code:docs/README.md,code:PRODUCT.md,code:AGENTS.md,code:CHANGELOG.md,code:LICENSE | A:bun run dev,bun run build,bun test,src/lib/,docs/README.md | S:新增或改动文档必须回 docs/README.md 补索引；本文件只做摘要不复述细节
 bun.lock[FV3L]: F:bun 生成的依赖锁文件：记录精确版本与完整性校验 | R:code:package.json | A:lockfileVersion | S:只由 bun 安装维护，勿手改
 index.html[EG5T]: F:Vite 入口 HTML：挂载点、站点标题与描述、图标，加载 src/main.tsx | R:code:src/main.tsx | A:#root,/src/main.tsx,favicon.svg | S:预览与构建都以此文件为入口，改挂载点会同时打断开发服务与打包
-package.json[FV6T]: F:项目清单：名称、版本、bun 脚本与依赖清单，版本号唯一事实来源 | R:code:bun.lock,code:CHANGELOG.md,code:vite.config.ts | A:version,scripts,dependencies,devDependencies | S:版本号只在这里递增且必须同步 CHANGELOG.md；脚本只有 dev/build/lint/preview 四个
+package.json[FV6T]: F:项目清单：名称、版本、bun 脚本与依赖清单，版本号唯一事实来源 | R:code:bun.lock,code:CHANGELOG.md,code:vite.config.ts | A:version,scripts,test,dependencies,devDependencies | S:版本号只在这里递增且必须同步 CHANGELOG.md；脚本是 dev/build/lint/test/preview 五个
 tsconfig.app.json[XV4T]: F:应用侧 TypeScript 配置：目标 es2023、bundler 解析、严格未用检查与 noEmit | R:code:tsconfig.json,code:src/main.tsx | A:moduleResolution,noUnusedLocals,noEmit,jsx | S:noEmit 由 vite 负责打包；noUnusedLocals 与 noUnusedParameters 开着，留未用符号会直接编译失败
 tsconfig.json[XV4T]: F:工程引用入口：把应用侧与构建侧两个子配置组合起来 | R:code:tsconfig.app.json,code:tsconfig.node.json | A:references,files | S:本文件只做引用，编译选项都在两个子配置里；tsc -b 由此展开
 tsconfig.node.json[XV4T]: F:构建侧 TypeScript 配置：只覆盖 vite.config.ts，用 nodenext 与 node 类型 | R:code:vite.config.ts,code:tsconfig.json | A:module,nodenext,types,include | S:include 只含 vite.config.ts，改动它会连带改变 tsc -b 的检查范围
@@ -41,6 +41,7 @@ README.md[SG4T]: F:架构目录索引：文档清单、阅读顺序与相关代�
 0010-批量预览统一为-PressSheet.md[SQ5T]: F:批量单张预览复用 PressSheet 本体，缩放与列数可调、双击进单张（0.5.0） | R:code:src/components/PressSheet.tsx,code:src/components/BatchPreviewGrid.tsx,code:src/state/labelStore.ts | A:STAGE_MAX_PX,previewZoom,previewLayout,0.5.0 | S:批量与单张预览必须共用同一个 PressSheet，不要另建第二套预览实现
 0011-滚轮换张与预览提示.md[SQ5T]: F:单张突出预览用滚轮换上下张：原生非被动监听加累计阈值（0.5.1） | R:code:src/components/PressSheet.tsx,code:src/components/BatchPreviewGrid.tsx | A:WHEEL_STEP_PX,onStep,0.5.1 | S:React onWheel 是被动监听、preventDefault 无效，滚轮接管必须挂原生非被动监听
 README.md[SG5T]: F:变更记录目录索引：0001 起各次变更的状态与生效版本 | R:code:docs/README.md | A:已执行,不可变变更文档 | S:变更文档定稿后不重写，后续变化另建文档并标注替代关系
+0012-架构优化-组件复用与模块边界.md[SG6T]: F:结构重构记录：权威去重、工单拆段、编排与副作用分层、存储独立，并含最小单测与证据 | R:code:src/lib/batch.ts,code:src/state/persistence.ts,code:src/components/docket/fields.tsx,code:src/App.tsx,code:tests/batch.test.ts | A:0012,权威去重,工单拆段,最小单测 | S:行为保持的重构不递增版本；同类结构改动沿用本文档的「不做项」边界（不拆渲染核、不动组件收 store 的约定）
 
 ===C:/Users/wang-it-think/Desktop/Code/QRStick/docs/decisions/===
 0001-界面语言-印刷工单与印张.md[SG7T]: F:界面语言定为印刷工单与印张：选定过程、落地语法与四条纪律 | R:code:src/theme.ts,code:src/index.css,code:PRODUCT.md,code:src/components/PressSheet.tsx | A:FieldRow,DocketSection,SheetRuler,RegistrationMark,LineMark,drawColorBar | S:状态一律用线型表达而不是颜色；参数按优先级塌缩，恢复默认单独隔离
