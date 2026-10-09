@@ -62,7 +62,7 @@ export interface TitleConfig {
   lineHeight: number;
 }
 
-/** 导出件上的印刷标记（默认全关，导出就是一张干净的标签） */
+/** 导出件上的印刷标记：默认只开四角裁切标记（会被印进导出件），色标条与边距线按需开 */
 export interface MarksConfig {
   /** 四角裁切标记 */
   cropMarks: boolean;

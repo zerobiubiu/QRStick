@@ -56,7 +56,7 @@ export default function App() {
           ...outcome,
         });
       } catch (cause) {
-        setRecord({ ...IDLE_EXPORT, error: cause instanceof Error ? cause.message : '导出失败，请检查浏览器下载权限' });
+        setRecord({ ...IDLE_EXPORT, error: cause instanceof Error ? cause.message : '无法写入下载文件，请检查浏览器的下载权限' });
       }
     },
     [config, mode, rows, selectedRow, setRecord],
