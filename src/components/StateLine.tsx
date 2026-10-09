@@ -97,7 +97,9 @@ export function StateLine({ record, flagged, summary, reason }: StateLineProps) 
           <Typography sx={{ fontSize: 11, color: 'text.primary', whiteSpace: 'nowrap' }}>· {record.note}</Typography>
         ) : null}
         {record.error ? (
-          <Typography sx={{ fontSize: 11, color: 'text.primary' }}>· 导出失败：{record.error}</Typography>
+          <Typography sx={{ fontSize: 11, color: 'text.primary' }}>
+            {record.phase === 'done' ? `· ${record.error}` : `· 导出失败：${record.error}`}
+          </Typography>
         ) : null}
       </Box>
     </Tooltip>

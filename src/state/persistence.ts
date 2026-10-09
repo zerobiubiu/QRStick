@@ -3,11 +3,12 @@
  *
  * 四个键各存一类状态（配置 / 批量行 / 样式预设 / 界面状态），读的时候一律
  * 「形状对不上就退回默认值」，绝不把旧结构或半截结构塞进界面；写入失败
- * （隐私模式）只影响持久化，不影响使用。
+ * （隐私模式 / 配额满）不影响继续使用，但会**如实回报给界面**，绝不静默吞掉——
+ * 否则用户会以为「改动已自动保存」。
  *
  * 状态仓 `labelStore.ts` 只负责状态与动作，不再直接读写存储。
  */
-import { useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { BatchRow, ImageExportOptions, LabelConfig, PreviewColumns } from '../lib/types';
 import type { BatchMeta, LabelPreset, ViewState } from './types';
 
@@ -142,18 +143,84 @@ export function loadInitialState(): {
   return { config: loadConfig(), rows, batch, presets: loadPresets(), view: loadView() };
 }
 
+/** 写入失败的人话原因：隐私模式与配额满是最常见的两种 */
+function describeWriteFailure(cause: unknown): string {
+  const name = cause instanceof DOMException ? cause.name : '';
+  if (name === 'QuotaExceededError' || name === 'NS_ERROR_DOM_QUOTA_REACHED') return '本机存储空间已满';
+  if (name === 'SecurityError') return '浏览器禁用了本机存储（隐私模式或站点设置）';
+  return '浏览器拒绝了这次写入';
+}
+
+/** 一次挂载的写入状态：失败原因由界面就地说明，空串表示一直写得好好的 */
+export interface PersistStatus {
+  failedReason: string;
+}
+
+export interface PersistOptions {
+  /** 写入去抖毫秒数：值很大又改得频繁（例如上千行数据）时用，0 = 每次改动立即写 */
+  debounceMs?: number;
+}
+
 /**
- * 把一份状态挂到某个本机键上：状态一变就写入。
+ * 把一份状态挂到某个本机键上：状态一变就写入，并回报是否写得进去。
  * 四个键共用这一个实现，不再每个键抄一遍带 try/catch 的 effect。
+ *
+ * 去抖只按需开启（批量行用）：界面状态（配置 / 视图 / 预设）仍然即时写，
+ * 不牺牲「改一下就记住」的手感；待写值放 ref，卸载或换 key 前会 flush，
+ * 去抖窗口里的最后一次改动不会丢。
  */
-export function usePersisted<T>(key: string, value: T): void {
-  useEffect(() => {
+export function usePersisted<T>(key: string, value: T, { debounceMs = 0 }: PersistOptions = {}): PersistStatus {
+  const [failedReason, setFailedReason] = useState('');
+  const pendingRef = useRef<{ key: string; value: T } | null>(null);
+  const timerRef = useRef<number | null>(null);
+
+  const write = useCallback((pending: { key: string; value: T } | null) => {
+    if (!pending) return;
     try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch {
-      /* 隐私模式下写入会失败，不影响使用 */
+      localStorage.setItem(pending.key, JSON.stringify(pending.value));
+      setFailedReason((prev) => (prev ? '' : prev)); // 恢复后不留旧提示；同值更新会被 React 跳过
+    } catch (cause) {
+      setFailedReason(describeWriteFailure(cause));
     }
-  }, [key, value]);
+  }, []);
+
+  useEffect(() => {
+    pendingRef.current = { key, value };
+    if (debounceMs > 0) {
+      timerRef.current = window.setTimeout(() => {
+        timerRef.current = null;
+        const pending = pendingRef.current;
+        pendingRef.current = null;
+        write(pending);
+      }, debounceMs);
+      return () => {
+        if (timerRef.current !== null) {
+          window.clearTimeout(timerRef.current);
+          timerRef.current = null;
+        }
+      };
+    }
+    const pending = pendingRef.current;
+    pendingRef.current = null;
+    write(pending);
+  }, [key, value, debounceMs, write]);
+
+  // 卸载前的最后一写：去抖窗口里还没落盘的值不能丢（卸载路径没地方报错，交给界面上已有的失败提示）
+  useEffect(
+    () => () => {
+      const pending = pendingRef.current;
+      pendingRef.current = null;
+      if (!pending) return;
+      try {
+        localStorage.setItem(pending.key, JSON.stringify(pending.value));
+      } catch {
+        /* 卸载中无法再更新状态；界面此前的失败提示已说明存储不可用 */
+      }
+    },
+    [],
+  );
+
+  return { failedReason };
 }
 
 /** 供测试或排障读取一份原始值（解析与兜底仍走上面的 loader） */

@@ -55,8 +55,8 @@ export async function exportPdf(pages: ExportPage[], fileName: string): Promise<
  * （A4 300 DPI 一页就是 35 MB），所以这里按页喂进来、喂完就让调用方回收画布。
  */
 export interface PdfBuilder {
-  /** 追加一页；图像数据当场写进文档，之后画布可以释放 */
-  addPage(page: ExportPage): void;
+  /** 追加一页；图像数据当场写进文档，之后画布可以释放。返回 false 表示这一页没编码出来，未写入 */
+  addPage(page: ExportPage): boolean;
   save(fileName: string): void;
 }
 
@@ -64,6 +64,14 @@ export function createPdfBuilder(): PdfBuilder {
   let doc: jsPDF | null = null;
   return {
     addPage(page) {
+      // 先把这一页编码成 PNG：编码失败（画布已被回收、内存不足等）只跳过这一页，
+      // 绝不能让它把整份文档连坐作废
+      let dataUrl: string;
+      try {
+        dataUrl = page.canvas.toDataURL('image/png');
+      } catch {
+        return false;
+      }
       // jsPDF 的 format 数组永远按纵向解释（短边在前），横向页面靠 orientation 摆正：
       // 这样 210×297 与 297×210 才会各自落到正确的页面尺寸上
       const landscape = page.widthMm > page.heightMm;
@@ -79,7 +87,7 @@ export function createPdfBuilder(): PdfBuilder {
         doc.addPage(format, landscape ? 'landscape' : 'portrait');
       }
       doc.addImage(
-        page.canvas.toDataURL('image/png'),
+        dataUrl,
         'PNG',
         0,
         0,
@@ -88,9 +96,10 @@ export function createPdfBuilder(): PdfBuilder {
         undefined,
         'FAST', // Flate 无损压缩：二维码模块要清晰，文件也别太肥
       );
+      return true;
     },
     save(fileName) {
-      if (!doc) return;
+      if (!doc) return; // 一页都没写进去就不生成文件，免得留下空文档
       saveBlob(doc.output('blob'), `${sanitizeFileName(fileName)}.pdf`);
     },
   };

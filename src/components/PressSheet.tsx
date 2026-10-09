@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Box, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { renderLabel, type LabelLayout } from '../lib/render';
+import { LineMark } from './StateLine';
 import { PREVIEW_MAX_PX, previewScaleFor } from '../lib/preview';
 import { useElementSize } from '../lib/useElementSize';
 import { formatMm } from '../lib/units';
@@ -187,6 +188,9 @@ export function PressSheet({
     return renderLabel(config, previewScaleFor(layout, PREVIEW_MAX_PX));
   }, [config, layout]);
 
+  // 画布分配不出（尺寸超浏览器上限）：这一张预览不了，也绝不能挂一张空白画布冒充出片结果
+  const canvasUnavailable = rendered.failure === 'canvas_unavailable';
+
   // 用回调 ref 挂画布：hold 住节点的可以是首次测量之前（台面还没量到尺寸），
   // 用 effect 会因为「节点晚于 effect 出现」而漏挂。
   const attachCanvas = useCallback(
@@ -216,7 +220,9 @@ export function PressSheet({
   const qrReadout =
     layout.qrModules > 0
       ? `外框 ${layout.qrActualMm.toFixed(1)} mm · 码面 ${layout.qrInkMm.toFixed(1)} mm · ${layout.qrModulePx} px/模块 · ${layout.qrModules} 模块`
-      : '占位（内容为空）';
+      : layout.qrOverflow
+        ? '占位（内容超出二维码容量）'
+        : '占位（内容为空）';
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0, flex: 1, bgcolor: 'var(--ground)' }}>
@@ -248,7 +254,15 @@ export function PressSheet({
           </Box>
         </Box>
 
-        {pxPerMm > 0.4 ? (
+        {canvasUnavailable ? (
+          // 出不了图时说人话：台面上给一句原因与出路，而不是一张空白纸
+          <Stack sx={{ maxWidth: 340, gap: 0.75 }}>
+            <LineMark form="dashed" width={22} />
+            <Typography sx={{ fontSize: 11, fontFamily: MONO_FONT, color: 'text.secondary', lineHeight: 1.5 }}>
+              画布太大，浏览器分配不出：降低 DPI、缩小纸张或减小页边距
+            </Typography>
+          </Stack>
+        ) : pxPerMm > 0.4 ? (
           <Box
             sx={{
               display: 'grid',
@@ -299,6 +313,15 @@ export function PressSheet({
         />
         <Readout label="分辨率" value={`${layout.dpi} dpi · ${layout.pixelWidth} × ${layout.pixelHeight} px`} />
         <Readout label="二维码" value={qrReadout} />
+        {/* 纠错取实际等级：内容过长会回退，读数必须与印在纸上的那条色标条一致 */}
+        <Readout
+          label="纠错"
+          value={
+            layout.actualErrorCorrectionLevel === config.qr.errorCorrectionLevel
+              ? layout.actualErrorCorrectionLevel
+              : `${layout.actualErrorCorrectionLevel}（请求 ${config.qr.errorCorrectionLevel}）`
+          }
+        />
         <Readout label="标题" value={`${layout.titleLines.length} 行 · ${config.title.fontSizePt} pt`} />
         <Readout label="版心" value={`${formatMm(layout.contentWidthPx / (layout.dpi / 25.4))} × ${formatMm(layout.contentHeightPx / (layout.dpi / 25.4))} mm`} />
         <Readout label="内容" value={`${config.content.length} 字符`} />

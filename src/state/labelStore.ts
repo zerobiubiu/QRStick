@@ -4,7 +4,7 @@
  * 全部落在本机 localStorage（纯前端、零上传）。配置、批量行、预设各占一个键，
  * 形状对不上就退回默认，绝不把旧结构直接塞进界面。
  */
-import { useCallback, useState, type Dispatch, type SetStateAction } from 'react';
+import { useCallback, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import type {
   BatchRow,
   ImageExportOptions,
@@ -43,7 +43,10 @@ export interface LabelStore {
   mode: AppMode;
   setMode: (mode: AppMode) => void;
   rows: BatchRow[];
+  /** 整批替换批量行（导入 / 清空）：越界的多选会被丢弃，免得导出侧命中已经不存在的行 */
   setRows: (rows: BatchRow[]) => void;
+  /** 批量行写入本机存储失败的人话原因（空串 = 正常）；由数据源区就地提示 */
+  rowsStorageError: string;
   addRow: () => void;
   updateRow: (index: number, patch: Partial<Pick<BatchRow, 'title' | 'content'>>) => void;
   removeRow: (index: number) => void;
@@ -96,7 +99,7 @@ export function useLabelStore(): LabelStore {
   const [initial] = useState(loadInitialState);
   const [config, setConfig] = useState<LabelConfig>(initial.config);
   const [mode, setMode] = useState<AppMode>('single');
-  const [rows, setRows] = useState<BatchRow[]>(initial.rows);
+  const [rows, setRowsState] = useState<BatchRow[]>(initial.rows);
   const [batch, setBatch] = useState<BatchMeta | null>(initial.batch);
   const [selectedRow, setSelectedRow] = useState(1);
   const [record, setRecord] = useState<ExportRecord>(IDLE_EXPORT);
@@ -104,11 +107,23 @@ export function useLabelStore(): LabelStore {
   const [view, setView] = useState<ViewState>(initial.view);
   const [selectedIds, setSelectedIdsState] = useState<number[]>([]);
 
-  // 四份状态各自落本机：写入失败（隐私模式）只影响持久化，不影响使用
+  // 四份状态各自落本机：写入失败（隐私模式 / 配额满）不影响使用，但会经 rowsStorageError 报给界面
   usePersisted(VIEW_KEY, view);
   usePersisted(CONFIG_KEY, config);
-  usePersisted(ROWS_KEY, { rows, batch });
+  // 批量行可能上千条，且行内编辑每个按键都变：整份序列化去抖，避免打字卡顿
+  const rowsSnapshot = useMemo(() => ({ rows, batch }), [rows, batch]);
+  const { failedReason: rowsStorageError } = usePersisted(ROWS_KEY, rowsSnapshot, { debounceMs: 400 });
   usePersisted(PRESETS_KEY, presets);
+
+  /** 整批替换批量行：顺手丢掉越界的多选，绝不让选中项指向已不存在的行 */
+  const setRows = useCallback((next: BatchRow[]) => {
+    setRowsState(next);
+    const alive = new Set(next.map((row) => row.index));
+    setSelectedIdsState((prev) => {
+      const kept = prev.filter((id) => alive.has(id));
+      return kept.length === prev.length ? prev : kept;
+    });
+  }, []);
 
   const patchPage = useCallback((next: Partial<PageConfig>) => {
     setConfig((c) => ({ ...c, page: { ...c.page, ...next } }));
@@ -129,12 +144,12 @@ export function useLabelStore(): LabelStore {
 
   const addRow = useCallback(() => {
     const next = [...rows, { index: rows.length + 1, title: '', content: '' }];
-    setRows(next);
+    setRowsState(next);
     setSelectedRow(next.length);
   }, [rows]);
 
   const updateRow = useCallback((index: number, patch: Partial<Pick<BatchRow, 'title' | 'content'>>) => {
-    setRows((prev) => prev.map((row) => (row.index === index ? { ...row, ...patch } : row)));
+    setRowsState((prev) => prev.map((row) => (row.index === index ? { ...row, ...patch } : row)));
   }, []);
 
   /** 删除（单条 / 多条走同一条路）：重排序号，并让选中行落到最近的一行 */
@@ -142,7 +157,7 @@ export function useLabelStore(): LabelStore {
     (indexes: number[]) => {
       const targets = new Set(indexes);
       const next = rows.filter((row) => !targets.has(row.index)).map((row, i) => ({ ...row, index: i + 1 }));
-      setRows(next);
+      setRowsState(next);
       setSelectedIdsState((prev) => prev.filter((id) => !targets.has(id)));
       setSelectedRow((current) => {
         if (next.length === 0) return 1;
@@ -165,7 +180,7 @@ export function useLabelStore(): LabelStore {
       const next = [...rows];
       next.splice(from, 1);
       next.splice(target, 0, moved);
-      setRows(next.map((row, i) => ({ ...row, index: i + 1 })));
+      setRowsState(next.map((row, i) => ({ ...row, index: i + 1 })));
       // 选中行与多选都要跟着搬位置，否则索引会指向别人
       setSelectedRow((current) => remapAfterMove(current - 1, from, target) + 1);
       setSelectedIdsState((prev) => prev.map((id) => remapAfterMove(id - 1, from, target) + 1).sort((a, b) => a - b));
@@ -283,6 +298,7 @@ export function useLabelStore(): LabelStore {
     setMode,
     rows,
     setRows,
+    rowsStorageError,
     addRow,
     updateRow,
     removeRow,

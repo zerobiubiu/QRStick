@@ -12,6 +12,7 @@ import { buildBatch } from '../lib/batch';
 import { canvasToPngBlob, sanitizeFileName } from '../lib/download';
 import { yieldToPaint } from '../lib/async';
 import { createPdfBuilder, exportPng, exportWord, type ExportPage, type WordPage } from '../lib/export';
+import { failureCount, renderFailureText, summarizeFailures, tallyFailure } from '../lib/failures';
 import { layoutLabel, renderLabel, renderQrCode } from '../lib/render';
 import { pxToMm, sheetSize } from '../lib/units';
 import type { BatchRow, LabelConfig } from '../lib/types';
@@ -38,18 +39,29 @@ export interface ExportOutcome {
   action: string;
   fileName: string;
   pages: number;
+  /** 跳过的页数：这一批里没能出图、没有写进成品的页 */
+  failed: number;
+  /** 失败原因（去重，最多 3 条人话），拿给状态行直接用 */
+  failureReasons: string[];
 }
 
 /** 进度回调：批量出码时界面靠它报「第 n / 共 m 页」 */
 export type ExportProgress = (done: number, total: number) => void;
 
-function toExportPage(config: LabelConfig): ExportPage {
-  const { canvas } = renderLabel(config);
+/** 渲染一页；出不了图（占位框二维码 / 分配失败的画布）返回 null，这一页不进成品 */
+function toExportPage(config: LabelConfig): ExportPage | null {
+  const { canvas, failure } = renderLabel(config);
+  if (failure) return null;
   const { widthMm, heightMm } = sheetSize(config.page);
   return { canvas, widthMm, heightMm };
 }
 
-async function toWordPage(config: LabelConfig): Promise<WordPage> {
+/** 这一页没能出图的人话原因（只在失败分支里调用，代价是一次版式计算） */
+function failureReasonFor(config: LabelConfig): string {
+  return renderFailureText(layoutLabel(config).qrOverflow ? 'qr_overflow' : 'canvas_unavailable');
+}
+
+async function toWordPage(config: LabelConfig): Promise<WordPage | null> {
   const layout = layoutLabel(config);
   const qr = renderQrCode(
     config.content,
@@ -58,6 +70,8 @@ async function toWordPage(config: LabelConfig): Promise<WordPage> {
     config.qr.errorCorrectionLevel,
     config.qr.quietZoneModules,
   );
+  // 占位框二维码、或画布被浏览器夹小：都不进成品
+  if (qr.overflow || qr.canvas.width !== qr.sidePx || qr.canvas.height !== qr.sidePx) return null;
   const blob = await canvasToPngBlob(qr.canvas);
   const { widthMm, heightMm } = sheetSize(config.page);
   return {
@@ -88,9 +102,11 @@ export async function runExport(request: ExportRequest, onProgress?: ExportProgr
     const suffix = rows.length ? `-第${position + 1}张` : '';
     const name = `${base}${suffix}`;
     onProgress?.(0, 1);
-    await exportPng(toExportPage(target), name);
+    const page = toExportPage(target);
+    if (!page) throw new Error(`没能出图：${failureReasonFor(target)}`);
+    await exportPng(page, name);
     onProgress?.(1, 1);
-    return { action, fileName: `${name}.png`, pages: 1 };
+    return { action, fileName: `${name}.png`, pages: 1, failed: 0, failureReasons: [] };
   }
 
   const targets = batchConfigs.length ? batchConfigs : [config];
@@ -99,21 +115,53 @@ export async function runExport(request: ExportRequest, onProgress?: ExportProgr
 
   if (format === 'pdf') {
     const builder = createPdfBuilder();
+    const failures = new Map<string, number>();
+    let written = 0;
     for (let index = 0; index < targets.length; index += 1) {
-      builder.addPage(toExportPage(targets[index]));
+      const target = targets[index];
+      try {
+        const page = toExportPage(target);
+        if (!page) tallyFailure(failures, failureReasonFor(target));
+        else if (builder.addPage(page)) written += 1;
+        else tallyFailure(failures, '画布编码失败，这一页没有写进文档');
+      } catch {
+        tallyFailure(failures, renderFailureText('canvas_unavailable'));
+      }
       onProgress?.(index + 1, targets.length);
       await yieldToPaint();
     }
+    if (written === 0) throw new Error(`这一批 ${targets.length} 页都没能出图，没有生成文件`);
     builder.save(name);
-    return { action, fileName: `${name}.pdf`, pages: targets.length };
+    return {
+      action,
+      fileName: `${name}.pdf`,
+      pages: written,
+      failed: failureCount(failures),
+      failureReasons: summarizeFailures(failures),
+    };
   }
 
   const wordPages: WordPage[] = [];
+  const failures = new Map<string, number>();
   for (let index = 0; index < targets.length; index += 1) {
-    wordPages.push(await toWordPage(targets[index]));
+    const target = targets[index];
+    try {
+      const page = await toWordPage(target);
+      if (page) wordPages.push(page);
+      else tallyFailure(failures, failureReasonFor(target));
+    } catch {
+      tallyFailure(failures, renderFailureText('canvas_unavailable'));
+    }
     onProgress?.(index + 1, targets.length);
     await yieldToPaint();
   }
+  if (wordPages.length === 0) throw new Error(`这一批 ${targets.length} 页都没能出图，没有生成文件`);
   await exportWord(wordPages, name);
-  return { action, fileName: `${name}.docx`, pages: wordPages.length };
+  return {
+    action,
+    fileName: `${name}.docx`,
+    pages: wordPages.length,
+    failed: failureCount(failures),
+    failureReasons: summarizeFailures(failures),
+  };
 }

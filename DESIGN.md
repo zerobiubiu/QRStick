@@ -184,7 +184,7 @@ components:
 
 整套系统只有两种材料——墨（`#101010`）与纸（`#ffffff`），加一块台面灰（`#f4f4f2`）。层级全部由 1 物理像素的发丝线、墨的透明度梯度、以及三条 1.5px 重线分界承担；没有圆角、没有卡片、没有阴影堆叠。印刷三原色只在极小面积上出现：套准十字的四条色版臂、焦点环、选中底色。数字一律等宽对齐，尺寸一律带单位（mm / DPI / pt），因为这套界面最终要落到实物上。
 
-密度是车间密度：正文 13px，元数据 10.5–11px，读数条一行六格，字段行上下各 8px 内边距、按钮与分段最小高 26px、数字格内边距 6px 9px。参数改动即时重排印张，没有「应用」这一步；破坏性动作（恢复默认）被隔离到工单最底部并附说明。窄屏时参数与读数先让位，印张与导出永不被挤掉——优先级塌缩是这个世界的秩序。
+密度是车间密度：正文 13px，元数据 10.5–11px，读数条一行七格（末格是实际纠错等级），字段行上下各 8px 内边距、按钮与分段最小高 26px、数字格内边距 6px 9px。参数改动即时重排印张，没有「应用」这一步；破坏性动作（恢复默认）被隔离到工单最底部并附说明。窄屏时参数与读数先让位，印张与导出永不被挤掉——优先级塌缩是这个世界的秩序。
 
 **Key Characteristics:**
 - 直角是唯一的形：全局 `borderRadius: 0`，滑块拇指是 10 × 16 的立式矩形，复选框方角。
@@ -270,7 +270,7 @@ components:
 
 **看版台与刻度尺**：台面内边距与刻度带宽度同为 `STRIP_PX = 22px`（`src/components/PressSheet.tsx:17`、`src/components/PressSheet.tsx:199`、`src/components/PressSheet.tsx:222-223`），印张在台面居中（`placeContent: center`，`src/components/PressSheet.tsx:198`），四角套准十字以 `inset: 6px` 钉住（`src/components/PressSheet.tsx:203`）。每毫米像素数由台面实测尺寸反算，上限 4（`src/components/PressSheet.tsx:171-180`）；刻度步长随密度自动降档为 1 / 2 / 5 / 10 mm，标注每 ≥34px 一个（`src/components/PressSheet.tsx:69-78`）；`pxPerMm ≤ 0.4` 时整块印张不画（`src/components/PressSheet.tsx:218`），免得画出一张糊纸。预览画布最长边 1800px 等比降采样，导出永远满 DPI（`src/components/PressSheet.tsx:16`、`src/components/PressSheet.tsx:153`）。
 
-**读数条**：印张下沿一行六格（印张 / 分辨率 / 二维码 / 标题 / 版心 / 内容），每格 `6px 12px` 并与左邻共用一条发丝线（`src/components/PressSheet.tsx:247-267`，格子定义在 `:140-147`）；窄屏不换行改为横向滚动，`md` 以上才允许换行（`src/components/PressSheet.tsx:251-253`）。
+**读数条**：印张下沿一行七格（印张 / 分辨率 / 二维码 / 标题 / 版心 / 内容 / 纠错），每格 `6px 12px` 并与左邻共用一条发丝线（`src/components/PressSheet.tsx:305-330`，格子定义在 `:119-132`）；窄屏不换行改为横向滚动，`md` 以上才允许换行。纠错一格报**实际**等级（内容过长会回退，回退时写成「L（请求 H）」），与印在纸上的色标条同源。
 
 **窄屏高度**：批量数据表 340px、单张（非批量）时印张 460px、批量窄屏下的印张 360px（`src/App.tsx:159`、`src/App.tsx:147`、`src/App.tsx:176`）。这些是显式像素而不是 `auto`——窄屏这张栅格列本身没有可分的剩余高度，必须自带高度；批量数据表还额外带 `flex: '0 0 auto'`，免得被同级内容按 flex 规则压缩（`src/App.tsx:145-147`、`src/App.tsx:153-155` 的注释与取值）。
 
@@ -372,7 +372,7 @@ components:
 ### 状态行 (StateLine + LineMark)
 - **Style:** 应用底部的通栏：`padding: 6px 14px`、上沿发丝线、纸白底、10px 间距，左侧线型标记（默认宽 34px、高 12px），右侧 11px 等宽文字（`src/components/StateLine.tsx:68-81`）。
 - **States:** 空闲时显示当前规格读数（如 A4 · 300 DPI 时的 `2480 × 3508 px · 8 px/模块 · 纠错 M`，次级墨）；出片中显示动作与进度（`付印 PDF 3/12`，点划线）；完成显示文件名 / 页数 / 时间（双线）；有提醒则换虚线（`src/components/StateLine.tsx:56-89`、`src/App.tsx:181-185`）。
-- **Error tail:** 出错时在行尾补一句「· 导出失败：{原因}」，11px、墨黑，不换颜色（`src/components/StateLine.tsx:84-86`）。
+- **Error tail:** 整次导出失败时在行尾补一句「· 导出失败：{原因}」；批量里只失败了几页/几张时相位仍是「已导出」（双线），行尾直接接原因（「· 内容超出二维码容量，已跳过 2 张」），不用「导出失败」这个前缀——产出物是部分成立的。两种都 11px、墨黑，不换颜色（`src/components/StateLine.tsx:99-103`）。
 
 ### 批量数据表 (BatchGrid)
 - **Style:** 表头带 `padding: 6px 14px` + `0.035` 墨洗，下沿发丝线；列头行下沿换 1.5px 墨线；表体 12px，单元格只用发丝线分隔（`src/components/BatchGrid.tsx:72-116`，`:80`、`:108`、`:104`）。
@@ -389,7 +389,8 @@ components:
 - **Stage:** 台面灰底、居中、内边距 22px，四角套准十字以 `inset: 6px` 钉住（`src/components/PressSheet.tsx:189-245`，`:198-199`、`:203`）。台面按内容框测量（`clientWidth` 减去左右内边距，`:45-53`），印张栅格再叠 `maxWidth / maxHeight: 100%` 兜底——任何量测误差表现为整体缩小，绝不裁切（`:225-226` 的注释与取值）。
 - **Ruler:** 紧贴印张左、上两边，22px 宽，按当前每毫米像素现算刻度（`src/components/PressSheet.tsx:219-231`）。
 - **Paper:** 纸白、直角、唯一允许的投影；画布 `inset: 0` 绝对定位并以 `key={signature}` 重挂，每次重排触发一次 180ms 上墨动效（`src/components/PressSheet.tsx:232-242`，`:238`、`:241`）。
-- **Readout Strip:** 六格读数（印张 / 分辨率 / 二维码 / 标题 / 版心 / 内容），每格字段名 10px、数值 11px 等宽、不换行（`src/components/PressSheet.tsx:140-147`、`:247-267`）。二维码一格在内容为空时显示「占位（内容为空）」（`src/components/PressSheet.tsx:184-187`）。
+- **Readout Strip:** 七格读数（印张 / 分辨率 / 二维码 / 标题 / 版心 / 内容 / 纠错），每格字段名 10px、数值 11px 等宽、不换行（`src/components/PressSheet.tsx:119-132`、`:305-330`）。二维码一格在内容为空时显示「占位（内容为空）」，内容超出二维码容量时显示「占位（内容超出二维码容量）」（`src/components/PressSheet.tsx:220-225`）；纠错一格报实际等级（`src/components/PressSheet.tsx:316-323`）。
+- **画布分配不出时**：台面不挂空白纸冒充出片结果——把纸与刻度尺短路掉，只在原处留一句「画布太大，浏览器分配不出：降低 DPI、缩小纸张或减小页边距」，用虚线标记 + 11px 等宽（`src/components/PressSheet.tsx:191-192`、`:257-264`）。
 
 ### 印件上的标记（导出件，不是屏幕辅助线）
 - **裁切标记:** 四角、长 `min(5mm, 页边距 × 0.5)`、厚 `max(1px, DPI/600)`、与版心相距 `max(2 厚, 页边距 × 0.22)`；页边距不足 4mm 时自动忽略并报警（`src/lib/render.ts:263-277`、`:400`）。裁切标记默认打开，色标条与页边距参考虚线默认关闭（`src/state/labelStore.ts:35`），勾选后真的会印进文件（`src/components/Docket.tsx:533-560`）。

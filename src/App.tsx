@@ -71,15 +71,22 @@ export default function App() {
   const previewLayoutInfo = useMemo(() => layoutLabel(previewConfig), [previewConfig]);
   const previewSignature = useMemo(() => JSON.stringify(previewConfig), [previewConfig]);
 
-  const pickedRows = useMemo(() => rows.filter((row) => selectedIds.includes(row.index)), [rows, selectedIds]);
+  const pickedRows = useMemo(() => {
+    const picked = new Set(selectedIds);
+    return rows.filter((row) => picked.has(row.index));
+  }, [rows, selectedIds]);
 
   const imageLabel = `出片 ${imageExport.format.toUpperCase()}`;
   const imageModeLabel =
     imageExport.mode === 'each' ? '逐张' : imageExport.mode === 'zip' ? '打包 ZIP' : '拼接一张';
 
+  /** 批量模式但一条数据都没有：三个导出动作没有目标，先禁用并在状态行说明 */
+  const batchEmpty = mode === 'batch' && rows.length === 0;
+
   /** 三个动作的含义常驻可见：区别只放在 tooltip 里，触屏用户永远看不到 */
-  const exportBrief =
-    mode === 'batch' && rows.length
+  const exportBrief = batchEmpty
+    ? '批量模式还没有数据：导入 CSV / Excel 或粘贴两列，或者切回单张模式，再出片。'
+    : mode === 'batch' && rows.length
       ? `出片：${imageExport.format.toUpperCase()} · ${imageModeLabel} · 出 ${
           pickedRows.length ? `选中的 ${pickedRows.length}` : `全部 ${rows.length}`
         } 张 · 付印 PDF / 交版 Word：每行一页，共 ${rows.length} 页 · 打印请设 100%，关闭「适应页面」`
@@ -104,6 +111,8 @@ export default function App() {
     bindings: SHORTCUTS,
     onExport: handleExport,
     onToggleMode: () => setMode(mode === 'batch' ? 'single' : 'batch'),
+    // 与按钮同一条门槛：导出中或批量模式没有数据时，快捷键也不该另开一扇门
+    enabled: !busy && !batchEmpty,
   });
 
   const requestRowDelete = useCallback(
@@ -175,7 +184,7 @@ export default function App() {
                   <Button
                     size="small"
                     variant={action === 'pdf' ? 'contained' : 'outlined'}
-                    disabled={busy}
+                    disabled={busy || batchEmpty}
                     onClick={() => void handleExport(action)}
                   >
                     {action === 'image'
@@ -296,7 +305,7 @@ export default function App() {
             record={record}
             flagged={flagged}
             reason={issues.length ? issues[0].message : undefined}
-            summary={`${layout.pixelWidth} × ${layout.pixelHeight} px · ${layout.qrModulePx} px/模块 · 纠错 ${config.qr.errorCorrectionLevel}`}
+            summary={`${layout.pixelWidth} × ${layout.pixelHeight} px · ${layout.qrModulePx} px/模块 · 纠错 ${layout.actualErrorCorrectionLevel}`}
           />
         </Box>
       </Box>

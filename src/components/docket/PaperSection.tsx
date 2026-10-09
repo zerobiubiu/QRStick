@@ -5,10 +5,17 @@
  */
 import { useState } from 'react';
 import { Button, Slider, Stack, TextField, ToggleButton, ToggleButtonGroup } from '@mui/material';
-import { DPI_PRESETS, PAGE_PRESETS, formatMm, parseAspectRatio } from '../../lib/units';
+import { DPI_PRESETS, PAGE_PRESETS, clamp, formatMm, parseAspectRatio } from '../../lib/units';
 import type { BlockAlign, PageConfig } from '../../lib/types';
 import { MONO_FONT } from '../../theme';
 import { DocketSection, FieldRow, FieldSelect, NumberField, Segmented } from './fields';
+
+/** 自定义毫米尺寸的上下限，与数字框同源；派生高度也必须夹在同一区间里 */
+const SIZE_MIN_MM = 10;
+const SIZE_MAX_MM = 2000;
+/** 长宽比（高 / 宽）的合理区间：超出去的不是标签，是误输入 */
+const RATIO_MIN = 0.1;
+const RATIO_MAX = 10;
 
 export function PaperSection({
   page,
@@ -28,8 +35,16 @@ export function PaperSection({
       setRatioError('看不懂这种写法。请用 宽:高（1:1.414）、3:4，或一个小数（0.707）');
       return;
     }
+    if (ratio < RATIO_MIN || ratio > RATIO_MAX) {
+      setRatioError(`长宽比要在 1:10 到 10:1 之间（这套写法算出 ${ratio.toFixed(2)}）`);
+      return;
+    }
     setRatioError('');
-    onPatch({ presetId: 'custom', heightMm: Math.round(page.widthMm * ratio * 10) / 10 });
+    // 宽度先夹到数字框的同源区间（旧存储里可能越界），派生高度按它算并再夹一次：
+    // 否则 2000mm × 1:10 会派生出 20000mm，导出画布直接爆到几十亿像素
+    const widthMm = clamp(page.widthMm, SIZE_MIN_MM, SIZE_MAX_MM);
+    const heightMm = clamp(widthMm * ratio, SIZE_MIN_MM, SIZE_MAX_MM);
+    onPatch({ presetId: 'custom', widthMm, heightMm });
   };
 
   return (

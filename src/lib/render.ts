@@ -5,15 +5,26 @@
  * 关键纪律：
  *  - 毫米是版面真相，像素是导出真相；所有落地尺寸都按 DPI 换算后再回读成毫米读数；
  *  - 二维码按整数像素 / 模块绘制，绝不缩放，模块边界永远落在设备像素上；
- *  - 没内容就画占位框，不抛异常；内容过长自动降纠错等级并如实上报。
+ *  - 没内容或内容超出二维码容量都画占位框，**绝不抛异常**；内容过长自动降纠错等级并如实上报；
+ *  - 画布分配失败（尺寸超过浏览器上限）要显式报失败，绝不能返回一张空白还当成成功。
  */
 import QRCode from 'qrcode';
 import { resolveLabelFont } from './fonts';
 import { mmToPx, pxToMm, ptToPx, sheetSize } from './units';
-import type { ErrorCorrectionLevel, LabelConfig, RenderResult } from './types';
+import type { ErrorCorrectionLevel, LabelConfig, RenderFailure, RenderResult } from './types';
 
 /** 纠错等级由强到弱，内容塞不下时按这个顺序回退 */
 const ECL_ORDER: ErrorCorrectionLevel[] = ['H', 'Q', 'M', 'L'];
+
+/** 版本 40、字节模式下各纠错等级能装的最大字节数（UTF-8 计）：用来提前判容量，不必靠抛异常试探 */
+const ECL_BYTE_CAPACITY: Record<ErrorCorrectionLevel, number> = { L: 2953, M: 2331, Q: 1663, H: 1273 };
+
+/** 超过这个兆像素：导出慢且吃内存，提醒但不拦 */
+const CANVAS_WARN_MEGAPIXELS = 60;
+/** 超过这个兆像素：浏览器多半分配不出画布，按错误拦下（A4@600 约 35 兆像素） */
+const MAX_RENDER_MEGAPIXELS = 100;
+/** 标题最多占版心高度的比例：超出的行不印，二维码至少留四成高度，免得被挤成废码 */
+const TITLE_MAX_HEIGHT_SHARE = 0.6;
 
 const INK = '#101010';
 const PAPER = '#ffffff';
@@ -32,6 +43,10 @@ export interface QrRender {
   downgraded: boolean;
   /** 内容为空时的占位状态 */
   empty: boolean;
+  /** 内容超出二维码容量（四级全装不下）：画的是占位框，张贴物上不会有可扫的码 */
+  overflow: boolean;
+  /** 实际使用的纠错等级（回退之后），读数与色标条以它为准 */
+  level: ErrorCorrectionLevel;
 }
 
 /** 版式几何（全部为像素，毫米读数由调用方按 DPI 回读） */
@@ -69,6 +84,12 @@ export interface LabelLayout {
   spaceLimited: boolean;
   /** 字号过大导致标题自己就溢出版心 */
   titleOverflow: boolean;
+  /** 标题因超出「最多占版心六成」而被裁掉的行数 */
+  titleClippedLines: number;
+  /** 二维码内容超出容量（四级全装不下）：版面上只有占位框 */
+  qrOverflow: boolean;
+  /** 实际使用的纠错等级（内容过长会回退），读数与色标条以它为准 */
+  actualErrorCorrectionLevel: ErrorCorrectionLevel;
 }
 
 export interface LabelIssue {
@@ -79,14 +100,24 @@ export interface LabelIssue {
 let measureCtx: CanvasRenderingContext2D | null = null;
 
 function measureWidth(text: string, fontCss: string): number {
-  if (!measureCtx) measureCtx = document.createElement('canvas').getContext('2d');
+  // 无 DOM 环境（单测 / SSR）拿不到测量上下文：退回按字数估算，绝不让测量本身抛异常
+  if (!measureCtx && typeof document !== 'undefined') measureCtx = document.createElement('canvas').getContext('2d');
   const ctx = measureCtx;
   if (!ctx) return text.length * 8;
   if (ctx.font !== fontCss) ctx.font = fontCss;
   return ctx.measureText(text).width;
 }
 
-/** 按可用宽度折行：中文逐字断，西文优先在空格处断 */
+/** 切成字素簇：ZWJ 组合 emoji、变体选择符、组合附加符都算一个单位，断行不会把它们切散 */
+function graphemes(text: string): string[] {
+  const Segmenter = typeof Intl !== 'undefined' ? (Intl as { Segmenter?: new (locale?: string, options?: { granularity: string }) => { segment(input: string): Iterable<{ segment: string }> } }).Segmenter : undefined;
+  if (Segmenter) {
+    return [...new Segmenter('zh', { granularity: 'grapheme' }).segment(text)].map((part) => part.segment);
+  }
+  return Array.from(text);
+}
+
+/** 按可用宽度折行：中文逐字断，西文优先在空格处断；宽度按字素簇累加，万字号标题也不会退化成 O(n²) 测量 */
 function wrapTitleLines(raw: string, maxWidthPx: number, fontCss: string): string[] {
   const out: string[] = [];
   for (const paragraph of raw.replace(/\r\n?/g, '\n').split('\n')) {
@@ -94,39 +125,46 @@ function wrapTitleLines(raw: string, maxWidthPx: number, fontCss: string): strin
       out.push('');
       continue;
     }
-    let line = '';
-    for (const ch of paragraph) {
-      const candidate = line + ch;
-      if (line && maxWidthPx > 0 && measureWidth(candidate, fontCss) > maxWidthPx) {
-        const spaceAt = line.lastIndexOf(' ');
-        if (spaceAt > 0 && spaceAt >= line.length * 0.3) {
-          out.push(line.slice(0, spaceAt));
-          line = line.slice(spaceAt + 1) + ch;
+    let line: { unit: string; width: number }[] = [];
+    let lineWidth = 0;
+    for (const unit of graphemes(paragraph)) {
+      const unitWidth = measureWidth(unit, fontCss);
+      if (line.length && maxWidthPx > 0 && lineWidth + unitWidth > maxWidthPx) {
+        const text = line.map((item) => item.unit).join('');
+        const spaceAt = text.lastIndexOf(' ');
+        if (spaceAt > 0 && spaceAt >= text.length * 0.3) {
+          out.push(text.slice(0, spaceAt));
+          const rest = graphemes(text.slice(spaceAt + 1));
+          line = rest.map((u) => ({ unit: u, width: measureWidth(u, fontCss) }));
+          lineWidth = line.reduce((sum, item) => sum + item.width, 0);
         } else {
-          out.push(line);
-          line = ch;
+          out.push(text);
+          line = [];
+          lineWidth = 0;
         }
-      } else {
-        line = candidate;
       }
+      line.push({ unit, width: unitWidth });
+      lineWidth += unitWidth;
     }
-    out.push(line);
+    out.push(line.map((item) => item.unit).join(''));
   }
   return out.map((l) => l.replace(/\s+$/, ''));
 }
 
+/** 生成二维码矩阵：按 H→Q→M→L 逐级回退；四级都装不下时返回 null（容量超限，交给调用方画占位框） */
 function createQrMatrix(content: string, requested: ErrorCorrectionLevel) {
-  const levels = ECL_ORDER.slice(ECL_ORDER.indexOf(requested));
-  let failure: unknown = null;
+  // 非法等级（手改的预设 JSON）回落到 M，仍然走完整回退顺序，不要只留最后一级
+  const index = ECL_ORDER.indexOf(requested);
+  const levels = ECL_ORDER.slice(index < 0 ? ECL_ORDER.indexOf('M') : index);
   for (const level of levels) {
     try {
       const qr = QRCode.create(content, { errorCorrectionLevel: level });
       return { matrix: qr.modules, level, downgraded: level !== requested };
-    } catch (error) {
-      failure = error;
+    } catch {
+      // 这一级装不下，继续试更低一级；四级全失败时返回 null，由调用方画占位框（不抛）
     }
   }
-  throw failure instanceof Error ? failure : new Error('二维码生成失败');
+  return null;
 }
 
 /** 生成二维码画布：模块整数像素、静默区算在内、内容为空时给占位框 */
@@ -139,8 +177,8 @@ export function renderQrCode(
 ): QrRender {
   const requestedPx = Math.max(1, Math.round(mmToPx(sizeMm, dpi)));
   const canvas = document.createElement('canvas');
-
-  if (!content.trim()) {
+  // 画不出码时（没内容 / 容量超限）画一张虚线占位框：印张上不留空白，也不抛异常打断整页
+  const drawPlaceholder = () => {
     canvas.width = requestedPx;
     canvas.height = requestedPx;
     const ctx = canvas.getContext('2d');
@@ -151,10 +189,17 @@ export function renderQrCode(
       ctx.strokeRect(ctx.lineWidth / 2, ctx.lineWidth / 2, requestedPx - ctx.lineWidth, requestedPx - ctx.lineWidth);
       ctx.setLineDash([]);
     }
-    return { canvas, modulePx: 0, modules: 0, sidePx: requestedPx, downgraded: false, empty: true };
-  }
+  };
+  const placeholderQr = (overflow: boolean): QrRender => {
+    drawPlaceholder();
+    return { canvas, modulePx: 0, modules: 0, sidePx: requestedPx, downgraded: false, empty: !overflow, overflow, level };
+  };
 
-  const { matrix, downgraded } = createQrMatrix(content, level);
+  if (!content.trim()) return placeholderQr(false);
+
+  const built = createQrMatrix(content, level);
+  if (!built) return placeholderQr(true);
+  const { matrix, downgraded, level: actualLevel } = built;
   const quiet = Math.max(0, Math.round(quietZoneModules));
   const modules = matrix.size + quiet * 2;
   // 取整只允许「不超过」上限：向上取整会让印出来的码比版心还宽，
@@ -179,7 +224,7 @@ export function renderQrCode(
     }
   }
 
-  return { canvas, modulePx, modules, sidePx, downgraded, empty: false };
+  return { canvas, modulePx, modules, sidePx, downgraded, empty: false, overflow: false, level: actualLevel };
 }
 
 interface Built {
@@ -203,7 +248,11 @@ function build(config: LabelConfig, scale: number): Built {
   const titleFontCss = `${config.title.bold ? '700' : '400'} ${titleFontPx}px ${font.stack}`;
   const titleLineHeightPx = titleFontPx * Math.max(0.8, config.title.lineHeight);
   const rawTitle = config.title.text ?? '';
-  const titleLines = rawTitle.trim() ? wrapTitleLines(rawTitle, contentWidthPx, titleFontCss) : [];
+  const wrappedTitle = rawTitle.trim() ? wrapTitleLines(rawTitle, contentWidthPx, titleFontCss) : [];
+  // 标题最多占版心高度的六成：再多就会把二维码挤成废码，超出的行不印，由体检如实报出
+  const titleLineBudget = Math.max(1, Math.floor((contentHeightPx * TITLE_MAX_HEIGHT_SHARE) / titleLineHeightPx));
+  const titleLines = wrappedTitle.slice(0, titleLineBudget);
+  const titleClippedLines = Math.max(0, wrappedTitle.length - titleLines.length);
   const titleHeightPx = titleLines.length * titleLineHeightPx;
 
   const hasTitle = titleLines.length > 0;
@@ -267,6 +316,9 @@ function build(config: LabelConfig, scale: number): Built {
       qrActualMm,
       qrInkMm: pxToMm(qr.modulePx * (qr.modules - 2 * Math.max(0, Math.round(config.qr.quietZoneModules))), exportDpi),
       qrModules: qr.modules,
+      qrOverflow: qr.overflow,
+      actualErrorCorrectionLevel: qr.level,
+      titleClippedLines,
       qrX,
       qrY,
       spaceLimited: qrLimitMm < config.qr.sizeMm - 0.01,
@@ -325,7 +377,7 @@ function drawSheetMarks(ctx: CanvasRenderingContext2D, built: Built) {
 /** 色标条与规格读数：真读数，不是装饰 */
 function drawColorBar(ctx: CanvasRenderingContext2D, built: Built) {
   const { layout, config } = built;
-  const { dpi, marginPx, pixelWidth, pixelHeight, qrModulePx, qrModules } = layout;
+  const { dpi, marginPx, pixelWidth, pixelHeight, qrModulePx, qrModules, actualErrorCorrectionLevel } = layout;
   const bandPx = marginPx;
   if (!config.marks.colorBar || bandPx < mmToPx(6, dpi)) return;
 
@@ -333,7 +385,7 @@ function drawColorBar(ctx: CanvasRenderingContext2D, built: Built) {
   const barWidthPx = cellPx * 8;
   const barHeightPx = Math.max(2, Math.round(Math.min(mmToPx(2.6, dpi), bandPx * 0.42)));
   const fontPx = Math.max(6, Math.round(ptToPx(5, dpi)));
-  const text = `${config.page.widthMm}×${config.page.heightMm}mm · ${config.page.dpi}DPI · 模块${qrModulePx}px · ${qrModules}模块 · 纠错${config.qr.errorCorrectionLevel}`;
+  const text = `${config.page.widthMm}×${config.page.heightMm}mm · ${config.page.dpi}DPI · 模块${qrModulePx}px · ${qrModules}模块 · 纠错${actualErrorCorrectionLevel}`;
 
   ctx.save();
   ctx.font = `400 ${fontPx}px "Cascadia Mono", Consolas, monospace`;
@@ -357,7 +409,7 @@ function drawColorBar(ctx: CanvasRenderingContext2D, built: Built) {
   ctx.restore();
 }
 
-/** 渲染整张标签（scale < 1 用于界面预览，导出永远用 scale = 1） */
+/** 渲染整张标签（scale < 1 用于界面预览，导出永远用 scale = 1）：出不了图时用 failure 表达，绝不抛异常 */
 export function renderLabel(config: LabelConfig, scale = 1): RenderResult {
   const built = build(config, scale);
   const { layout, qr } = built;
@@ -365,43 +417,57 @@ export function renderLabel(config: LabelConfig, scale = 1): RenderResult {
   canvas.width = layout.pixelWidth;
   canvas.height = layout.pixelHeight;
   const ctx = canvas.getContext('2d');
+  // 画布分配失败（尺寸超过浏览器上限）或尺寸被浏览器夹小：显式报失败，绝不返回一张空白还当成成功
+  let failure: RenderFailure | null =
+    ctx && canvas.width === layout.pixelWidth && canvas.height === layout.pixelHeight
+      ? qr.overflow
+        ? 'qr_overflow'
+        : null
+      : 'canvas_unavailable';
 
-  if (ctx) {
-    ctx.fillStyle = PAPER;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    drawSheetMarks(ctx, built);
+  if (ctx && failure !== 'canvas_unavailable') {
+    try {
+      ctx.fillStyle = PAPER;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawSheetMarks(ctx, built);
 
-    if (layout.titleLines.length) {
-      ctx.save();
-      ctx.fillStyle = INK;
-      ctx.font = layout.titleFontCss;
-      ctx.textBaseline = 'top';
-      const padding = (layout.titleLineHeightPx - layout.titleFontPx) / 2;
-      layout.titleLines.forEach((line, index) => {
-        if (!line) return;
-        const y = Math.round(layout.titleYPx + index * layout.titleLineHeightPx + padding);
-        let x = layout.marginPx;
-        if (config.title.align === 'center') {
-          x = Math.round(layout.marginPx + (layout.contentWidthPx - ctx.measureText(line).width) / 2);
-        } else if (config.title.align === 'right') {
-          x = Math.round(layout.marginPx + layout.contentWidthPx - ctx.measureText(line).width);
-        }
-        ctx.fillText(line, x, y);
-      });
-      ctx.restore();
+      if (layout.titleLines.length) {
+        ctx.save();
+        ctx.fillStyle = INK;
+        ctx.font = layout.titleFontCss;
+        ctx.textBaseline = 'top';
+        const padding = (layout.titleLineHeightPx - layout.titleFontPx) / 2;
+        layout.titleLines.forEach((line, index) => {
+          if (!line) return;
+          const y = Math.round(layout.titleYPx + index * layout.titleLineHeightPx + padding);
+          let x = layout.marginPx;
+          if (config.title.align === 'center') {
+            x = Math.round(layout.marginPx + (layout.contentWidthPx - ctx.measureText(line).width) / 2);
+          } else if (config.title.align === 'right') {
+            x = Math.round(layout.marginPx + layout.contentWidthPx - ctx.measureText(line).width);
+          }
+          ctx.fillText(line, x, y);
+        });
+        ctx.restore();
+      }
+
+      ctx.drawImage(qr.canvas, layout.qrX, layout.qrY, layout.qrSidePx, layout.qrSidePx);
+      drawColorBar(ctx, built);
+    } catch {
+      // 绘制中途失败（内存不足等）：按失败上报，不让异常冒到界面里把整页打白
+      failure = 'canvas_unavailable';
     }
-
-    ctx.drawImage(qr.canvas, layout.qrX, layout.qrY, layout.qrSidePx, layout.qrSidePx);
-    drawColorBar(ctx, built);
   }
 
   return {
     canvas,
-    pixelWidth: canvas.width,
-    pixelHeight: canvas.height,
+    pixelWidth: layout.pixelWidth,
+    pixelHeight: layout.pixelHeight,
     modulePx: qr.modulePx,
     qrModules: qr.modules,
     downgraded: qr.downgraded,
+    actualErrorCorrectionLevel: qr.level,
+    failure,
   };
 }
 
@@ -412,6 +478,25 @@ export function validateLabel(config: LabelConfig, layout: LabelLayout): LabelIs
 
   if (!config.content.trim()) {
     issues.push({ level: 'warn', message: '内容为空：二维码位置只画了占位框。' });
+  }
+  if (layout.qrOverflow) {
+    const cap = ECL_BYTE_CAPACITY[config.qr.errorCorrectionLevel] ?? ECL_BYTE_CAPACITY.M;
+    const bytes = new TextEncoder().encode(config.content).length;
+    issues.push({
+      level: 'error',
+      message: `内容 ${bytes} 字节超出二维码容量（纠错 ${config.qr.errorCorrectionLevel} 最多 ${cap} 字节）：二维码位置只画了占位框，请缩短内容或降低纠错等级。`,
+    });
+  } else if (layout.actualErrorCorrectionLevel !== config.qr.errorCorrectionLevel) {
+    issues.push({
+      level: 'warn',
+      message: `内容较长：纠错等级已由 ${config.qr.errorCorrectionLevel} 降到 ${layout.actualErrorCorrectionLevel} 才装得下，印在纸上的也是 ${layout.actualErrorCorrectionLevel}。`,
+    });
+  }
+  if (layout.titleClippedLines > 0) {
+    issues.push({
+      level: 'warn',
+      message: `标题过长：超出「最多占版心六成」的 ${layout.titleClippedLines} 行没有印出，请缩短标题或减小字号。`,
+    });
   }
   if (layout.titleOverflow) {
     issues.push({ level: 'error', message: '标题太高，已经占满版心，二维码无处安放：缩小字号、减小行高或加大页边距。' });
@@ -439,7 +524,12 @@ export function validateLabel(config: LabelConfig, layout: LabelLayout): LabelIs
     issues.push({ level: 'warn', message: '页边距不足 4 mm，裁切标记画不下，已忽略。' });
   }
   const megapixels = (layout.pixelWidth * layout.pixelHeight) / 1_000_000;
-  if (megapixels > 60) {
+  if (megapixels > MAX_RENDER_MEGAPIXELS) {
+    issues.push({
+      level: 'error',
+      message: `导出画布 ${megapixels.toFixed(0)} 兆像素超过上限 ${MAX_RENDER_MEGAPIXELS} 兆像素：浏览器分配不出这么大的画布，请降低 DPI、缩小纸张或减小页边距。`,
+    });
+  } else if (megapixels > CANVAS_WARN_MEGAPIXELS) {
     issues.push({ level: 'warn', message: `当前 ${dpi} DPI 共 ${megapixels.toFixed(0)} 兆像素，导出会慢且占内存，建议降到 300 DPI。` });
   }
   return issues;

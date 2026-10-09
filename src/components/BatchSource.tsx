@@ -18,7 +18,8 @@ export function BatchSource({ store, confirm }: { store: LabelStore; confirm: (r
   const [error, setError] = useState('');
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState('');
-  const { batch, rows } = store;
+  const [warningsOpen, setWarningsOpen] = useState(false);
+  const { batch, rows, rowsStorageError } = store;
 
   const apply = (parsed: DataParse, fileName: string) => {
     store.setRows(parsed.rows);
@@ -30,13 +31,47 @@ export function BatchSource({ store, confirm }: { store: LabelStore; confirm: (r
       warnings: parsed.warnings,
     });
     store.setSelectedRow(parsed.rows[0]?.index ?? 1);
+    store.setSelectedIds([]); // 换了一批数据，旧的多选不再指向任何一行
+    setWarningsOpen(false); // 新的一批提醒默认折起来，别把长列表一次摊开
+  };
+
+  /**
+   * 解析后的落库：0 行当错误、已有数据先确认。
+   * 直接覆盖会静默盖掉现场数据；空文件若照单全收，会清空行并把文件名当成来源。
+   */
+  const commit = (parsed: DataParse, fileName: string, afterApply?: () => void) => {
+    if (parsed.rows.length === 0) {
+      setError(
+        rows.length
+          ? `「${fileName}」文件里没有可用的数据行：已保留原来的 ${rows.length} 行数据。`
+          : `「${fileName}」文件里没有可用的数据行：没有导入任何数据。`,
+      );
+      return;
+    }
+    const done = () => {
+      apply(parsed, fileName);
+      afterApply?.();
+    };
+    if (rows.length === 0) {
+      done();
+      return;
+    }
+    confirm({
+      title: `替换现有 ${rows.length} 行数据`,
+      detail: `将用「${fileName}」里的 ${parsed.rows.length} 行替换当前数据；这一步不能撤销（已经导出的文件不受影响）。`,
+      items: parsed.rows
+        .slice(0, 8)
+        .map((row) => `${row.index}. ${row.title || '（无标题）'} → ${row.content || '（内容为空）'}`),
+      confirmLabel: `替换为 ${parsed.rows.length} 行`,
+      onConfirm: done,
+    });
   };
 
   const load = async (file: File) => {
     setBusy(true);
     setError('');
     try {
-      apply(await parseDataFile(file), file.name);
+      commit(await parseDataFile(file), file.name);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '文件解析失败');
     } finally {
@@ -47,9 +82,10 @@ export function BatchSource({ store, confirm }: { store: LabelStore; confirm: (r
   const loadPaste = () => {
     setError('');
     try {
-      apply(parsePastedText(pasteText), '粘贴的数据');
-      setPasteOpen(false);
-      setPasteText('');
+      commit(parsePastedText(pasteText), '粘贴的数据', () => {
+        setPasteOpen(false);
+        setPasteText('');
+      });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '粘贴内容解析失败');
     }
@@ -105,6 +141,7 @@ export function BatchSource({ store, confirm }: { store: LabelStore; confirm: (r
                   onConfirm: () => {
                     store.setRows([]);
                     store.setBatch(null);
+                    store.setSelectedIds([]);
                   },
                 })
               }
@@ -163,15 +200,41 @@ export function BatchSource({ store, confirm }: { store: LabelStore; confirm: (r
           </Typography>
         ) : null}
 
+        {rowsStorageError ? (
+          <Typography sx={{ fontSize: 10.5, color: 'text.primary', lineHeight: 1.5 }}>
+            · 本机存储写入失败：本次改动不会保留（{rowsStorageError}）。请清理浏览器存储，或换一个非隐私窗口再来。
+          </Typography>
+        ) : null}
+
         {batch?.warnings.length ? (
           <Box sx={{ borderLeft: '1px dashed var(--rule-strong)', pl: 1 }}>
-            {batch.warnings.slice(0, 4).map((warning, index) => (
+            {(warningsOpen ? batch.warnings : batch.warnings.slice(0, 4)).map((warning, index) => (
               <Typography key={index} sx={{ fontSize: 10.5, color: 'text.secondary', lineHeight: 1.5 }}>
                 {warning}
               </Typography>
             ))}
             {batch.warnings.length > 4 ? (
-              <Typography sx={{ fontSize: 10.5, color: 'text.disabled' }}>还有 {batch.warnings.length - 4} 条…</Typography>
+              <Typography
+                role="button"
+                tabIndex={0}
+                onClick={() => setWarningsOpen((open) => !open)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    setWarningsOpen((open) => !open);
+                  }
+                }}
+                sx={{
+                  fontSize: 10.5,
+                  color: 'text.secondary',
+                  lineHeight: 1.5,
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  textUnderlineOffset: '2px',
+                }}
+              >
+                {warningsOpen ? '收起提醒' : `还有 ${batch.warnings.length - 4} 条…`}
+              </Typography>
             ) : null}
           </Box>
         ) : null}

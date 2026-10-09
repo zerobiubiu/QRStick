@@ -11,11 +11,14 @@ export function useAppShortcuts({
   bindings,
   onExport,
   onToggleMode,
+  enabled = true,
 }: {
   /** 键（event.key）→ 导出动作 */
   bindings: Record<string, TopAction>;
   onExport: (action: TopAction) => void;
   onToggleMode: () => void;
+  /** 导出此刻能不能触发（导出中 / 批量模式没有数据时为 false）；快捷键不能绕过按钮的 disabled */
+  enabled?: boolean;
 }): void {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -26,6 +29,7 @@ export function useAppShortcuts({
       const action = bindings[event.key];
       if (action) {
         event.preventDefault();
+        if (!enabled) return; // 按钮此时是灰的，键盘也不该另开一扇门
         void onExport(action);
         return;
       }
@@ -36,5 +40,5 @@ export function useAppShortcuts({
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [bindings, onExport, onToggleMode]);
+  }, [bindings, enabled, onExport, onToggleMode]);
 }

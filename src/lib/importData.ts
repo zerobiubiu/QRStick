@@ -103,7 +103,8 @@ export function parseDelimitedText(text: string, delimiter = ','): { rows: strin
 
 /** 嗅探分隔符：看前几行里哪个候选符在引号外出现得最多（一个都不出现时按逗号） */
 export function sniffDelimiter(text: string): string {
-  const head = text.split(/\r\n|\r|\n/).slice(0, 8).join('\n');
+  // 只看前 8 行，但整份文本可能有几十兆：先截到前 64KB 再切行，别为大文件白扫一遍
+  const head = text.slice(0, 64 * 1024).split(/\r\n|\r|\n/).slice(0, 8).join('\n');
   let best = ',';
   let bestCount = 0;
   for (const candidate of DELIMITERS) {
@@ -150,7 +151,8 @@ function cellToText(value: unknown): string {
  * - 全空行直接跳过：不占序号、不报警告；
  * - 内容为空的行记入 warnings 并跳过（标题允许为空）；
  * - 映射时去掉字段首尾空白：Excel 常在单元格里留下看不见的空格，而二维码内容末尾多一个空格就扫不出来；
- * - BatchRow.index 是结果里的序号（从 1 开始，被跳过的行不占号）；warnings 里报的是数据行号，方便回原文件定位；
+ * - BatchRow.index 是结果里的序号（从 1 开始，被跳过的行不占号）；warnings 里报的是**文件物理行号**
+ *   （有表头时数据从第 2 行起数），方便回原文件定位；
  * - 超过两列时忽略多余列，并记一条警告。
  */
 function toBatchRows(
@@ -196,7 +198,8 @@ function toBatchRows(
       content = fields[1].trim();
     }
     if (content === '') {
-      warnings.push(`第 ${i + 1} 行内容为空，已跳过`);
+      // 报文件里的物理行号（有表头时数据从第 2 行起），别报剔除表头后的下标
+      warnings.push(`第 ${i + (hasHeader ? 2 : 1)} 行内容为空，已跳过`);
       return;
     }
     rows.push({ index: rows.length + 1, title, content });
@@ -246,7 +249,21 @@ async function parseJsonFile(file: File): Promise<DataParse> {
   return { ...mapped, encoding: 'utf-8', format: 'json' };
 }
 
-/** 按文件类型分派：xlsx / json 走各自解析，其余按分隔文本（分隔符嗅探，.tsv 固定制表符） */
+/** 专线扩展名；不在这个表里的扩展名一律拒绝，免得 Office 变体或二进制改名被当表格读成乱码 */
+const KNOWN_EXTENSIONS = ['csv', 'tsv', 'txt', 'json', 'xlsx', 'xls'];
+
+/** 替换字符与控制字符（制表 / 换行 / 回车除外）占比过高时，多半是二进制改了扩展名 */
+function looksBinary(text: string): boolean {
+  if (!text) return false;
+  let suspicious = 0;
+  for (let i = 0; i < text.length; i += 1) {
+    const code = text.charCodeAt(i);
+    if (code === 0xfffd || (code < 0x20 && code !== 0x09 && code !== 0x0a && code !== 0x0d)) suspicious += 1;
+  }
+  return suspicious / text.length > 0.02;
+}
+
+/** 按文件类型分派：xlsx / json 走各自解析，白名单内的文本按分隔文本（分隔符嗅探，.tsv 固定制表符） */
 export async function parseDataFile(file: File): Promise<DataParse> {
   const name = file.name.toLowerCase();
   const extension = name.includes('.') ? name.slice(name.lastIndexOf('.') + 1) : '';
@@ -255,7 +272,16 @@ export async function parseDataFile(file: File): Promise<DataParse> {
   if (extension === 'xls') {
     throw new Error('不支持老式 .xls（二进制格式）：请用 Excel 另存为 .xlsx 或 .csv 再导入');
   }
+  if (!KNOWN_EXTENSIONS.includes(extension)) {
+    const shown = extension ? `.${extension}` : '没有扩展名';
+    throw new Error(
+      `不支持的文件类型（${shown}）：请用 .csv / .tsv / .txt / .json / .xlsx；.xlsm / .ods 请先用 Excel 另存为 .xlsx 或 .csv`,
+    );
+  }
   const { text, encoding } = await decodeFile(file);
+  if (looksBinary(text)) {
+    throw new Error('这个文件不像文本数据（可能是二进制文件改了扩展名）：请确认它是从 Excel 另存出来的 .csv / .tsv / .txt');
+  }
   const delimiter = extension === 'tsv' ? '\t' : sniffDelimiter(text);
   const format: DataFormat = extension === 'tsv' ? 'tsv' : extension === 'txt' ? 'txt' : 'csv';
   const mapped = toBatchRows(parseDelimitedText(text, delimiter).rows);

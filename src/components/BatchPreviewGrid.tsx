@@ -23,10 +23,47 @@ const PREVIEW_CAP = 200;
 /** 估范围用的单格高度（像素）：只为「第 X–Y 张」这个读数服务 */
 const TILE_STRIDE_PX = 240;
 
+/**
+ * 每帧最多出片几张缩略图。
+ *
+ * 参数一改（拖滑杆），所有已可见的格子会在同一个提交里同步 renderLabel，
+ * 两百张挤一帧就把主线程按住不放。这里把所有出片意图收进一个队列摊到动画帧上：
+ * 同一格只保留最新意图（旧的一律作废），队列不空就一直排下一帧——最后一帧一定出片。
+ */
+const THUMB_PER_FRAME = 4;
+
+/** 待出片的格子：键是格子的稳定身份，值是这一格「最新的出片意图」 */
+const thumbBacklog = new Map<object, () => void>();
+let thumbFrame = 0;
+
+function pumpThumbs() {
+  if (thumbFrame !== 0) return;
+  thumbFrame = requestAnimationFrame(() => {
+    thumbFrame = 0;
+    for (const [key, draw] of [...thumbBacklog].slice(0, THUMB_PER_FRAME)) {
+      thumbBacklog.delete(key);
+      draw();
+    }
+    if (thumbBacklog.size) pumpThumbs();
+  });
+}
+
+/** 登记一格的最新出片意图；已有同一格的意图直接顶掉（过期帧不浪费一次出片） */
+function queueThumb(key: object, draw: () => void) {
+  thumbBacklog.set(key, draw);
+  pumpThumbs();
+}
+
+/** 撤下这一格的意图（离屏或卸载时）：离屏的格子不该占出片机会 */
+function dropThumb(key: object) {
+  thumbBacklog.delete(key);
+}
+
 /** 网格里的一格：媒体框按此行标签的自身宽高比，画布 object-fit 放入 → 不拉伸、不裁切 */
 function Tile({
   row,
   config,
+  aspect,
   fingerprint,
   selected,
   onSelect,
@@ -34,6 +71,8 @@ function Tile({
 }: {
   row: BatchRow;
   config: LabelConfig;
+  /** 媒体框的比例：只跟纸张参数有关（行数据只覆盖标题与内容），父级算一次传进来 */
+  aspect: string;
   fingerprint: string;
   selected: boolean;
   onSelect: (index: number) => void;
@@ -41,43 +80,58 @@ function Tile({
 }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const holderRef = useRef<HTMLDivElement>(null);
+  // 这一格在出片队列里的身份：稳定键，重复登记只保留最新意图
+  const tileKey = useRef<object>({});
   const [visible, setVisible] = useState(false);
   const [error, setError] = useState('');
-  const aspect = useMemo(() => {
-    const layout = layoutLabel(buildRowConfig(config, row));
-    return `${layout.sheetWidthMm} / ${layout.sheetHeightMm}`;
-  }, [config, row]);
 
+  // 进视野、出视野都要认：离屏即回收画布（一张缩略图约 1.6 MB，两百张常驻就是几百兆）
   useEffect(() => {
     const node = wrapperRef.current;
-    if (!node || visible) return;
+    if (!node) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) setVisible(true);
+        const entry = entries[entries.length - 1];
+        if (!entry) return;
+        setVisible((prev) => (prev === entry.isIntersecting ? prev : entry.isIntersecting));
       },
       { rootMargin: '320px 0px' },
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [visible]);
+  }, []);
 
   useEffect(() => {
     const holder = holderRef.current;
-    if (!visible || !holder) return;
-    let message = '';
-    try {
-      const rowConfig = buildRowConfig(config, row);
-      const scale = previewScaleFor(layoutLabel(rowConfig), THUMB_MAX_PX);
-      const { canvas } = renderLabel(rowConfig, scale);
-      holder.replaceChildren(canvas);
-    } catch (cause) {
-      message = cause instanceof Error ? cause.message : '渲染失败';
+    const key = tileKey.current;
+    if (!visible) {
+      // 离屏回收：画布不再常驻，滚回来时按当前参数重新出一张
+      holder?.replaceChildren();
+      return;
     }
-    // 画布渲染只能在 DOM 就绪后做（不能在渲染期），失败信息要落进界面状态
-    // oxlint-disable-next-line react/set-state-in-effect
-    setError((prev) => (prev === message ? prev : message));
+    if (!holder) return;
+    // 出片摊到动画帧上（见 queueThumb）：参数连着改时不会把几百张挤进同一个提交
+    queueThumb(key, () => {
+      let message = '';
+      try {
+        const rowConfig = buildRowConfig(config, row);
+        const scale = previewScaleFor(layoutLabel(rowConfig), THUMB_MAX_PX);
+        const { canvas, failure } = renderLabel(rowConfig, scale);
+        // 分配不出画布的行不挂空白画布：说清原因，别让人把空白当成印出来的样子
+        if (failure === 'canvas_unavailable') {
+          holder.replaceChildren();
+          message = '画布太大，浏览器分配不出：降低 DPI 或缩小纸张';
+        } else {
+          holder.replaceChildren(canvas);
+        }
+      } catch (cause) {
+        holder.replaceChildren();
+        message = cause instanceof Error ? cause.message : '出片时出了状况';
+      }
+      setError((prev) => (prev === message ? prev : message));
+    });
     return () => {
-      holder.replaceChildren();
+      dropThumb(key);
     };
     // fingerprint 覆盖 config 的变化；行标题/内容变化必须重渲染，否则就是过期缩略图
   }, [visible, row.title, row.content, fingerprint, config, row]);
@@ -109,18 +163,30 @@ function Tile({
       }}
     >
       <Box sx={{ position: 'relative', width: '100%', aspectRatio: aspect, bgcolor: 'var(--ground)', overflow: 'hidden' }}>
+        {/* 画布框常驻：出不了片时在上面盖一层说明，不能把节点摘掉（摘掉就再也不会重出片） */}
+        <Box
+          ref={holderRef}
+          sx={{ position: 'absolute', inset: 0, '& canvas': { display: 'block', width: '100%', height: '100%', objectFit: 'contain' } }}
+        />
         {error ? (
-          <Stack sx={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', px: 1 }}>
-            <Typography sx={{ fontSize: 10.5, textAlign: 'center' }}>第 {row.index} 行渲染失败</Typography>
-            <Typography sx={{ fontSize: 10, color: 'text.secondary', textAlign: 'center' }}>{error}</Typography>
+          <Stack
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 0.25,
+              px: 1,
+              bgcolor: 'var(--ground)',
+              border: '1px dashed var(--rule-strong)',
+            }}
+          >
+            <Typography sx={{ fontSize: 10.5, textAlign: 'center' }}>第 {row.index} 行出不了片</Typography>
+            <Typography sx={{ fontSize: 10, fontFamily: MONO_FONT, color: 'text.secondary', textAlign: 'center', lineHeight: 1.35 }}>
+              {error}
+            </Typography>
           </Stack>
-        ) : (
-          <Box
-            ref={holderRef}
-            sx={{ position: 'absolute', inset: 0, '& canvas': { display: 'block', width: '100%', height: '100%', objectFit: 'contain' } }}
-          />
-        )}
-        {!visible && !error ? (
+        ) : !visible ? (
           <Stack sx={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}>
             <Typography sx={{ fontSize: 10, color: 'text.secondary' }}>第 {row.index} 行待渲染</Typography>
           </Stack>
@@ -165,6 +231,11 @@ export function BatchPreviewGrid({
 }) {
   const { rows, selectedRow, previewLayout, previewZoom, previewColumns } = store;
   const fingerprint = useMemo(() => JSON.stringify(baseConfig), [baseConfig]);
+  // 每格的媒体框比例只跟纸张有关：算一次，别让两百格各自再算一遍版式
+  const tileAspect = useMemo(() => {
+    const layout = layoutLabel(baseConfig);
+    return `${layout.sheetWidthMm} / ${layout.sheetHeightMm}`;
+  }, [baseConfig]);
   const shown = rows.slice(0, PREVIEW_CAP);
   const selectedExists = rows.some((row) => row.index === selectedRow);
 
@@ -331,6 +402,7 @@ export function BatchPreviewGrid({
                 key={row.index}
                 row={row}
                 config={baseConfig}
+                aspect={tileAspect}
                 fingerprint={fingerprint}
                 selected={row.index === selectedRow}
                 onSelect={store.setSelectedRow}

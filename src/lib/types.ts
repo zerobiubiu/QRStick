@@ -147,4 +147,11 @@ export interface RenderResult {
   qrModules: number;
   /** 是否因内容过长而回退到更低纠错等级 */
   downgraded: boolean;
+  /** 实际生成用的纠错等级：内容过长时会低于请求值，读数条与色标条必须以它为准 */
+  actualErrorCorrectionLevel: ErrorCorrectionLevel;
+  /** 非 null 表示这一张没能正常出图；预览与导出都必须显式处理，绝不能当成成功 */
+  failure: RenderFailure | null;
 }
+
+/** 渲染失败原因：qr_overflow = 内容超出二维码容量（已画占位框，张贴物上没有可扫的码）；canvas_unavailable = 画布分配失败（产不出文件） */
+export type RenderFailure = 'qr_overflow' | 'canvas_unavailable';
