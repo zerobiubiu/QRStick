@@ -11,8 +11,9 @@ import { PressSheet } from './components/PressSheet';
 import { StateLine } from './components/StateLine';
 import { EXPORT_ACTION, runExport, type ExportFormat } from './export/run';
 import { layoutLabel, validateLabel } from './lib/render';
+import { formatMm } from './lib/units';
 import { IDLE_EXPORT, useLabelStore, type AppMode } from './state/labelStore';
-import { theme } from './theme';
+import { theme, MONO_FONT } from './theme';
 import type { LabelConfig } from './lib/types';
 
 const FORMATS: ExportFormat[] = ['png', 'pdf', 'word'];
@@ -22,6 +23,10 @@ const HINTS: Record<ExportFormat, string> = {
   pdf: '一页一张标签，页面毫米尺寸与印张一致，可直接送印',
   word: '标题是可直接编辑的文字、二维码是图片，方便交给别人改字',
 };
+
+/** 单个任务重复几十次时，键盘路径才是效率路径（Alt 组合不与浏览器快捷键打架） */
+const SHORTCUTS: Record<string, ExportFormat> = { '1': 'png', '2': 'pdf', '3': 'word' };
+const SHORTCUT_LABEL: Record<ExportFormat, string> = { png: 'Alt+1', pdf: 'Alt+2', word: 'Alt+3' };
 
 export default function App() {
   const store = useLabelStore();
@@ -49,6 +54,12 @@ export default function App() {
     if (record.phase === 'done' && exportedKey && exportedKey !== configKey) setRecord(IDLE_EXPORT);
   }, [configKey, exportedKey, record.phase, setRecord]);
 
+  /** 三个导出键的含义常驻可见：它们的区别只放在 tooltip 里，触屏用户永远看不到 */
+  const exportBrief =
+    mode === 'batch' && rows.length
+      ? `付印 PDF / 交版 Word：每行一页，共 ${rows.length} 页 · 出片 PNG：只出当前选中那一行 · 打印请设 100%，关闭「适应页面」`
+      : `出片 PNG：按 DPI 原样出图（${layout.pixelWidth} × ${layout.pixelHeight} px）· 付印 PDF：一页一张，页面就是 ${formatMm(layout.sheetWidthMm)} × ${formatMm(layout.sheetHeightMm)} mm（打印请设 100%，关闭「适应页面」）· 交版 Word：标题是可编辑文字`;
+
   const handleExport = useCallback(
     async (format: ExportFormat) => {
       setRecord({ ...IDLE_EXPORT, phase: 'busy', action: EXPORT_ACTION[format] });
@@ -61,6 +72,7 @@ export default function App() {
         setRecord({
           phase: 'done',
           at: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
+          note: format === 'pdf' ? '打印请设 100%，关闭「适应页面」缩放' : undefined,
           ...outcome,
         });
         setExportedKey(configKey);
@@ -70,6 +82,28 @@ export default function App() {
     },
     [config, mode, rows, selectedRow, setRecord],
   );
+
+  // Alt+1/2/3 导出、Alt+M 切模式；在输入框里打字时不抢键
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!event.altKey || event.ctrlKey || event.metaKey) return;
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target?.isContentEditable) return;
+      const format = SHORTCUTS[event.key];
+      if (format) {
+        event.preventDefault();
+        void handleExport(format);
+        return;
+      }
+      if (event.key.toLowerCase() === 'm') {
+        event.preventDefault();
+        setMode(mode === 'batch' ? 'single' : 'batch');
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [handleExport, mode, setMode]);
 
   const exportLabel = (format: ExportFormat) => {
     if (mode !== 'batch' || !rows.length) return EXPORT_ACTION[format];
@@ -100,7 +134,7 @@ export default function App() {
             exclusive
             size="small"
             value={mode}
-            aria-label="工作模式"
+            aria-label="工作模式（Alt+M 切换）"
             onChange={(_event, next: AppMode | null) => {
               if (next) setMode(next);
             }}
@@ -113,7 +147,7 @@ export default function App() {
 
           <Stack direction="row" sx={{ gap: 1 }}>
             {FORMATS.map((format) => (
-              <Tooltip key={format} title={HINTS[format]} arrow>
+              <Tooltip key={format} title={`${HINTS[format]}（${SHORTCUT_LABEL[format]}）`} arrow>
                 <span>
                   <Button
                     size="small"
@@ -129,6 +163,12 @@ export default function App() {
           </Stack>
         </Stack>
       </Paper>
+
+      <Box sx={{ flex: '0 0 auto', px: 2, py: 0.5, bgcolor: 'var(--paper)', borderBottom: '1px solid var(--rule)' }}>
+        <Typography sx={{ fontSize: 10.5, color: 'text.secondary', fontFamily: MONO_FONT, lineHeight: 1.5 }}>
+          {exportBrief}
+        </Typography>
+      </Box>
 
       <Box
         sx={{
@@ -168,7 +208,14 @@ export default function App() {
                 height: { xs: 340, lg: 'auto' },
               }}
             >
-              <BatchGrid rows={rows} selectedRow={selectedRow} onSelect={setSelectedRow} />
+              <BatchGrid
+                rows={rows}
+                selectedRow={selectedRow}
+                onSelect={setSelectedRow}
+                onAddRow={store.addRow}
+                onEditRow={store.updateRow}
+                onRemoveRow={store.removeRow}
+              />
               {wide ? (
                 <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, borderLeft: '1px solid var(--rule)' }}>
                   <PressSheet config={previewConfig} layout={previewLayout} signature={previewSignature} />

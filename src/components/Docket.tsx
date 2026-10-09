@@ -24,7 +24,7 @@ import {
 } from '@mui/material';
 import { LABEL_FONTS } from '../lib/fonts';
 import { DPI_PRESETS, PAGE_PRESETS, clamp, formatMm, parseAspectRatio } from '../lib/units';
-import type { Align, ErrorCorrectionLevel, TitlePosition } from '../lib/types';
+import type { Align, BlockAlign, ErrorCorrectionLevel, TitlePosition } from '../lib/types';
 import type { LabelIssue } from '../lib/render';
 import type { LabelStore } from '../state/labelStore';
 import { BatchSource } from './BatchSource';
@@ -276,6 +276,7 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
   const { config, patchPage, patchQr, patchTitle, patchMarks } = store;
   const [ratioText, setRatioText] = useState('1:1.414');
   const [ratioError, setRatioError] = useState('');
+  const [presetName, setPresetName] = useState('');
   const [moreOpen, setMoreOpen] = useState(!compact);
   const custom = config.page.presetId === 'custom';
 
@@ -304,6 +305,54 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
       }}
     >
       <Box sx={{ overflowY: 'auto', minHeight: 0, flex: 1 }}>
+        {/* 批量模式下数据源就是首要任务，排在最前 */}
+        {store.mode === 'batch' ? <BatchSource store={store} /> : null}
+
+        <DocketSection title="预设" meta={store.presets.length ? `${store.presets.length} 套` : '未保存'}>
+          <FieldRow label="存下这套" hint="把当前全部参数存成一套，下次一键回到同样的规格（存在本机）">
+            <Stack direction="row" sx={{ gap: 0.75, alignItems: 'center' }}>
+              <TextField
+                size="small"
+                value={presetName}
+                placeholder="名称，例如「A4 工单」"
+                onChange={(event) => setPresetName(event.target.value)}
+                slotProps={{ htmlInput: { 'aria-label': '预设名称' } }}
+                sx={{ flex: 1, minWidth: 0 }}
+              />
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => {
+                  store.savePreset(presetName);
+                  setPresetName('');
+                }}
+              >
+                保存
+              </Button>
+            </Stack>
+          </FieldRow>
+          {store.presets.length ? (
+            store.presets.map((preset) => (
+              <FieldRow key={preset.id} label={preset.name} hint={`保存于 ${preset.savedAt}`}>
+                <Stack direction="row" sx={{ gap: 0.75 }}>
+                  <Button size="small" variant="outlined" onClick={() => store.applyPreset(preset.id)}>
+                    套用
+                  </Button>
+                  <Button size="small" variant="text" onClick={() => store.deletePreset(preset.id)}>
+                    删除
+                  </Button>
+                </Stack>
+              </FieldRow>
+            ))
+          ) : (
+            <Box sx={{ px: 2, py: 0.75 }}>
+              <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>
+                还没有预设：同一种标签每天都要出的话，把现在这套参数存下来。
+              </Typography>
+            </Box>
+          )}
+        </DocketSection>
+
         <DocketSection title="规格" meta={`${formatMm(config.page.widthMm)} × ${formatMm(config.page.heightMm)}`}>
           <FieldRow label="纸张">
             <FieldSelect
@@ -312,7 +361,7 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
               onChange={(presetId) => {
                 const preset = PAGE_PRESETS.find((p) => p.id === presetId);
                 if (!preset) return;
-                patchPage({ presetId: preset.id, widthMm: preset.widthMm, heightMm: preset.heightMm });
+                patchPage({ presetId: preset.id, widthMm: preset.widthMm, heightMm: preset.heightMm, landscape: false });
               }}
             />
           </FieldRow>
@@ -325,6 +374,18 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
                 { value: 'landscape', label: '横向' },
               ]}
               onChange={(next) => patchPage({ landscape: next === 'landscape' })}
+            />
+          </FieldRow>
+          <FieldRow label="版式站位" hint="内容块（标题 + 二维码）在版心里的垂直位置；居中时上下留白各一半">
+            <Segmented<BlockAlign>
+              ariaLabel="版式垂直站位"
+              value={config.page.blockAlign}
+              options={[
+                { value: 'top', label: '顶部' },
+                { value: 'center', label: '居中' },
+                { value: 'bottom', label: '底部' },
+              ]}
+              onChange={(blockAlign) => patchPage({ blockAlign })}
             />
           </FieldRow>
           {custom ? (
@@ -522,10 +583,10 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
         </DocketSection>
 
         <DocketSection title="二维码" meta={`纠错 ${config.qr.errorCorrectionLevel}`}>
-          <FieldRow label="内容" align="start" hint="二维码里装的东西：编号、链接、备注都行，支持多行；批量模式下由 CSV 逐行覆盖">
+          <FieldRow label="内容" align="start" hint="二维码里装的东西：编号、链接、备注都行，支持多行；批量模式下由数据表的「内容」列逐行覆盖">
             <FieldTextArea value={config.content} onChange={store.setContent} minRows={2} maxRows={5} mono />
           </FieldRow>
-          <FieldRow label="边长" hint="含静默区；按整数像素 / 模块落地，实际边长以读数为准">
+          <FieldRow label="边长" hint="含静默区的外框尺寸；读数条同时给出外框与码面，码面才是贴纸上那个黑方块的大小">
             <Stack direction="row" sx={{ gap: 1.25, alignItems: 'center' }}>
               <NumberField
                 ariaLabel="二维码边长（毫米）"
@@ -605,18 +666,18 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
           </Collapse>
         </DocketSection>
 
-        {store.mode === 'batch' ? <BatchSource store={store} /> : null}
-      </Box>
+        </Box>
 
       {/* 体检常驻底栏：它是提醒的唯一解释处，不能停在滚动区最底部 */}
       <Box sx={{ mt: 'auto', borderTop: `1.5px solid ${INK}`, bgcolor: 'rgba(16,16,16,0.02)' }}>
-        {issues.length ? (
+        {/* 体检只列状态行没在说的那些：首条已经在状态行上，同屏不重复 */}
+        {issues.length > 1 ? (
           <Box sx={{ borderBottom: '1px solid var(--rule)', maxHeight: 140, overflowY: 'auto', px: 2, py: 0.75 }}>
             <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary', mb: 0.25 }}>
               体检 · {issues.filter((item) => item.level === 'error').length} 错 ·{' '}
-              {issues.filter((item) => item.level === 'warn').length} 警
+              {issues.filter((item) => item.level === 'warn').length} 警（首条见右下状态行）
             </Typography>
-            {issues.map((issue, index) => (
+            {issues.slice(1).map((issue, index) => (
               <Stack key={`${index}-${issue.message}`} direction="row" sx={{ gap: 1, alignItems: 'flex-start', py: 0.25 }}>
                 <Box sx={{ pt: 0.75 }}>
                   <LineMark form={issue.level === 'error' ? 'double' : 'dashed'} width={22} />

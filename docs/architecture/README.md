@@ -6,6 +6,6 @@
 
 阅读顺序：先 `0001`，再看源码 `src/lib/render.ts` → `src/lib/export.ts` → `src/export/run.ts`。
 
-相关代码/配置：`src/lib/{units,types,fonts,render,export,download,csv,batch}.ts`、`src/export/run.ts`、`src/state/labelStore.ts`。
+相关代码/配置：`src/lib/{units,types,fonts,render,export,download,importData,batch}.ts`、`src/export/run.ts`、`src/state/labelStore.ts`（本机三个键：`qrstick.config.v1` 配置、`qrstick.rows.v1` 批量行、`qrstick.presets.v1` 预设）。
 
 废弃与替代：无。

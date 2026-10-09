@@ -1,13 +1,16 @@
 /**
- * 状态仓：一份 LabelConfig（持久化到本机）、批量行、导出状态。
+ * 状态仓：一份 LabelConfig、批量数据行、导出状态、保存的预设。
  *
- * 参数改动立刻重排印张——没有「应用」按钮，所以「待应用」这个状态在本产品里不存在；
- * 界面上的状态只有四种，全部用线型表达：已生效 / 正在出片 / 已导出 / 有提醒。
+ * 全部落在本机 localStorage（纯前端、零上传）。配置、批量行、预设各占一个键，
+ * 形状对不上就退回默认，绝不把旧结构直接塞进界面。
  */
 import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import type { BatchRow, LabelConfig, MarksConfig, PageConfig, QrConfig, TitleConfig } from '../lib/types';
+import type { DataFormat } from '../lib/importData';
 
-const STORAGE_KEY = 'qrstick.config.v1';
+const CONFIG_KEY = 'qrstick.config.v1';
+const ROWS_KEY = 'qrstick.rows.v1';
+const PRESETS_KEY = 'qrstick.presets.v1';
 
 export const DEFAULT_CONFIG: LabelConfig = {
   page: {
@@ -17,6 +20,7 @@ export const DEFAULT_CONFIG: LabelConfig = {
     landscape: false,
     dpi: 300,
     marginMm: 12,
+    blockAlign: 'center',
   },
   qr: { sizeMm: 60, errorCorrectionLevel: 'M', quietZoneModules: 4 },
   title: {
@@ -30,15 +34,15 @@ export const DEFAULT_CONFIG: LabelConfig = {
     lineHeight: 1.25,
   },
   content: 'LOC-A-03-12',
-  // 裁切标记默认打开：它是这个世界的签名器件，且标记本来就是印在纸上的东西；
-  // 其余两个标记按需开（都会被印进导出件）
-  marks: { cropMarks: true, colorBar: false, marginGuides: false },
+  // 裁切标记与色标条默认打开：标记本来就该印在纸上，色标条还能在纸上自证尺寸
+  marks: { cropMarks: true, colorBar: true, marginGuides: false },
 };
 
 export type AppMode = 'single' | 'batch';
 
 export interface BatchMeta {
   fileName: string;
+  format: DataFormat;
   encoding: 'utf-8' | 'gbk';
   hasHeader: boolean;
   warnings: string[];
@@ -51,15 +55,24 @@ export interface ExportRecord {
   fileName: string;
   pages: number;
   at: string;
+  /** 导出后要补的一句提醒（例如打印请设 100%） */
+  note?: string;
   error?: string;
+}
+
+export interface LabelPreset {
+  id: string;
+  name: string;
+  savedAt: string;
+  config: LabelConfig;
 }
 
 export const IDLE_EXPORT: ExportRecord = { phase: 'idle', action: '', fileName: '', pages: 0, at: '' };
 
-/** 读取本机存下的配置；形状对不上就退回默认，绝不把旧结构直接塞进界面 */
+/** 老配置里没有的字段一律回落到默认值（例如后来才加的 blockAlign） */
 function loadConfig(): LabelConfig {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(CONFIG_KEY);
     if (!raw) return DEFAULT_CONFIG;
     const saved = JSON.parse(raw) as Partial<LabelConfig>;
     return {
@@ -74,18 +87,57 @@ function loadConfig(): LabelConfig {
   }
 }
 
+function loadRows(): { rows: BatchRow[]; batch: BatchMeta | null } {
+  try {
+    const raw = localStorage.getItem(ROWS_KEY);
+    if (!raw) return { rows: [], batch: null };
+    const saved = JSON.parse(raw) as { rows?: BatchRow[]; batch?: BatchMeta | null };
+    const rows = Array.isArray(saved.rows)
+      ? saved.rows
+          .filter((row) => typeof row?.content === 'string')
+          .map((row, i) => ({ index: i + 1, title: String(row.title ?? ''), content: String(row.content) }))
+      : [];
+    return { rows, batch: saved.batch ?? null };
+  } catch {
+    return { rows: [], batch: null };
+  }
+}
+
+function loadPresets(): LabelPreset[] {
+  try {
+    const raw = localStorage.getItem(PRESETS_KEY);
+    if (!raw) return [];
+    const saved = JSON.parse(raw) as LabelPreset[];
+    return Array.isArray(saved) ? saved.filter((preset) => preset?.id && preset?.config) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** 本机唯一标识：不用 crypto.randomUUID（内网 http 下不可用） */
+function makeId(): string {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export interface LabelStore {
   config: LabelConfig;
   mode: AppMode;
   setMode: (mode: AppMode) => void;
   rows: BatchRow[];
   setRows: (rows: BatchRow[]) => void;
+  addRow: () => void;
+  updateRow: (index: number, patch: Partial<Pick<BatchRow, 'title' | 'content'>>) => void;
+  removeRow: (index: number) => void;
   batch: BatchMeta | null;
   setBatch: (meta: BatchMeta | null) => void;
   selectedRow: number;
   setSelectedRow: (index: number) => void;
   record: ExportRecord;
   setRecord: Dispatch<SetStateAction<ExportRecord>>;
+  presets: LabelPreset[];
+  savePreset: (name: string) => void;
+  applyPreset: (id: string) => void;
+  deletePreset: (id: string) => void;
   patchPage: (next: Partial<PageConfig>) => void;
   patchQr: (next: Partial<QrConfig>) => void;
   patchTitle: (next: Partial<TitleConfig>) => void;
@@ -97,18 +149,35 @@ export interface LabelStore {
 export function useLabelStore(): LabelStore {
   const [config, setConfig] = useState<LabelConfig>(loadConfig);
   const [mode, setMode] = useState<AppMode>('single');
-  const [rows, setRows] = useState<BatchRow[]>([]);
-  const [batch, setBatch] = useState<BatchMeta | null>(null);
+  const [rows, setRows] = useState<BatchRow[]>(() => loadRows().rows);
+  const [batch, setBatch] = useState<BatchMeta | null>(() => loadRows().batch);
   const [selectedRow, setSelectedRow] = useState(1);
   const [record, setRecord] = useState<ExportRecord>(IDLE_EXPORT);
+  const [presets, setPresets] = useState<LabelPreset[]>(loadPresets);
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
     } catch {
       /* 隐私模式下写入会失败，不影响使用 */
     }
   }, [config]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(ROWS_KEY, JSON.stringify({ rows, batch }));
+    } catch {
+      /* 同上 */
+    }
+  }, [rows, batch]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
+    } catch {
+      /* 同上 */
+    }
+  }, [presets]);
 
   const patchPage = useCallback((next: Partial<PageConfig>) => {
     setConfig((c) => ({ ...c, page: { ...c.page, ...next } }));
@@ -127,18 +196,73 @@ export function useLabelStore(): LabelStore {
   }, []);
   const reset = useCallback(() => setConfig(DEFAULT_CONFIG), []);
 
+  const addRow = useCallback(() => {
+    setRows((prev) => {
+      const next = [...prev, { index: prev.length + 1, title: '', content: '' }];
+      setSelectedRow(next.length);
+      return next;
+    });
+  }, []);
+
+  const updateRow = useCallback((index: number, patch: Partial<Pick<BatchRow, 'title' | 'content'>>) => {
+    setRows((prev) => prev.map((row) => (row.index === index ? { ...row, ...patch } : row)));
+  }, []);
+
+  const removeRow = useCallback(
+    (index: number) => {
+      const next = rows.filter((row) => row.index !== index).map((row, i) => ({ ...row, index: i + 1 }));
+      setRows(next);
+      setSelectedRow((current) => {
+        if (next.length === 0) return 1;
+        if (current === index) return Math.min(index, next.length);
+        return current > index ? current - 1 : current;
+      });
+    },
+    [rows],
+  );
+
+  const savePreset = useCallback(
+    (name: string) => {
+      const preset: LabelPreset = {
+        id: makeId(),
+        name: name.trim() || `预设 ${presets.length + 1}`,
+        savedAt: new Date().toLocaleString('zh-CN', { hour12: false }),
+        config: structuredClone(config),
+      };
+      setPresets((prev) => [preset, ...prev]);
+    },
+    [config, presets.length],
+  );
+  const applyPreset = useCallback(
+    (id: string) => {
+      const preset = presets.find((item) => item.id === id);
+      if (preset) setConfig(structuredClone(preset.config));
+    },
+    [presets],
+  );
+  const deletePreset = useCallback((id: string) => {
+    setPresets((prev) => prev.filter((item) => item.id !== id));
+  }, []);
+
   return {
     config,
     mode,
     setMode,
     rows,
     setRows,
+    addRow,
+    updateRow,
+    removeRow,
     batch,
     setBatch,
     selectedRow,
     setSelectedRow,
     record,
     setRecord,
+    presets,
+    savePreset,
+    applyPreset,
+    deletePreset,
     patchPage,
     patchQr,
     patchTitle,

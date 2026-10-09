@@ -182,7 +182,7 @@ export function PressSheet({ config, layout, signature }: { config: LabelConfig;
   const displayHeight = layout.sheetHeightMm * pxPerMm;
   const qrReadout =
     layout.qrModules > 0
-      ? `${layout.qrActualMm.toFixed(1)} mm · ${layout.qrModulePx} px/模块 · ${layout.qrModules} 模块`
+      ? `外框 ${layout.qrActualMm.toFixed(1)} mm · 码面 ${layout.qrInkMm.toFixed(1)} mm · ${layout.qrModulePx} px/模块 · ${layout.qrModules} 模块`
       : '占位（内容为空）';
 
   return (

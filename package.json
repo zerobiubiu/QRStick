@@ -1,7 +1,7 @@
 {
   "name": "qrstick",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -20,7 +20,8 @@
     "jspdf": "^4.2.1",
     "qrcode": "^1.5.4",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "read-excel-file": "^9.3.12"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",

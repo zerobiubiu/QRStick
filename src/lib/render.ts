@@ -58,8 +58,10 @@ export interface LabelLayout {
   qrExportSidePx: number;
   /** 单模块边长（整数像素，导出网格） */
   qrModulePx: number;
-  /** 二维码落地后的真实边长（毫米）——屏幕拿尺子量到的就是它 */
+  /** 二维码落地后的**外框**边长（毫米，含静默区）——屏幕上拿尺子量到的是码面，不是这个数 */
   qrActualMm: number;
+  /** 码面边长（毫米，不含静默区）——「贴纸要多大的黑方块」就是它 */
+  qrInkMm: number;
   qrModules: number;
   qrX: number;
   qrY: number;
@@ -155,7 +157,10 @@ export function renderQrCode(
   const { matrix, downgraded } = createQrMatrix(content, level);
   const quiet = Math.max(0, Math.round(quietZoneModules));
   const modules = matrix.size + quiet * 2;
-  const modulePx = Math.max(1, Math.round(requestedPx / modules));
+  // 取整只允许「不超过」上限：向上取整会让印出来的码比版心还宽，
+  // 也会让「空间不足」时二维码被挤成左贴而不是居中
+  const rounded = Math.max(1, Math.round(requestedPx / modules));
+  const modulePx = rounded * modules > requestedPx ? Math.max(1, Math.floor(requestedPx / modules)) : rounded;
   const sidePx = modulePx * modules;
   canvas.width = sidePx;
   canvas.height = sidePx;
@@ -221,8 +226,19 @@ function build(config: LabelConfig, scale: number): Built {
   const qrActualMm = pxToMm(qr.sidePx, exportDpi);
   const qrDrawPx = Math.max(1, Math.round(mmToPx(qrActualMm, dpi)));
 
-  const titleYPx = config.title.position === 'above' || !hasTitle ? marginPx : marginPx + qrDrawPx + gapPx;
-  const qrY = hasTitle && config.title.position === 'above' ? marginPx + titleHeightPx + gapPx : marginPx;
+  // 内容块的垂直站位：留白全在下方（顶部）／上下各一半（居中）／全在上方（底部）
+  const blockHeightPx = titleBlockPx + qrDrawPx;
+  const freePx = Math.max(0, contentHeightPx - blockHeightPx);
+  const blockTopPx =
+    marginPx +
+    (config.page.blockAlign === 'center'
+      ? Math.round(freePx / 2)
+      : config.page.blockAlign === 'bottom'
+        ? freePx
+        : 0);
+
+  const titleYPx = config.title.position === 'above' || !hasTitle ? blockTopPx : blockTopPx + qrDrawPx + gapPx;
+  const qrY = hasTitle && config.title.position === 'above' ? blockTopPx + titleHeightPx + gapPx : blockTopPx;
   const qrX = Math.round(marginPx + Math.max(0, (contentWidthPx - qrDrawPx) / 2));
 
   return {
@@ -249,6 +265,7 @@ function build(config: LabelConfig, scale: number): Built {
       qrExportSidePx: qr.sidePx,
       qrModulePx: qr.modulePx,
       qrActualMm,
+      qrInkMm: pxToMm(qr.modulePx * (qr.modules - 2 * Math.max(0, Math.round(config.qr.quietZoneModules))), exportDpi),
       qrModules: qr.modules,
       qrX,
       qrY,

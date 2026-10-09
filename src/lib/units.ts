@@ -16,6 +16,11 @@ export const PAGE_PRESETS: PagePreset[] = [
   { id: 'A3', label: 'A3 297 × 420 mm', widthMm: 297, heightMm: 420 },
   { id: 'B5', label: 'B5 176 × 250 mm', widthMm: 176, heightMm: 250 },
   { id: 'Letter', label: 'Letter 215.9 × 279.4 mm', widthMm: 215.9, heightMm: 279.4 },
+  // 现场最常用的贴纸 / 热敏标签纸：预设写的是它本来的样子（选完即按这个方向落纸）
+  { id: 'label-60x40', label: '贴纸 60 × 40 mm', widthMm: 60, heightMm: 40 },
+  { id: 'label-80x50', label: '贴纸 80 × 50 mm', widthMm: 80, heightMm: 50 },
+  { id: 'label-100x150', label: '标签 100 × 150 mm', widthMm: 100, heightMm: 150 },
+  { id: 'label-4x6', label: '标签 4 × 6 in（101.6 × 152.4 mm）', widthMm: 101.6, heightMm: 152.4 },
   { id: 'custom', label: '自定义', widthMm: 210, heightMm: 297 },
 ];
 

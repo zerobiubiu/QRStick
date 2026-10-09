@@ -47,8 +47,11 @@ body {
   background: rgba(0, 147, 208, 0.24);
 }
 
+/* 焦点环是全站策略，必须压过组件库的 outline 重置：
+   MUI 的 ButtonBase / InputBase 会注入 `outline: 0` 且晚于本文件，所以这里用 !important。
+   键盘用户看不到焦点在哪，等于整条键盘路径不存在。 */
 :focus-visible {
-  outline: 2px solid var(--cyan);
+  outline: 2px solid var(--cyan) !important;
   outline-offset: 1px;
 }
 

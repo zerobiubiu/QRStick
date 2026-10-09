@@ -22,6 +22,9 @@ export interface PagePreset {
   heightMm: number;
 }
 
+/** 内容块（标题块 + 二维码）在版心里的垂直位置 */
+export type BlockAlign = 'top' | 'center' | 'bottom';
+
 /** 页面（印张）参数 */
 export interface PageConfig {
   /** 预设 id，见 units.ts 的 PAGE_PRESETS；'custom' 表示自定义宽高 */
@@ -35,6 +38,8 @@ export interface PageConfig {
   dpi: number;
   /** 四边页边距，毫米。标签内容不会越出这个边界 */
   marginMm: number;
+  /** 内容块的垂直站位：顶部 / 居中 / 底部 */
+  blockAlign: BlockAlign;
 }
 
 /** 二维码参数 */
