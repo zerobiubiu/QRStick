@@ -52,4 +52,6 @@ export interface ViewState {
   splitRatio: number;
   columnWidths: Record<string, number>;
   imageExport: ImageExportOptions;
+  /** 首访上手条是否已经被收起（用户点「知道了」，或第一次成功导出之后）——同一台机器不再出现 */
+  onboardSeen: boolean;
 }

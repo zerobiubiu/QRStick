@@ -73,6 +73,10 @@ export interface LabelStore {
   /** 表格列宽（持久化，手动拖拽调整） */
   columnWidths: Record<string, number>;
   setColumnWidths: (widths: Record<string, number>) => void;
+  /** 首访上手条是否已收起（本机记忆，导出过一次也算收过） */
+  onboardSeen: boolean;
+  /** 收起首访上手条（用户点「知道了」或第一次导出成功后调用），存本机、不再出现 */
+  dismissOnboard: () => void;
   imageExport: ImageExportOptions;
   setImageExport: (next: Partial<Omit<ImageExportOptions, 'stitch'>> & { stitch?: Partial<StitchOptions> }) => void;
   batch: BatchMeta | null;
@@ -211,6 +215,7 @@ export function useLabelStore(): LabelStore {
     [],
   );
   const setColumnWidths = useCallback((columnWidths: Record<string, number>) => setView((v) => ({ ...v, columnWidths })), []);
+  const dismissOnboard = useCallback(() => setView((v) => (v.onboardSeen ? v : { ...v, onboardSeen: true })), []);
   const setImageExport = useCallback(
     (next: Partial<Omit<ImageExportOptions, 'stitch'>> & { stitch?: Partial<StitchOptions> }) =>
       setView((v) => ({
@@ -317,6 +322,8 @@ export function useLabelStore(): LabelStore {
     setSplitRatio,
     columnWidths: view.columnWidths,
     setColumnWidths,
+    onboardSeen: view.onboardSeen,
+    dismissOnboard,
     imageExport: view.imageExport,
     setImageExport,
     batch,

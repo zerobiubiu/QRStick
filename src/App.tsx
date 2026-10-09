@@ -6,14 +6,15 @@
  *  - 单张：工单 + 整张印张预览（刻度尺、套准十字、读数条）；
  *  - 批量：数据表（可拖拽排序 / 列宽可调 / 多选）+ 多图预览（单张突出或网格）。
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Button, Paper, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import { BatchPreviewGrid } from './components/BatchPreviewGrid';
 import { BatchTable } from './components/BatchTable';
 import { ConfirmDialog, type ConfirmRequest } from './components/ConfirmDialog';
 import { Docket } from './components/Docket';
 import { PressSheet } from './components/PressSheet';
-import { StateLine } from './components/StateLine';
+import { LineMark, StateLine } from './components/StateLine';
+import { DEFAULT_CONFIG } from './state/persistence';
 import { EXPORT_ACTION } from './export/run';
 import { layoutLabel, validateLabel } from './lib/render';
 import { buildRowConfig } from './lib/batch';
@@ -52,6 +53,8 @@ export default function App() {
     imageExport,
     splitRatio,
     setSplitRatio,
+    onboardSeen,
+    dismissOnboard,
   } = store;
   const compact = useMediaQuery(theme.breakpoints.down('md'));
   const wide = useMediaQuery(theme.breakpoints.up('lg'));
@@ -60,7 +63,17 @@ export default function App() {
   const { containerRef: splitRef, startDrag: startSplit } = useSplitDrag(setSplitRatio);
 
   const layout = useMemo(() => layoutLabel(config), [config]);
-  const issues = useMemo(() => validateLabel(config, layout), [config, layout]);
+  const issues = useMemo(() => {
+    const list = validateLabel(config, layout);
+    // 示例标注：标题与内容都还是出厂示例（一个字没改）时提醒一句——改掉任一处即消失
+    if (config.title.text === DEFAULT_CONFIG.title.text && config.content === DEFAULT_CONFIG.content) {
+      list.push({
+        level: 'warn',
+        message: `当前是示例数据（${DEFAULT_CONFIG.title.text} / ${DEFAULT_CONFIG.content}）：换成你自己的编号再出片。`,
+      });
+    }
+    return list;
+  }, [config, layout]);
 
   /** 批量模式下，单张预览跟着当前选中行走（行 → 配置走 lib/batch.ts 的唯一实现） */
   const previewConfig = useMemo<LabelConfig>(() => {
@@ -131,6 +144,11 @@ export default function App() {
   );
 
   const flagged = issues.length > 0;
+  // 首访上手条：只在「还没导出过任何东西」的空档出现；点「知道了」或第一次导出成功后收起并存本机
+  const showOnboard = !onboardSeen && record.phase === 'idle';
+  useEffect(() => {
+    if (!onboardSeen && record.phase === 'done') dismissOnboard();
+  }, [onboardSeen, record.phase, dismissOnboard]);
 
   const modeSwitch = (
     <ToggleButtonGroup
@@ -230,6 +248,28 @@ export default function App() {
             height: { xs: mode === 'batch' ? 'auto' : 460, md: 'auto' },
           }}
         >
+          {showOnboard ? (
+            <Stack
+              direction="row"
+              sx={{
+                alignItems: 'center',
+                gap: 1.25,
+                px: 2,
+                py: 0.75,
+                flex: '0 0 auto',
+                bgcolor: 'var(--paper)',
+                borderBottom: '1px solid var(--rule)',
+              }}
+            >
+              <LineMark form="dashed" width={22} />
+              <Typography sx={{ fontSize: 10.5, color: 'text.secondary', minWidth: 0, lineHeight: 1.45 }}>
+                示例标签：把工单里的标题与内容换成你的，点「付印 PDF」出来的就是能直接打印的 A4 标签
+              </Typography>
+              <Button size="small" variant="text" onClick={dismissOnboard} sx={{ ml: 'auto', flex: '0 0 auto' }}>
+                知道了
+              </Button>
+            </Stack>
+          ) : null}
           {mode === 'batch' ? (
             <Box
               ref={splitRef}

@@ -101,6 +101,21 @@ export function StateLine({ record, flagged, summary, reason }: StateLineProps) 
             {record.phase === 'done' ? `· ${record.error}` : `· 导出失败：${record.error}`}
           </Typography>
         ) : null}
+        {/* 空闲时把快捷键摊在状态行右侧：桌面才显示，窄屏按优先级让位；一有导出记录就让位 */}
+        {record.phase === 'idle' ? (
+          <Typography
+            sx={{
+              ml: 'auto',
+              fontSize: 10.5,
+              color: 'text.secondary',
+              fontFamily: MONO_FONT,
+              whiteSpace: 'nowrap',
+              display: { xs: 'none', md: 'block' },
+            }}
+          >
+            Alt+1 出片 · Alt+2 付印 · Alt+3 交版 · Alt+M 切模式
+          </Typography>
+        ) : null}
       </Box>
     </Tooltip>
   );

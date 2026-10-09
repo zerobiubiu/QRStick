@@ -24,6 +24,7 @@ export const DEFAULT_VIEW: ViewState = {
   previewColumns: 'auto',
   splitRatio: 0.5,
   columnWidths: { index: 64, title: 190, content: 240, select: 44, handle: 40, actions: 40 },
+  onboardSeen: false,
   imageExport: {
     format: 'png',
     quality: 0.92,
@@ -71,6 +72,8 @@ function loadView(): ViewState {
       previewColumns: ['auto', 2, 3, 4, 5].includes(saved.previewColumns as never) ? (saved.previewColumns as PreviewColumns) : 'auto',
       splitRatio: typeof saved.splitRatio === 'number' ? Math.min(0.75, Math.max(0.25, saved.splitRatio)) : DEFAULT_VIEW.splitRatio,
       columnWidths: { ...DEFAULT_VIEW.columnWidths, ...saved.columnWidths },
+      // 只有明确存过 true 才算收过：老配置（没这个字段）保持「未收」，老用户也能看到一次首访条
+      onboardSeen: saved.onboardSeen === true,
       imageExport: {
         ...DEFAULT_VIEW.imageExport,
         ...saved.imageExport,
