@@ -7,7 +7,7 @@
  *    避免浏览器把连发下载当成恶意行为拦掉；单张失败只记进失败清单，不中断整批；
  *  - **不覆盖**：文件名一律「序号-标题」，序号两位补零，ZIP 条目同名也会被序号区分开。
  */
-import { zipSync, type Zippable } from 'fflate';
+import type { Zippable } from 'fflate';
 import { wait, yieldToPaint } from './async';
 import { sanitizeFileName, saveBlob } from './download';
 import { failureCount, summarizeFailures, tallyFailure } from './failures';
@@ -214,7 +214,8 @@ export async function exportImages(
     }
     entries['清单.csv'] = manifestCsv(packed);
     try {
-      // 图片本身已是压缩格式，ZIP 用存储模式（不重复压一遍），快且不卡
+      // 图片本身已是压缩格式，ZIP 用存储模式（不重复压一遍），快且不卡；fflate 到这一步才加载
+      const { zipSync } = await import('fflate');
       const zipped = zipSync(entries, { level: 0 });
       const zipName = `${sanitizeFileName(packed[0].page.label || 'qrstick')}-${packed.length}张.zip`;
       saveBlob(new Blob([zipped], { type: 'application/zip' }), zipName);

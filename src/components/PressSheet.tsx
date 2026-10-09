@@ -5,13 +5,13 @@
  *  台面（灰底 + 四角套准十字）→ 毫米刻度尺（贴着印张的真实刻度）→ 纸（渲染核产出的画布）。
  * 刻度尺的刻度不是装饰：它按印张在当前屏幕上每毫米多少像素现算，读数就是真实尺寸。
  */
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { renderLabel, type LabelLayout } from '../lib/render';
 import { LineMark } from './StateLine';
 import { PREVIEW_MAX_PX, previewScaleFor } from '../lib/preview';
 import { useElementSize } from '../lib/useElementSize';
-import { formatMm } from '../lib/units';
+import { MM_PER_INCH, formatMm } from '../lib/units';
 import type { LabelConfig } from '../lib/types';
 import { INK, MONO_FONT } from '../theme';
 
@@ -56,7 +56,11 @@ function buildTicks(lengthPx: number, pxPerMm: number) {
   return { ticks, step };
 }
 
-function SheetRuler({ axis, lengthPx, pxPerMm }: { axis: 'x' | 'y'; lengthPx: number; pxPerMm: number }) {
+/**
+ * 刻度尺：刻度数量随印张毫米数与屏幕密度增长（A4 纵向约 500 条线）。
+ * 用 memo 挡住「参数改动导致的重渲」——刻度只取决于长度与密度，字号/内容改动不该重造这几百个元素。
+ */
+const SheetRuler = memo(function SheetRuler({ axis, lengthPx, pxPerMm }: { axis: 'x' | 'y'; lengthPx: number; pxPerMm: number }) {
   const { ticks } = useMemo(() => buildTicks(lengthPx, pxPerMm), [lengthPx, pxPerMm]);
   const length = Math.max(1, Math.ceil(lengthPx));
 
@@ -114,16 +118,16 @@ function SheetRuler({ axis, lengthPx, pxPerMm }: { axis: 'x' | 'y'; lengthPx: nu
       ))}
     </svg>
   );
-}
+});
 
-function Readout({ label, value }: { label: string; value: string }) {
+const Readout = memo(function Readout({ label, value }: { label: string; value: string }) {
   return (
     <Box sx={{ px: 1.5, py: 0.75, borderLeft: '1px solid var(--rule)', minWidth: 0, flex: '0 0 auto' }}>
       <Typography sx={{ fontSize: 10, color: 'text.secondary', lineHeight: 1.2 }}>{label}</Typography>
       <Typography sx={{ fontSize: 11, fontFamily: MONO_FONT, lineHeight: 1.45, whiteSpace: 'nowrap' }}>{value}</Typography>
     </Box>
   );
-}
+});
 
 export function PressSheet({
   config,
@@ -183,24 +187,9 @@ export function PressSheet({
     return () => node.removeEventListener('wheel', onWheel);
   }, []);
 
-  const rendered = useMemo(() => {
-    // 预览上限与缩略图共用 lib/preview.ts 的同一套口径（导出永远用满 DPI）
-    return renderLabel(config, previewScaleFor(layout, PREVIEW_MAX_PX));
-  }, [config, layout]);
-
-  // 画布分配不出（尺寸超浏览器上限）：这一张预览不了，也绝不能挂一张空白画布冒充出片结果
-  const canvasUnavailable = rendered.failure === 'canvas_unavailable';
-
-  // 用回调 ref 挂画布：hold 住节点的可以是首次测量之前（台面还没量到尺寸），
-  // 用 effect 会因为「节点晚于 effect 出现」而漏挂。
-  const attachCanvas = useCallback(
-    (node: HTMLDivElement | null) => {
-      if (!node) return;
-      // 画布尺寸交给 CSS（'& canvas' 规则），回调里只负责挂载，避免在渲染期改外部对象的样式
-      node.replaceChildren(rendered.canvas);
-    },
-    [rendered],
-  );
+  // 预览画布：整块组件只创建一张（useState 惰性初始化，渲染期不碰 ref），参数改动只在它上面重绘
+  const [previewCanvas] = useState(() => document.createElement('canvas'));
+  const inkRef = useRef<HTMLDivElement | null>(null);
 
   // 适应窗口的基准比例：把印张按最长边放进台面
   const fitPxPerMm = Math.min(
@@ -217,6 +206,45 @@ export function PressSheet({
   const pxPerMm = fitPxPerMm > 0 ? Math.min(12, fitPxPerMm * zoom) : 0;
   const displayWidth = layout.sheetWidthMm * pxPerMm;
   const displayHeight = layout.sheetHeightMm * pxPerMm;
+
+  const rendered = useMemo(() => {
+    // 预览画布按台面上的**实际显示像素**渲染，再受 PREVIEW_MAX_PX 封顶：
+    // 画得比显示大，浏览器每帧都要把整张位图二次缩放（实测 A4 参数连击每步卡 60–120ms，
+    // 同操作在 60×40 贴纸上只有 11ms）。二维码模块尺寸仍然只在导出网格上决定（见 render.ts 的纪律），
+    // 这里只是把同一张码位图等比缩放；画布常驻复用见 renderLabel 的 into 参数。
+    const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+    // 台面上每毫米的屏幕像素 → 等效 DPI（×25.4），再乘 DPR 保住高分屏清晰度
+    const onScreen = pxPerMm > 0 ? (pxPerMm * MM_PER_INCH * dpr) / Math.max(1, layout.dpi) : 0;
+    const cap = previewScaleFor(layout, PREVIEW_MAX_PX);
+    const scale = onScreen > 0 ? Math.min(cap, onScreen) : cap;
+    return renderLabel(config, scale, previewCanvas);
+  }, [config, layout, previewCanvas, pxPerMm]);
+
+  // 画布分配不出（尺寸超浏览器上限）：这一张预览不了，也绝不能挂一张空白画布冒充出片结果
+  const canvasUnavailable = rendered.failure === 'canvas_unavailable';
+
+  // 用回调 ref 挂画布：hold 住节点的可以是首次测量之前（台面还没量到尺寸），
+  // 用 effect 会因为「节点晚于 effect 出现」而漏挂。
+  const attachCanvas = useCallback(
+    (node: HTMLDivElement | null) => {
+      inkRef.current = node;
+      if (!node) return;
+      // 画布尺寸交给 CSS（'& canvas' 规则），回调里只负责挂载，避免在渲染期改外部对象的样式；
+      // 已经是同一张画布就不要 replaceChildren——摘挂一次会让合成器重新上传整张位图
+      if (node.firstChild !== rendered.canvas) node.replaceChildren(rendered.canvas);
+    },
+    [rendered],
+  );
+
+  // 上墨：每次重排把 180ms 动画从头放一遍。元素不再重挂（key 会让预览画布无法复用），改显式重放
+  useEffect(() => {
+    const node = inkRef.current;
+    if (!node) return;
+    node.style.animation = 'none';
+    void node.offsetWidth; // 强制一次重排，动画才会真的从头开始
+    node.style.animation = '';
+  }, [signature]);
+
   const qrReadout =
     layout.qrModules > 0
       ? `外框 ${layout.qrActualMm.toFixed(1)} mm · 码面 ${layout.qrInkMm.toFixed(1)} mm · ${layout.qrModulePx} px/模块 · ${layout.qrModules} 模块`
@@ -287,7 +315,6 @@ export function PressSheet({
             >
               <Box
                 ref={attachCanvas}
-                key={signature}
                 className="sheet-ink"
                 sx={{ position: 'absolute', inset: 0, '& canvas': { display: 'block', width: '100%', height: '100%', objectFit: 'contain' } }}
               />

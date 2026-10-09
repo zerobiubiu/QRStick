@@ -5,17 +5,10 @@
  * 二维码位图（Word）由调用方按同一套毫米参数产出。毫米是唯一的版面真相，
  * 各格式内部单位的换算只发生在本文件里。
  */
-import { jsPDF } from 'jspdf';
-import {
-  AlignmentType,
-  Document,
-  ImageRun,
-  PageOrientation,
-  Packer,
-  Paragraph,
-  TextRun,
-  convertMillimetersToTwip,
-} from 'docx';
+// jsPDF 与 docx 只在真正导出时才需要。静态 import 会把两者一起塞进首屏包（约 500 kB 原始体积），
+// 所以这里只留 type-only import，运行时形状在各自的导出函数里按需动态取。
+import type { jsPDF } from 'jspdf';
+import type { ISectionOptions } from 'docx';
 import { canvasToPngBlob, sanitizeFileName, saveBlob } from './download';
 import { resolveLabelFont } from './fonts';
 import { MM_PER_INCH } from './units';
@@ -27,13 +20,6 @@ export interface ExportPage {
   heightMm: number;
 }
 
-/** 标题对齐 → docx 的段落对齐 */
-const ALIGNMENT_BY_ALIGN = {
-  left: AlignmentType.LEFT,
-  center: AlignmentType.CENTER,
-  right: AlignmentType.RIGHT,
-} as const;
-
 /** 导出一张 PNG：按画布原像素下载（就是导出 DPI 下的像素） */
 export async function exportPng(page: ExportPage, fileName: string): Promise<void> {
   saveBlob(await canvasToPngBlob(page.canvas), `${sanitizeFileName(fileName)}.png`);
@@ -41,7 +27,7 @@ export async function exportPng(page: ExportPage, fileName: string): Promise<voi
 
 /** 导出一个 PDF：每页尺寸 = 传入的毫米尺寸，图片 0,0 铺满整页 */
 export async function exportPdf(pages: ExportPage[], fileName: string): Promise<void> {
-  const builder = createPdfBuilder();
+  const builder = await createPdfBuilder();
   for (const page of pages) {
     builder.addPage(page);
   }
@@ -60,7 +46,9 @@ export interface PdfBuilder {
   save(fileName: string): void;
 }
 
-export function createPdfBuilder(): PdfBuilder {
+export async function createPdfBuilder(): Promise<PdfBuilder> {
+  // 动态取：点「付印 PDF」的那一刻才去加载 jsPDF，首屏不为它付体积
+  const { jsPDF: JsPDF } = await import('jspdf');
   let doc: jsPDF | null = null;
   return {
     addPage(page) {
@@ -77,7 +65,7 @@ export function createPdfBuilder(): PdfBuilder {
       const landscape = page.widthMm > page.heightMm;
       const format = landscape ? [page.heightMm, page.widthMm] : [page.widthMm, page.heightMm];
       if (!doc) {
-        doc = new jsPDF({
+        doc = new JsPDF({
           unit: 'mm',
           format,
           orientation: landscape ? 'landscape' : 'portrait',
@@ -123,7 +111,20 @@ export interface WordPage {
 
 /** 导出 Word：每页一节，页面尺寸与边距按毫米传入，标题可继续编辑 */
 export async function exportWord(pages: WordPage[], fileName: string): Promise<void> {
-  const sections = pages.map((page) => {
+  // 动态取：点「交版 Word」的那一刻才加载 docx
+  const {
+    AlignmentType,
+    Document,
+    ImageRun,
+    PageOrientation,
+    Packer,
+    Paragraph,
+    TextRun,
+    convertMillimetersToTwip,
+  } = await import('docx');
+  const alignOf = (align: WordPage['align']) =>
+    align === 'left' ? AlignmentType.LEFT : align === 'right' ? AlignmentType.RIGHT : AlignmentType.CENTER;
+  const sections: ISectionOptions[] = pages.map((page) => {
     const font = resolveLabelFont(page.fontId);
     // 画布渲染会把边距夹到「半页 - 1mm」以内，这里保持一致，免得 Word 自己改版心
     const marginMm = Math.max(0, Math.min(page.marginMm, Math.min(page.widthMm, page.heightMm) / 2 - 1));
@@ -135,7 +136,7 @@ export async function exportWord(pages: WordPage[], fileName: string): Promise<v
     const hasTitle = page.title.trim().length > 0;
 
     const titleParagraph = new Paragraph({
-      alignment: ALIGNMENT_BY_ALIGN[page.align],
+      alignment: alignOf(page.align),
       // 间距只写在标题段落上，避免 Word 把前后间距叠加成两倍
       spacing: page.position === 'above' ? { after: gapTwips } : { before: gapTwips },
       children: [

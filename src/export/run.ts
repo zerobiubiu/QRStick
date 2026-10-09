@@ -114,7 +114,7 @@ export async function runExport(request: ExportRequest, onProgress?: ExportProgr
   onProgress?.(0, targets.length);
 
   if (format === 'pdf') {
-    const builder = createPdfBuilder();
+    const builder = await createPdfBuilder();
     const failures = new Map<string, number>();
     let written = 0;
     for (let index = 0; index < targets.length; index += 1) {

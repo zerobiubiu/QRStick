@@ -115,13 +115,21 @@ function Tile({
       let message = '';
       try {
         const rowConfig = buildRowConfig(config, row);
-        const scale = previewScaleFor(layoutLabel(rowConfig), THUMB_MAX_PX);
-        const { canvas, failure } = renderLabel(rowConfig, scale);
+        const layout = layoutLabel(rowConfig);
+        // 缩略图按格子的**实际显示像素**渲染（仍受 THUMB_MAX_PX 封顶）：760px 的位图塞进 ~250px 的格子，
+        // 浏览器要为每个格子二次缩放；位图与显示一一对应后，滚过一屏的开销小一个量级
+        const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+        const onScreenPx = holder.clientWidth > 0 ? holder.clientWidth * dpr : THUMB_MAX_PX;
+        const scale = previewScaleFor(layout, Math.min(THUMB_MAX_PX, onScreenPx));
+        // 同一格的画布复用（pass 进 into）：不要每帧给 holder 换一张新 canvas
+        const existing = holder.firstElementChild;
+        const reuse = existing instanceof HTMLCanvasElement ? existing : undefined;
+        const { canvas, failure } = renderLabel(rowConfig, scale, reuse);
         // 分配不出画布的行不挂空白画布：说清原因，别让人把空白当成印出来的样子
         if (failure === 'canvas_unavailable') {
           holder.replaceChildren();
           message = '画布太大，浏览器分配不出：降低 DPI 或缩小纸张';
-        } else {
+        } else if (holder.firstElementChild !== canvas) {
           holder.replaceChildren(canvas);
         }
       } catch (cause) {

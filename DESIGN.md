@@ -268,7 +268,7 @@ components:
 
 **间距语汇**：MUI 的 8px 单位，`sx` 只取 `0.25 / 0.5 / 0.6 / 0.75 / 1 / 1.25 / 1.5 / 1.75 / 2` 这些倍数（= 2 / 4 / 4.8 / 6 / 8 / 10 / 12 / 14 / 16px）。最常出现的三档：字段行内边距 `8px 16px`、分段标题带 `6px 16px`、工单页脚 `10px 16px`（`src/components/Docket.tsx:57-58`、`src/components/Docket.tsx:155-157`、`src/components/Docket.tsx:604-605`）。字段行是 `96px minmax(0,1fr)` 的两列栅格，列距 12px、行距 4px（`src/components/Docket.tsx:53-56`）——字段名的宽度固定，值永远从同一列起排，这是联单的对齐。
 
-**看版台与刻度尺**：台面内边距与刻度带宽度同为 `STRIP_PX = 22px`（`src/components/PressSheet.tsx:17`、`src/components/PressSheet.tsx:199`、`src/components/PressSheet.tsx:222-223`），印张在台面居中（`placeContent: center`，`src/components/PressSheet.tsx:198`），四角套准十字以 `inset: 6px` 钉住（`src/components/PressSheet.tsx:203`）。每毫米像素数由台面实测尺寸反算，上限 4（`src/components/PressSheet.tsx:171-180`）；刻度步长随密度自动降档为 1 / 2 / 5 / 10 mm，标注每 ≥34px 一个（`src/components/PressSheet.tsx:69-78`）；`pxPerMm ≤ 0.4` 时整块印张不画（`src/components/PressSheet.tsx:218`），免得画出一张糊纸。预览画布最长边 1800px 等比降采样，导出永远满 DPI（`src/components/PressSheet.tsx:16`、`src/components/PressSheet.tsx:153`）。
+**看版台与刻度尺**：台面内边距与刻度带宽度同为 `STRIP_PX = 22px`（`src/components/PressSheet.tsx:17`、`src/components/PressSheet.tsx:199`、`src/components/PressSheet.tsx:222-223`），印张在台面居中（`placeContent: center`，`src/components/PressSheet.tsx:198`），四角套准十字以 `inset: 6px` 钉住（`src/components/PressSheet.tsx:203`）。每毫米像素数由台面实测尺寸反算，上限 4（`src/components/PressSheet.tsx:171-180`）；刻度步长随密度自动降档为 1 / 2 / 5 / 10 mm，标注每 ≥34px 一个（`src/components/PressSheet.tsx:69-78`）；`pxPerMm ≤ 0.4` 时整块印张不画（`src/components/PressSheet.tsx:218`），免得画出一张糊纸。预览画布按台面上的**实际显示像素**渲染（CSS px × DPR），再受 `PREVIEW_MAX_PX = 1800` 封顶；导出永远满 DPI（`src/components/PressSheet.tsx:210-221`、`src/lib/preview.ts:10`）。二维码模块尺寸只在导出网格上决定，这里只是把同一张码位图等比缩放——画得比显示大，浏览器每帧都要二次缩放整张位图，参数连击时每步会多卡 50ms 量级。
 
 **读数条**：印张下沿一行七格（印张 / 分辨率 / 二维码 / 标题 / 版心 / 内容 / 纠错），每格 `6px 12px` 并与左邻共用一条发丝线（`src/components/PressSheet.tsx:305-330`，格子定义在 `:119-132`）；窄屏不换行改为横向滚动，`md` 以上才允许换行。纠错一格报**实际**等级（内容过长会回退，回退时写成「L（请求 H）」），与印在纸上的色标条同源。
 
@@ -387,8 +387,8 @@ components:
 
 ### 印张台面 (PressSheet)
 - **Stage:** 台面灰底、居中、内边距 22px，四角套准十字以 `inset: 6px` 钉住（`src/components/PressSheet.tsx:189-245`，`:198-199`、`:203`）。台面按内容框测量（`clientWidth` 减去左右内边距，`:45-53`），印张栅格再叠 `maxWidth / maxHeight: 100%` 兜底——任何量测误差表现为整体缩小，绝不裁切（`:225-226` 的注释与取值）。
-- **Ruler:** 紧贴印张左、上两边，22px 宽，按当前每毫米像素现算刻度（`src/components/PressSheet.tsx:219-231`）。
-- **Paper:** 纸白、直角、唯一允许的投影；画布 `inset: 0` 绝对定位并以 `key={signature}` 重挂，每次重排触发一次 180ms 上墨动效（`src/components/PressSheet.tsx:232-242`，`:238`、`:241`）。
+- **Ruler:** 紧贴印张左、上两边，22px 宽，按当前每毫米像素现算刻度（`src/components/PressSheet.tsx:194-231`）。刻度数量随印张毫米数与屏幕密度增长（A4 纵向约 250 条线），组件用 `memo` 挡住「参数改动引起的重渲」——刻度只取决于长度与密度。
+- **Paper:** 纸白、直角、唯一允许的投影；画布 `inset: 0` 绝对定位，**同一张画布常驻复用**（参数改动只重绘，不换元素——每次重挂会让合成器重新上传整张位图），每次重排由 `signature` 变化显式把 180ms 上墨动效从头放一遍（`src/components/PressSheet.tsx:190-231`）。
 - **Readout Strip:** 七格读数（印张 / 分辨率 / 二维码 / 标题 / 版心 / 内容 / 纠错），每格字段名 10px、数值 11px 等宽、不换行（`src/components/PressSheet.tsx:119-132`、`:305-330`）。二维码一格在内容为空时显示「占位（内容为空）」，内容超出二维码容量时显示「占位（内容超出二维码容量）」（`src/components/PressSheet.tsx:220-225`）；纠错一格报实际等级（`src/components/PressSheet.tsx:316-323`）。
 - **画布分配不出时**：台面不挂空白纸冒充出片结果——把纸与刻度尺短路掉，只在原处留一句「画布太大，浏览器分配不出：降低 DPI、缩小纸张或减小页边距」，用虚线标记 + 11px 等宽（`src/components/PressSheet.tsx:191-192`、`:257-264`）。
 
@@ -399,7 +399,7 @@ components:
 - **占位框:** 内容为空时二维码位置画虚线方框而不是留白或抛错（`src/lib/render.ts:135-146`）。
 
 ### 动效
-全站只有一个动效：印张上墨。印张每次重排（`key` 变化）都以 180ms 的 `cubic-bezier(0.16, 1, 0.3, 1)` 从 `opacity: 0.42 / blur(0.6px)` 收到 `opacity: 1 / blur(0)`，`both` 填充（`src/index.css:80-94`、`src/components/PressSheet.tsx:241`）。它模拟印刷机压下时的一次上墨，给「参数已生效」一个物理信号——因为这个界面没有「应用」按钮，改动必须自己被人看见。`prefers-reduced-motion: reduce` 下该动效被完全关闭（`src/index.css:96-100`）；此外没有任何过渡、变换或滚动动画被定义。
+全站只有一个动效：印张上墨。印张每次重排都以 180ms 的 `cubic-bezier(0.16, 1, 0.3, 1)` 从 `opacity: 0.42 / blur(0.6px)` 收到 `opacity: 1 / blur(0)`，`both` 填充（`src/index.css:97-116`）。动画不靠元素重挂，而是 `signature` 变化时显式把动画从头放一遍（`src/components/PressSheet.tsx:224-231`），这样预览画布才能常驻复用。它模拟印刷机压下时的一次上墨，给「参数已生效」一个物理信号——因为这个界面没有「应用」按钮，改动必须自己被人看见。`prefers-reduced-motion: reduce` 下该动效被完全关闭（`src/index.css:112-116`）；此外没有任何过渡、变换或滚动动画被定义。
 
 ## Do's and Don'ts
 

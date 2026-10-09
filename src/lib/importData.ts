@@ -12,7 +12,6 @@
  * 表头规则：首行同时出现 标题/title 与 内容/content/文本/text 两列时按列名取值（列序不限）；
  * 否则视为无表头：第 1 列 = 标题、第 2 列 = 内容，只有一列时标题 = 内容。
  */
-import readXlsxFile from 'read-excel-file/browser';
 import type { BatchRow } from './types';
 
 export type DataFormat = 'csv' | 'tsv' | 'txt' | 'json' | 'xlsx' | 'paste';
@@ -226,6 +225,8 @@ function jsonToMatrix(value: unknown): { matrix: string[][]; objects: boolean } 
 }
 
 async function parseXlsxFile(file: File): Promise<DataParse> {
+  // 动态取：只有真的导入 .xlsx 时才加载解析器
+  const { default: readXlsxFile } = await import('read-excel-file/browser');
   const sheets = await readXlsxFile(file);
   const warnings: string[] = [];
   if (sheets.length > 1) {

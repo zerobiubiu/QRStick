@@ -167,8 +167,26 @@ function createQrMatrix(content: string, requested: ErrorCorrectionLevel) {
   return null;
 }
 
-/** 生成二维码画布：模块整数像素、静默区算在内、内容为空时给占位框 */
+/** 二维码位图缓存：同一份内容 + 同一落地尺寸会被反复索要（拖参数时 layoutLabel 与 renderLabel 各要一次），
+ *  每次都重画是 20 兆像素级的画布分配与填充——参数改动不该为它等待 */
+let qrMemo: { key: string; value: QrRender } | null = null;
+
+/** 生成二维码画布：模块整数像素、静默区算在内，内容为空或超容量时给占位框；相同输入直接复用上一张 */
 export function renderQrCode(
+  content: string,
+  sizeMm: number,
+  dpi: number,
+  level: ErrorCorrectionLevel,
+  quietZoneModules = 4,
+): QrRender {
+  const key = `${content}\u0000${sizeMm}\u0000${dpi}\u0000${level}\u0000${quietZoneModules}`;
+  if (qrMemo?.key === key) return qrMemo.value;
+  const value = buildQrRender(content, sizeMm, dpi, level, quietZoneModules);
+  qrMemo = { key, value };
+  return value;
+}
+
+function buildQrRender(
   content: string,
   sizeMm: number,
   dpi: number,
@@ -410,12 +428,15 @@ function drawColorBar(ctx: CanvasRenderingContext2D, built: Built) {
 }
 
 /** 渲染整张标签（scale < 1 用于界面预览，导出永远用 scale = 1）：出不了图时用 failure 表达，绝不抛异常 */
-export function renderLabel(config: LabelConfig, scale = 1): RenderResult {
+export function renderLabel(config: LabelConfig, scale = 1, into?: HTMLCanvasElement): RenderResult {
   const built = build(config, scale);
   const { layout, qr } = built;
-  const canvas = document.createElement('canvas');
-  canvas.width = layout.pixelWidth;
-  canvas.height = layout.pixelHeight;
+  // 预览会传入一张常驻画布复用：每次参数改动都新建 canvas 会让合成器反复上传大位图，
+  // 还会制造大对象 GC 停顿（实测 A4 参数连击时每步 60–90ms 卡顿，贴纸尺寸则只有 11ms）
+  const canvas = into ?? document.createElement('canvas');
+  // 尺寸没变就不赋值：赋同值也会清整块画布，而这里本来就要全幅重绘
+  if (canvas.width !== layout.pixelWidth) canvas.width = layout.pixelWidth;
+  if (canvas.height !== layout.pixelHeight) canvas.height = layout.pixelHeight;
   const ctx = canvas.getContext('2d');
   // 画布分配失败（尺寸超过浏览器上限）或尺寸被浏览器夹小：显式报失败，绝不返回一张空白还当成成功
   let failure: RenderFailure | null =
