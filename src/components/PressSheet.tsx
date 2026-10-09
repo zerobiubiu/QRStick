@@ -133,11 +133,8 @@ export function PressSheet({ config, layout, signature }: { config: LabelConfig;
   const attachCanvas = useCallback(
     (node: HTMLDivElement | null) => {
       if (!node) return;
-      const canvas = rendered.canvas;
-      canvas.style.width = '100%';
-      canvas.style.height = '100%';
-      canvas.style.display = 'block';
-      node.replaceChildren(canvas);
+      // 画布尺寸交给 CSS（'& canvas' 规则），回调里只负责挂载，避免在渲染期改外部对象的样式
+      node.replaceChildren(rendered.canvas);
     },
     [rendered],
   );
@@ -211,7 +208,12 @@ export function PressSheet({ config, layout, signature }: { config: LabelConfig;
                 boxShadow: '0 1px 1.5px rgba(16,16,16,0.16), 0 18px 34px -18px rgba(16,16,16,0.34)',
               }}
             >
-              <Box ref={attachCanvas} key={signature} className="sheet-ink" sx={{ position: 'absolute', inset: 0 }} />
+              <Box
+                ref={attachCanvas}
+                key={signature}
+                className="sheet-ink"
+                sx={{ position: 'absolute', inset: 0, '& canvas': { display: 'block', width: '100%', height: '100%' } }}
+              />
             </Box>
           </Box>
         ) : null}

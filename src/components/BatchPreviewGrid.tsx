@@ -60,18 +60,18 @@ function Tile({
   useEffect(() => {
     const holder = holderRef.current;
     if (!visible || !holder) return;
+    let message = '';
     try {
       const rowConfig = buildRowConfig(config, row);
       const scale = previewScaleFor(layoutLabel(rowConfig), THUMB_MAX_PX);
       const { canvas } = renderLabel(rowConfig, scale);
-      canvas.style.width = '100%';
-      canvas.style.height = '100%';
-      canvas.style.display = 'block';
       holder.replaceChildren(canvas);
-      setError('');
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : '渲染失败');
+      message = cause instanceof Error ? cause.message : '渲染失败';
     }
+    // 画布渲染只能在 DOM 就绪后做（不能在渲染期），失败信息要落进界面状态
+    // oxlint-disable-next-line react/set-state-in-effect
+    setError((prev) => (prev === message ? prev : message));
     return () => {
       holder.replaceChildren();
     };
@@ -99,7 +99,7 @@ function Tile({
             <Typography sx={{ fontSize: 10, color: 'text.secondary', textAlign: 'center' }}>{error}</Typography>
           </Stack>
         ) : (
-          <Box ref={holderRef} sx={{ position: 'absolute', inset: 0 }} />
+          <Box ref={holderRef} sx={{ position: 'absolute', inset: 0, '& canvas': { display: 'block', width: '100%', height: '100%' } }} />
         )}
         {!visible && !error ? (
           <Stack sx={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}>

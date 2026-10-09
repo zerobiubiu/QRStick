@@ -10,7 +10,7 @@
  *  - 行高固定（ROW_H），超过阈值只渲染视口内的行（上下用占位行撑高度），因此几千行也能流畅；
  *  - 列宽、分栏比例、多选、当前行都在 store 里，切换制作模式不会丢。
  */
-import { useCallback, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import {
   Box,
   Button,
@@ -169,8 +169,11 @@ export function BatchTable({ store, onRequestDelete }: { store: LabelStore; onRe
   const [activeId, setActiveId] = useState<number | null>(null);
   const [resizing, setResizing] = useState<string | null>(null);
   const { size: viewport, attach: attachViewport } = useElementSize();
+  // 拖拽列宽时要在 window 的 pointermove 里读到最新宽度：用 ref 同步（effect 里更新，不在渲染期写 ref）
   const widthsRef = useRef(columnWidths);
-  widthsRef.current = columnWidths;
+  useEffect(() => {
+    widthsRef.current = columnWidths;
+  }, [columnWidths]);
 
   const sensors = useSensors(
     // 距离阈值：点复选框、点输入框不会误触发拖拽
