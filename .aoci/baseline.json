@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created_at": "2026-10-09T15:22:23Z",
-  "updated_at": "2026-10-09T17:24:43Z",
+  "updated_at": "2026-10-09T17:52:08Z",
   "files": {
     ".gitattributes": {
       "role": "index",
@@ -41,15 +41,15 @@
     },
     "CHANGELOG.md": {
       "role": "index",
-      "sha256": "cca2367e610711b80d2a2c75487187b176a8f1f2ebf4ecb04d8cff48ce884b83",
-      "size": 8822,
-      "normalized_sha256": "cca2367e610711b80d2a2c75487187b176a8f1f2ebf4ecb04d8cff48ce884b83"
+      "sha256": "d227f16b2f3d609dee76002196848f01df864066471c3cdb10d35b1e35619f3f",
+      "size": 9820,
+      "normalized_sha256": "d227f16b2f3d609dee76002196848f01df864066471c3cdb10d35b1e35619f3f"
     },
     "DESIGN.md": {
       "role": "index",
-      "sha256": "36b82ff2c96eb3faf5eee6ee1074cecd3e9f3eb308b6d498875c669ec77effa1",
-      "size": 41046,
-      "normalized_sha256": "36b82ff2c96eb3faf5eee6ee1074cecd3e9f3eb308b6d498875c669ec77effa1"
+      "sha256": "19667371137080eb1f12822d347874832a80f354d09cbfed9d2970bde300e707",
+      "size": 41742,
+      "normalized_sha256": "19667371137080eb1f12822d347874832a80f354d09cbfed9d2970bde300e707"
     },
     "LICENSE": {
       "role": "index",
@@ -71,9 +71,9 @@
     },
     "aoci.code.txt": {
       "role": "index",
-      "sha256": "6cfe3d3feb0f3ccfdb9b34d4a512d06411565b06a8b12b6effe1463531c15789",
-      "size": 29859,
-      "normalized_sha256": "6cfe3d3feb0f3ccfdb9b34d4a512d06411565b06a8b12b6effe1463531c15789"
+      "sha256": "ab3f776144643c79dcf103c95c54c374350946c7b6a0769a6dae5d9ddd8bdd63",
+      "size": 30289,
+      "normalized_sha256": "ab3f776144643c79dcf103c95c54c374350946c7b6a0769a6dae5d9ddd8bdd63"
     },
     "aoci.meta.txt": {
       "role": "index",
@@ -95,9 +95,9 @@
     },
     "docs/README.md": {
       "role": "index",
-      "sha256": "54de73eea2f831e190627caf9b45d9968846dc5149c9c2bc7d1680a006c8c55a",
-      "size": 4503,
-      "normalized_sha256": "54de73eea2f831e190627caf9b45d9968846dc5149c9c2bc7d1680a006c8c55a"
+      "sha256": "ccac63694072994a97ff4f92958ab2475228042911517b3a9d6fe5df60757e77",
+      "size": 4807,
+      "normalized_sha256": "ccac63694072994a97ff4f92958ab2475228042911517b3a9d6fe5df60757e77"
     },
     "docs/architecture/0001-渲染核与导出链路.md": {
       "role": "index",
@@ -189,11 +189,17 @@
       "size": 15287,
       "normalized_sha256": "0156c9acdfd36dadbdc82e52820cf3ae9f11c862a86b37e04b00b92f06748536"
     },
+    "docs/changes/0014-性能优化-首屏闭包与参数交互.md": {
+      "role": "index",
+      "sha256": "eaa2ae9b7c3d1482731ac47d24a2022c1b261936cf2e67f3fe08f176327f6edb",
+      "size": 8649,
+      "normalized_sha256": "eaa2ae9b7c3d1482731ac47d24a2022c1b261936cf2e67f3fe08f176327f6edb"
+    },
     "docs/changes/README.md": {
       "role": "index",
-      "sha256": "b5744efafe7cd30e588d30aceab768fe4df884dad0d949871414f1618c557c99",
-      "size": 2532,
-      "normalized_sha256": "b5744efafe7cd30e588d30aceab768fe4df884dad0d949871414f1618c557c99"
+      "sha256": "828c20ee884c14baa26218b2717bae12ce419c7e41de9d4015dae0bc49623c7f",
+      "size": 2800,
+      "normalized_sha256": "828c20ee884c14baa26218b2717bae12ce419c7e41de9d4015dae0bc49623c7f"
     },
     "docs/decisions/0001-界面语言-印刷工单与印张.md": {
       "role": "index",
@@ -220,9 +226,9 @@
     },
     "package.json": {
       "role": "index",
-      "sha256": "2c689f2c240d1a4f259c0d121991c567d16693dd52b637ecc11cd8e00ad13ad6",
+      "sha256": "28668539a22f11a051c1ba5f9b831afa18ab763c2415f0aab3b1bf95505375f2",
       "size": 1005,
-      "normalized_sha256": "2c689f2c240d1a4f259c0d121991c567d16693dd52b637ecc11cd8e00ad13ad6"
+      "normalized_sha256": "28668539a22f11a051c1ba5f9b831afa18ab763c2415f0aab3b1bf95505375f2"
     },
     "public/favicon.svg": {
       "role": "index",
@@ -238,9 +244,9 @@
     },
     "src/components/BatchPreviewGrid.tsx": {
       "role": "index",
-      "sha256": "c34b76bdef974d69620f48615762fedf413296b813e751c36bf1ba645af1974a",
-      "size": 16532,
-      "normalized_sha256": "c34b76bdef974d69620f48615762fedf413296b813e751c36bf1ba645af1974a"
+      "sha256": "230ef3b933ab4d41d63eed6d9cdf364e0ab1697e67f28fdb146d8227b0f3f2ef",
+      "size": 17307,
+      "normalized_sha256": "230ef3b933ab4d41d63eed6d9cdf364e0ab1697e67f28fdb146d8227b0f3f2ef"
     },
     "src/components/BatchSource.tsx": {
       "role": "index",
@@ -268,9 +274,9 @@
     },
     "src/components/PressSheet.tsx": {
       "role": "index",
-      "sha256": "b209b2afb62c729081a138330dc938f705175abfd200b59d9ba314c62bedc308",
-      "size": 14771,
-      "normalized_sha256": "b209b2afb62c729081a138330dc938f705175abfd200b59d9ba314c62bedc308"
+      "sha256": "d1376185f8e1faf2cb24211a81dac48ad1828f3babeb53fe58c6a1ff9474873e",
+      "size": 16688,
+      "normalized_sha256": "d1376185f8e1faf2cb24211a81dac48ad1828f3babeb53fe58c6a1ff9474873e"
     },
     "src/components/StateLine.tsx": {
       "role": "index",
@@ -316,9 +322,9 @@
     },
     "src/export/run.ts": {
       "role": "index",
-      "sha256": "aff1e93c1d03ba5c7531cbff7988f6fb3dafa0278a091bad271af3f09f19b81a",
-      "size": 6599,
-      "normalized_sha256": "aff1e93c1d03ba5c7531cbff7988f6fb3dafa0278a091bad271af3f09f19b81a"
+      "sha256": "cc1e32330cad3dd806605b0b3ce3d67b679c5e39d6dbed28d5d5ed7ddc1f6b07",
+      "size": 6605,
+      "normalized_sha256": "cc1e32330cad3dd806605b0b3ce3d67b679c5e39d6dbed28d5d5ed7ddc1f6b07"
     },
     "src/export/runImage.ts": {
       "role": "index",
@@ -352,15 +358,15 @@
     },
     "src/lib/export.ts": {
       "role": "index",
-      "sha256": "dd2ad201f12bdbdfb741da12961dbe31313c2533ad2fc2a086c18a9846d8dd4c",
-      "size": 6981,
-      "normalized_sha256": "dd2ad201f12bdbdfb741da12961dbe31313c2533ad2fc2a086c18a9846d8dd4c"
+      "sha256": "5e5ed6b6d81ed00a05d0d1cd61662c3ffa30af03060dd2592157ed8ba3e3cc63",
+      "size": 7510,
+      "normalized_sha256": "5e5ed6b6d81ed00a05d0d1cd61662c3ffa30af03060dd2592157ed8ba3e3cc63"
     },
     "src/lib/exportImage.ts": {
       "role": "index",
-      "sha256": "5f3500206376a93dce8a8de52f60cfc84208217a1c94fb89e294ccf61c5dbc4e",
-      "size": 10518,
-      "normalized_sha256": "5f3500206376a93dce8a8de52f60cfc84208217a1c94fb89e294ccf61c5dbc4e"
+      "sha256": "0a4ed3f71681b4f7517ed1902c883adf1cc44c91c154734c00e949cf30a7edd3",
+      "size": 10590,
+      "normalized_sha256": "0a4ed3f71681b4f7517ed1902c883adf1cc44c91c154734c00e949cf30a7edd3"
     },
     "src/lib/failures.ts": {
       "role": "index",
@@ -376,9 +382,9 @@
     },
     "src/lib/importData.ts": {
       "role": "index",
-      "sha256": "c196b4e5380c7a98daa38bd3abff45f5f49e5108ede7738d3f7e1f2d61bbc6fa",
-      "size": 12360,
-      "normalized_sha256": "c196b4e5380c7a98daa38bd3abff45f5f49e5108ede7738d3f7e1f2d61bbc6fa"
+      "sha256": "4e1ea041a461ca41d1cab65b2706d4f9ff7684ff19ef53996df0e6339ae92787",
+      "size": 12449,
+      "normalized_sha256": "4e1ea041a461ca41d1cab65b2706d4f9ff7684ff19ef53996df0e6339ae92787"
     },
     "src/lib/presetFile.ts": {
       "role": "index",
@@ -394,9 +400,9 @@
     },
     "src/lib/render.ts": {
       "role": "index",
-      "sha256": "a144ace993f12fb7b5b5cf50a08a0284c61022cddab7085bb366224868378bf6",
-      "size": 23714,
-      "normalized_sha256": "a144ace993f12fb7b5b5cf50a08a0284c61022cddab7085bb366224868378bf6"
+      "sha256": "6a8754330802ddaf34b68c150e6872a495cc8ac7e0824c80a33bc70cf71d5526",
+      "size": 24938,
+      "normalized_sha256": "6a8754330802ddaf34b68c150e6872a495cc8ac7e0824c80a33bc70cf71d5526"
     },
     "src/lib/types.ts": {
       "role": "index",
