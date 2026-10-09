@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created_at": "2026-10-09T15:22:23Z",
-  "updated_at": "2026-10-09T18:07:49Z",
+  "updated_at": "2026-10-09T18:20:12Z",
   "files": {
     ".gitattributes": {
       "role": "index",
@@ -17,9 +17,9 @@
     },
     ".impeccable/design.json": {
       "role": "index",
-      "sha256": "c42e61d523c82d98840a81a9d2773915783f38f293d553b9b2fd8314203bc1d7",
-      "size": 46888,
-      "normalized_sha256": "db38ef1e17f2d397f6aca4bf897236e43d5d98243be825b192b7caacf5c70696"
+      "sha256": "167b0d42478c05d7c9b641c4f4e536a4574650230fd2f663989e3726d34cc092",
+      "size": 49691,
+      "normalized_sha256": "167b0d42478c05d7c9b641c4f4e536a4574650230fd2f663989e3726d34cc092"
     },
     ".omp/mcp.json": {
       "role": "index",
@@ -47,9 +47,9 @@
     },
     "DESIGN.md": {
       "role": "index",
-      "sha256": "056064ec5e923d08166e564ebb6be934d20ffdce727cf72c73ee7ac7d97cb530",
-      "size": 43055,
-      "normalized_sha256": "056064ec5e923d08166e564ebb6be934d20ffdce727cf72c73ee7ac7d97cb530"
+      "sha256": "a173865e5a1507ff2ac89387a11600f16d7a8fd793818100963a3a2ed415b92e",
+      "size": 42283,
+      "normalized_sha256": "a173865e5a1507ff2ac89387a11600f16d7a8fd793818100963a3a2ed415b92e"
     },
     "LICENSE": {
       "role": "index",
@@ -71,9 +71,9 @@
     },
     "aoci.code.txt": {
       "role": "index",
-      "sha256": "dafc87525ef7d987d3fc2366a23b04e39ebe1d589d53f07fa6b37763a34c2eaa",
-      "size": 30791,
-      "normalized_sha256": "dafc87525ef7d987d3fc2366a23b04e39ebe1d589d53f07fa6b37763a34c2eaa"
+      "sha256": "7cba5c1c9c09f17d0286bb717ece229934ef12c53f531a43210d330e2ad35a9e",
+      "size": 31617,
+      "normalized_sha256": "7cba5c1c9c09f17d0286bb717ece229934ef12c53f531a43210d330e2ad35a9e"
     },
     "aoci.meta.txt": {
       "role": "index",
@@ -95,15 +95,15 @@
     },
     "docs/README.md": {
       "role": "index",
-      "sha256": "4a967a9534f075df40795d8495bb737c39c21bd768590afb6b788a16e116c951",
-      "size": 5075,
-      "normalized_sha256": "4a967a9534f075df40795d8495bb737c39c21bd768590afb6b788a16e116c951"
+      "sha256": "b35bb96f0e23b28fe977ef2fe730420e9fef92af1c8c97e6da06d4b68af92eea",
+      "size": 5406,
+      "normalized_sha256": "b35bb96f0e23b28fe977ef2fe730420e9fef92af1c8c97e6da06d4b68af92eea"
     },
     "docs/architecture/0001-渲染核与导出链路.md": {
       "role": "index",
-      "sha256": "48166fc2eb025ce261df8baaa39d75cca7b51da9bea74b2c1cf820ed46df675b",
-      "size": 3427,
-      "normalized_sha256": "48166fc2eb025ce261df8baaa39d75cca7b51da9bea74b2c1cf820ed46df675b"
+      "sha256": "d1c59e86655dfa92d6d5693d08d2d77d1a99642cdb644c436932a4aa74892836",
+      "size": 5908,
+      "normalized_sha256": "d1c59e86655dfa92d6d5693d08d2d77d1a99642cdb644c436932a4aa74892836"
     },
     "docs/architecture/README.md": {
       "role": "index",
@@ -201,11 +201,17 @@
       "size": 7358,
       "normalized_sha256": "0dbe9878ebdf2ffe93969337966fbd45fddc533ab3200da099635c87852e8b20"
     },
+    "docs/changes/0016-设计台账校正-引用改符号与侧车重生.md": {
+      "role": "index",
+      "sha256": "5653361d24c77dbbdc0465632167c90aa1fb1cb6cf6ed47023bea73cc5948b3b",
+      "size": 7024,
+      "normalized_sha256": "5653361d24c77dbbdc0465632167c90aa1fb1cb6cf6ed47023bea73cc5948b3b"
+    },
     "docs/changes/README.md": {
       "role": "index",
-      "sha256": "8f0b97499e61587c59693beb00faa8c55d06eab4c304114ade3cacd39019b37b",
-      "size": 3029,
-      "normalized_sha256": "8f0b97499e61587c59693beb00faa8c55d06eab4c304114ade3cacd39019b37b"
+      "sha256": "bc1126160868e239cecacb040d7bd4ec3da6a21af1f0b1324e33f6f51a132d90",
+      "size": 3339,
+      "normalized_sha256": "bc1126160868e239cecacb040d7bd4ec3da6a21af1f0b1324e33f6f51a132d90"
     },
     "docs/decisions/0001-界面语言-印刷工单与印张.md": {
       "role": "index",

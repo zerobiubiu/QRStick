@@ -6,7 +6,7 @@
 .oxlintrc.json[XQ3T]: F:oxlint 静态检查配置：启用 react/typescript/oxc 插件与两条 react 规则 | R:code:package.json | A:plugins,rules,react/rules-of-hooks,react/only-export-components | S:-
 AGENTS.md[SC6S]: F:agent 执行规则：Git、版本、文档、验证与 bun 口径，并承载 AOCI 认知区块 | R:code:docs/README.md,code:aoci.txt | A:aoci:begin,bun,docs/changes | S:aoci 区块由 aoci init 追加、原文不可改动；受管文件变更后须按 Guide 收尾维护认知
 CHANGELOG.md[SV5T]: F:语义化版本变更日志：只有被发布程序的行为变更才递增版本并记录，含 0.5.2 加固、0.5.3 性能与 0.6.0 首访引导 | R:code:package.json,code:docs/changes/README.md | A:0.6.0,语义化版本 | S:版本号唯一事实来源是 package.json，递增版本必须同步本文件与 docs/changes/
-DESIGN.md[CU7L]: F:设计令牌与视觉语法唯一事实来源：调色板、字阶、间距、组件语法、读数条与状态行措辞、首访条、预览渲染口径及拒绝清单 | R:code:.impeccable/design.json,code:src/theme.ts,code:src/components/PressSheet.tsx,code:src/components/StateLine.tsx | A:colors,typography,ink,cyan,读数条 | S:字号与颜色超出字阶即判漂移；读数条格数、状态行措辞与新增提示条（首访 / 示例标注 / 快捷键）以本文件为准
+DESIGN.md[CU7L]: F:设计令牌与视觉语法唯一事实来源（frontmatter 为规范层）：调色板、字阶、间距、组件语法、读数条与状态行措辞、首访条、预览渲染口径及拒绝清单 | R:code:.impeccable/design.json,code:src/theme.ts,code:src/components/PressSheet.tsx,code:src/components/StateLine.tsx | A:colors,typography,ink,cyan,读数条 | S:字号与颜色超出字阶即判漂移；读数条格数与提示条措辞以本文件为准；源码引用只写文件与符号，不写会漂的行号
 LICENSE[SG2T]: F:MIT 许可证原文：允许自由使用、修改与分发，须保留版权声明 | R:code:package.json | A:MIT | S:-
 PRODUCT.md[SU6T]: F:产品与用户上下文：使用者、场景、定位与约束，impeccable 的约定输入 | R:code:docs/decisions/0001-界面语言-印刷工单与印张.md | A:Users,Positioning,Constraints | S:未定事项（多标签拼版）本期不做；改动本文件前先问用户
 README.md[SG6T]: F:面向使用者的项目说明：能力清单、目录职责、两条硬约定与 bun 命令（含测试） | R:code:docs/README.md,code:PRODUCT.md,code:AGENTS.md,code:CHANGELOG.md,code:LICENSE | A:bun run dev,bun run build,bun test,src/lib/,docs/README.md | S:新增或改动文档必须回 docs/README.md 补索引；本文件只做摘要不复述细节
@@ -19,13 +19,13 @@ tsconfig.node.json[XV4T]: F:构建侧 TypeScript 配置：只覆盖 vite.config.
 vite.config.ts[XV5T]: F:Vite 构建配置：启用 React 插件，定义开发服务与打包行为 | R:code:package.json,code:tsconfig.node.json | A:defineConfig,plugins,@vitejs/plugin-react | S:产物是纯静态 dist/，直接发布到静态托管根路径；不要在这里引入后端代理
 
 ===C:/Users/wang-it-think/Desktop/Code/QRStick/.impeccable/===
-design.json[CU5L]: F:impeccable 产出的机器可读设计令牌表，供设计漂移探测器比对 | R:code:DESIGN.md,code:src/theme.ts | A:colorMeta,typography,schemaVersion | S:与 DESIGN.md 是同一设计语言的两处表述，改令牌必须两处同步
+design.json[CU5L]: F:impeccable 侧车：只放 frontmatter 装不下的扩展（色阶、阴影、动效、断点、组件自包含 html/css）与从 DESIGN.md 原样搬来的叙事 | R:code:DESIGN.md,code:src/theme.ts | A:schemaVersion,colorMeta,shadows,components,narrative | S:令牌唯一来源是 DESIGN.md 的 frontmatter，本文件不重复定义；改 DESIGN.md 后必须重生本文件（含 generatedAt 与叙事）
 
 ===C:/Users/wang-it-think/Desktop/Code/QRStick/docs/===
 README.md[SG6T]: F:文档体系唯一入口：全部文档索引、类型与状态规范、随行写变更文档的要求 | R:code:AGENTS.md,code:DESIGN.md,code:PRODUCT.md | A:docs/changes/,docs/architecture/,docs/decisions/ | S:改源码必须随行写 docs/changes/ 并回本文件补索引；编号只做目录内局部递增
 
 ===C:/Users/wang-it-think/Desktop/Code/QRStick/docs/architecture/===
-0001-渲染核与导出链路.md[SG7T]: F:架构说明：毫米到像素到文件的唯一链路，以及预览与导出必然一致的原因 | R:code:src/lib/render.ts,code:src/lib/export.ts,code:src/export/run.ts,code:src/lib/units.ts | A:renderLabel,layoutLabel,renderQrCode,createPdfBuilder,drawColorBar | S:二维码只在导出网格上按整数像素取整一次，预览只等比缩放同一张位图；缩放后再取整会让屏幕读数与打印互相打架
+0001-渲染核与导出链路.md[SG7T]: F:架构现状说明：毫米到像素到文件的唯一链路、预览与导出必然一致的原因，并随 0013/0014 补齐失败契约与两道尺寸闸门 | R:code:src/lib/render.ts,code:src/lib/export.ts,code:src/lib/exportImage.ts,code:src/lib/failures.ts | A:renderLabel,layoutLabel,renderQrCode,createPdfBuilder,drawColorBar | S:渲染核 never-throw（失败走 RenderResult.failure）；二维码只在导出网格上按整数像素取整一次且预览只等比缩放同一张位图；导出画布 100 兆像素上限
 README.md[SG4T]: F:架构目录索引：文档清单、阅读顺序与相关代码清单 | R:code:docs/architecture/0001-渲染核与导出链路.md | A:阅读顺序,相关代码/配置 | S:labelStore 的本机四键与界面层文件清单是现状事实，改名后要同步本文件
 
 ===C:/Users/wang-it-think/Desktop/Code/QRStick/docs/changes/===
@@ -45,6 +45,7 @@ README.md[SG5T]: F:变更记录目录索引：0001 起各次变更的状态与�
 0013-加固-边界输入与失败可见.md[SG6S]: F:加固变更记录：边界输入、失败可见、导出逐页隔离与并发防重入，含逐项取证、验证记录与未做项 | R:code:src/lib/render.ts,code:src/lib/failures.ts,code:src/export/run.ts,code:src/state/persistence.ts,code:src/components/BatchSource.tsx | A:0013,加固,失败可见,导出隔离 | S:加固改的是边界行为不是界面语言；新增阈值（标题六成版心、100 兆像素、二维码字节容量）与失败口径以本文档为准，改这些数字前先读它
 0014-性能优化-首屏闭包与参数交互.md[SG6S]: F:性能变更记录：首屏闭包减半（四个重库改按需加载）与参数交互掉帧减半，含排除法定位、度量口径与残余限制 | R:code:src/lib/export.ts,code:src/components/PressSheet.tsx,code:src/components/BatchPreviewGrid.tsx,code:src/lib/render.ts | A:0014,首屏闭包,按需加载,预览分辨率 | S:判「首屏是否回归」只看首屏闭包（入口 + 静态 import 链），不看入口 chunk 单文件大小；新增重库先问它属于首屏还是某次动作
 0015-首访引导与示例标注.md[SG6S]: F:首访引导变更记录：一次性上手条、示例数据标注与快捷键可见性，含首访取证、出现纪律与验证记录 | R:code:src/App.tsx,code:src/components/StateLine.tsx,code:src/state/labelStore.ts,code:src/state/persistence.ts | A:0015,首访引导,示例标注,快捷键 | S:新引导的纪律：只在状态行空闲时出现、点掉或到过价值即收起、存本机不再出现；文案与出现条件以本文档为准
+0016-设计台账校正-引用改符号与侧车重生.md[SG6S]: F:设计台账校正记录：引用从行号改「文件 + 符号」的理由与做法、令牌对表、侧车重生与架构现状文档补齐 | R:code:DESIGN.md,code:.impeccable/design.json,code:docs/architecture/0001-渲染核与导出链路.md | A:0016,引用改符号,侧车重生,令牌对表 | S:DESIGN.md 的源码引用一律只写文件与符号（行号会随改动漂移）；判「设计是否漂移」跑 impeccable detect，不要肉眼对行号
 
 ===C:/Users/wang-it-think/Desktop/Code/QRStick/docs/decisions/===
 0001-界面语言-印刷工单与印张.md[SG7T]: F:界面语言定为印刷工单与印张：选定过程、落地语法与四条纪律 | R:code:src/theme.ts,code:src/index.css,code:PRODUCT.md,code:src/components/PressSheet.tsx | A:FieldRow,DocketSection,SheetRuler,RegistrationMark,LineMark,drawColorBar | S:状态一律用线型表达而不是颜色；参数按优先级塌缩，恢复默认单独隔离
