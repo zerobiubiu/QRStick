@@ -5,7 +5,7 @@
  * 规格 / 标题 / 二维码 / 输出四段；低优先级的参数收在「更多规格」里，
  * 窄屏时默认收起，印张永远不被参数挤掉。
  */
-import { createContext, useContext, useId, useState, type ReactNode } from 'react';
+import { createContext, useContext, useId, useRef, useState, type ReactNode } from 'react';
 import {
   Box,
   Button,
@@ -23,8 +23,10 @@ import {
   Typography,
 } from '@mui/material';
 import { LABEL_FONTS } from '../lib/fonts';
+import { saveBlob, sanitizeFileName } from '../lib/download';
+import { buildPresetFile, parsePresetFile } from '../lib/presetFile';
 import { DPI_PRESETS, PAGE_PRESETS, clamp, formatMm, parseAspectRatio } from '../lib/units';
-import type { Align, BlockAlign, ErrorCorrectionLevel, TitlePosition } from '../lib/types';
+import type { Align, BlockAlign, ErrorCorrectionLevel, PresetScope, TitlePosition } from '../lib/types';
 import type { LabelIssue } from '../lib/render';
 import type { LabelStore } from '../state/labelStore';
 import { BatchSource } from './BatchSource';
@@ -277,6 +279,9 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
   const [ratioText, setRatioText] = useState('1:1.414');
   const [ratioError, setRatioError] = useState('');
   const [presetName, setPresetName] = useState('');
+  const [presetScope, setPresetScope] = useState<PresetScope>('full');
+  const [presetNotice, setPresetNotice] = useState('');
+  const presetInputRef = useRef<HTMLInputElement>(null);
   const [moreOpen, setMoreOpen] = useState(!compact);
   const custom = config.page.presetId === 'custom';
 
@@ -289,6 +294,36 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
     }
     setRatioError('');
     patchPage({ presetId: 'custom', heightMm: Math.round(config.page.widthMm * ratio * 10) / 10 });
+  };
+
+  const exportPresets = () => {
+    if (!store.presets.length) {
+      setPresetNotice('还没有预设可导出：先存一套。');
+      return;
+    }
+    const entries = store.presets.map(({ name, scope, savedAt, config: presetConfig }) => ({
+      name,
+      scope,
+      savedAt,
+      config: presetConfig,
+    }));
+    saveBlob(
+      new Blob([buildPresetFile(entries)], { type: 'application/json;charset=utf-8' }),
+      `${sanitizeFileName('qrstick-预设')}.json`,
+    );
+    setPresetNotice(`已导出 ${entries.length} 套预设（JSON，可带到别的机器导入）`);
+  };
+
+  const importPresetFile = async (file: File) => {
+    try {
+      const parsed = parsePresetFile(await file.text());
+      const { added, replaced } = store.importPresets(parsed.entries);
+      const parts = [`导入 ${added + replaced} 套（新增 ${added}、覆盖 ${replaced}）`];
+      if (parsed.warnings.length) parts.push(`${parsed.warnings.length} 条提醒：${parsed.warnings[0]}`);
+      setPresetNotice(parts.join('；'));
+    } catch (cause) {
+      setPresetNotice(cause instanceof Error ? `导入失败：${cause.message}` : '导入失败');
+    }
   };
 
   return (
@@ -308,32 +343,75 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
         {/* 批量模式下数据源就是首要任务，排在最前 */}
         {store.mode === 'batch' ? <BatchSource store={store} /> : null}
 
-        <DocketSection title="预设" meta={store.presets.length ? `${store.presets.length} 套` : '未保存'}>
-          <FieldRow label="存下这套" hint="把当前全部参数存成一套，下次一键回到同样的规格（存在本机）">
-            <Stack direction="row" sx={{ gap: 0.75, alignItems: 'center' }}>
+        <DocketSection title="样式预设" meta={store.presets.length ? `${store.presets.length} 套` : '未保存'}>
+          <FieldRow label="存下这套" hint="整套 = 纸张 + 样式；只样式 = 标题格式 / 二维码参数 / 印刷标记 / 版式站位（不动纸张与页边距）">
+            <Stack direction="row" sx={{ gap: 0.75, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Segmented<PresetScope>
+                ariaLabel="预设存档范围"
+                value={presetScope}
+                options={[
+                  { value: 'full', label: '整套' },
+                  { value: 'style', label: '只样式' },
+                ]}
+                onChange={setPresetScope}
+              />
               <TextField
                 size="small"
                 value={presetName}
                 placeholder="名称，例如「A4 工单」"
                 onChange={(event) => setPresetName(event.target.value)}
                 slotProps={{ htmlInput: { 'aria-label': '预设名称' } }}
-                sx={{ flex: 1, minWidth: 0 }}
+                sx={{ flex: 1, minWidth: 96 }}
               />
               <Button
                 size="small"
                 variant="outlined"
                 onClick={() => {
-                  store.savePreset(presetName);
+                  store.savePreset(presetName, presetScope);
                   setPresetName('');
+                  setPresetNotice(`已保存「${presetName.trim() || '未命名预设'}」`);
                 }}
               >
                 保存
               </Button>
             </Stack>
           </FieldRow>
+
+          <FieldRow label="导入导出" hint="导出一个 JSON 文件就能带到别的机器（内网多台各存各的问题一次解决）；导入时同名覆盖">
+            <Stack direction="row" sx={{ gap: 0.75, flexWrap: 'wrap' }}>
+              <Button size="small" variant="outlined" disabled={!store.presets.length} onClick={exportPresets}>
+                导出预设文件
+              </Button>
+              <Button size="small" variant="outlined" onClick={() => presetInputRef.current?.click()}>
+                导入预设文件
+              </Button>
+            </Stack>
+          </FieldRow>
+          <input
+            ref={presetInputRef}
+            type="file"
+            accept=".json,application/json"
+            hidden
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = '';
+              if (file) void importPresetFile(file);
+            }}
+          />
+
+          {presetNotice ? (
+            <Box sx={{ px: 2, py: 0.75, borderBottom: '1px solid var(--rule)' }}>
+              <Typography sx={{ fontSize: 10.5, fontFamily: MONO_FONT, color: 'text.secondary' }}>{presetNotice}</Typography>
+            </Box>
+          ) : null}
+
           {store.presets.length ? (
             store.presets.map((preset) => (
-              <FieldRow key={preset.id} label={preset.name} hint={`保存于 ${preset.savedAt}`}>
+              <FieldRow
+                key={preset.id}
+                label={preset.name}
+                hint={`${preset.scope === 'style' ? '只样式' : '整套'} · 保存于 ${preset.savedAt}`}
+              >
                 <Stack direction="row" sx={{ gap: 0.75 }}>
                   <Button size="small" variant="outlined" onClick={() => store.applyPreset(preset.id)}>
                     套用
@@ -347,7 +425,7 @@ export function Docket({ store, compact, issues }: { store: LabelStore; compact:
           ) : (
             <Box sx={{ px: 2, py: 0.75 }}>
               <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>
-                还没有预设：同一种标签每天都要出的话，把现在这套参数存下来。
+                还没有预设：同一种标签每天都要出的话，把现在这套存下来；也可以导入别人导出的预设文件。
               </Typography>
             </Box>
           )}

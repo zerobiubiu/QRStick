@@ -5,8 +5,9 @@
  * 形状对不上就退回默认，绝不把旧结构直接塞进界面。
  */
 import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
-import type { BatchRow, LabelConfig, MarksConfig, PageConfig, QrConfig, TitleConfig } from '../lib/types';
+import type { BatchRow, LabelConfig, MarksConfig, PageConfig, PresetScope, QrConfig, TitleConfig } from '../lib/types';
 import type { DataFormat } from '../lib/importData';
+import type { PresetFileEntry } from '../lib/presetFile';
 
 const CONFIG_KEY = 'qrstick.config.v1';
 const ROWS_KEY = 'qrstick.rows.v1';
@@ -64,6 +65,8 @@ export interface LabelPreset {
   id: string;
   name: string;
   savedAt: string;
+  /** full = 整套参数；style = 只存样式（标题格式 / 二维码参数 / 印刷标记 / 版式站位） */
+  scope: PresetScope;
   config: LabelConfig;
 }
 
@@ -108,7 +111,11 @@ function loadPresets(): LabelPreset[] {
     const raw = localStorage.getItem(PRESETS_KEY);
     if (!raw) return [];
     const saved = JSON.parse(raw) as LabelPreset[];
-    return Array.isArray(saved) ? saved.filter((preset) => preset?.id && preset?.config) : [];
+    return Array.isArray(saved)
+      ? saved
+          .filter((preset) => preset?.id && preset?.config)
+          .map((preset) => ({ ...preset, scope: preset.scope === 'style' ? 'style' : 'full' }))
+      : [];
   } catch {
     return [];
   }
@@ -135,9 +142,10 @@ export interface LabelStore {
   record: ExportRecord;
   setRecord: Dispatch<SetStateAction<ExportRecord>>;
   presets: LabelPreset[];
-  savePreset: (name: string) => void;
+  savePreset: (name: string, scope: PresetScope) => void;
   applyPreset: (id: string) => void;
   deletePreset: (id: string) => void;
+  importPresets: (entries: PresetFileEntry[]) => { added: number; replaced: number };
   patchPage: (next: Partial<PageConfig>) => void;
   patchQr: (next: Partial<QrConfig>) => void;
   patchTitle: (next: Partial<TitleConfig>) => void;
@@ -222,27 +230,76 @@ export function useLabelStore(): LabelStore {
   );
 
   const savePreset = useCallback(
-    (name: string) => {
+    (name: string, scope: PresetScope) => {
       const preset: LabelPreset = {
         id: makeId(),
         name: name.trim() || `预设 ${presets.length + 1}`,
         savedAt: new Date().toLocaleString('zh-CN', { hour12: false }),
+        scope,
         config: structuredClone(config),
       };
       setPresets((prev) => [preset, ...prev]);
     },
     [config, presets.length],
   );
+  // 样式预设只覆盖样式四件套，纸张与页边距保持当前值——这样「同一套标题样式」能贴到不同尺寸的标签上
   const applyPreset = useCallback(
     (id: string) => {
       const preset = presets.find((item) => item.id === id);
-      if (preset) setConfig(structuredClone(preset.config));
+      if (!preset) return;
+      if (preset.scope === 'style') {
+        setConfig((current) => ({
+          ...current,
+          title: { ...preset.config.title },
+          qr: { ...preset.config.qr },
+          marks: { ...preset.config.marks },
+          page: { ...current.page, blockAlign: preset.config.page.blockAlign },
+        }));
+        return;
+      }
+      setConfig(structuredClone(preset.config));
     },
     [presets],
   );
   const deletePreset = useCallback((id: string) => {
     setPresets((prev) => prev.filter((item) => item.id !== id));
   }, []);
+
+  /** 导入预设：同名覆盖、否则插到最前；缺字段按默认值补齐，绝不把半截结构塞进界面 */
+  const importPresets = useCallback(
+    (entries: PresetFileEntry[]) => {
+      const next = [...presets];
+      let added = 0;
+      let replaced = 0;
+      for (const entry of entries) {
+        const merged: LabelConfig = {
+          page: { ...DEFAULT_CONFIG.page, ...entry.config.page },
+          qr: { ...DEFAULT_CONFIG.qr, ...entry.config.qr },
+          title: { ...DEFAULT_CONFIG.title, ...entry.config.title },
+          marks: { ...DEFAULT_CONFIG.marks, ...entry.config.marks },
+          content: typeof entry.config.content === 'string' ? entry.config.content : DEFAULT_CONFIG.content,
+        };
+        const preset: LabelPreset = {
+          id: makeId(),
+          name: entry.name,
+          savedAt: entry.savedAt || new Date().toLocaleString('zh-CN', { hour12: false }),
+          scope: entry.scope,
+          config: merged,
+        };
+        const existing = next.findIndex((item) => item.name === entry.name);
+        if (existing >= 0) {
+          next[existing] = preset;
+          replaced += 1;
+        } else {
+          next.unshift(preset);
+          added += 1;
+        }
+      }
+      setPresets(next);
+      return { added, replaced };
+    },
+    [presets],
+  );
 
   return {
     config,
@@ -263,6 +320,7 @@ export function useLabelStore(): LabelStore {
     savePreset,
     applyPreset,
     deletePreset,
+    importPresets,
     patchPage,
     patchQr,
     patchTitle,

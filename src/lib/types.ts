@@ -25,6 +25,9 @@ export interface PagePreset {
 /** 内容块（标题块 + 二维码）在版心里的垂直位置 */
 export type BlockAlign = 'top' | 'center' | 'bottom';
 
+/** 预设的存档范围：整套参数，还是只存样式（标题格式 / 二维码参数 / 印刷标记 / 版式站位） */
+export type PresetScope = 'full' | 'style';
+
 /** 页面（印张）参数 */
 export interface PageConfig {
   /** 预设 id，见 units.ts 的 PAGE_PRESETS；'custom' 表示自定义宽高 */
