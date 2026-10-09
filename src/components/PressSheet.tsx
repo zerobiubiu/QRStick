@@ -5,7 +5,7 @@
  *  台面（灰底 + 四角套准十字）→ 毫米刻度尺（贴着印张的真实刻度）→ 纸（渲染核产出的画布）。
  * 刻度尺的刻度不是装饰：它按印张在当前屏幕上每毫米多少像素现算，读数就是真实尺寸。
  */
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Box, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { renderLabel, type LabelLayout } from '../lib/render';
 import { useElementSize } from '../lib/useElementSize';
@@ -18,6 +18,8 @@ const STAGE_MAX_PX = 1800;
 const STRIP_PX = 22;
 /** 可选的缩放倍数：1 = 适应窗口 */
 const ZOOM_STEPS = [1, 1.5, 2, 3];
+/** 滚轮累计多少像素才算「切一张」：触控板一格只有几像素，不累计会一次飞过头 */
+const WHEEL_STEP_PX = 40;
 
 /** 套准十字：四个色版各出一根，印张世界的签名细节 */
 function RegistrationMark({ size = 17 }: { size?: number }) {
@@ -128,6 +130,7 @@ export function PressSheet({
   signature,
   zoom,
   onZoomChange,
+  onStep,
 }: {
   config: LabelConfig;
   layout: LabelLayout;
@@ -135,8 +138,49 @@ export function PressSheet({
   /** 缩放倍数：1 = 适应窗口；>1 放大并在台面内滚动 */
   zoom: number;
   onZoomChange: (zoom: number) => void;
+  /** 传了它才接管滚轮：台面滚不动时滚轮切上下张（放大到能滚时仍先滚纸面） */
+  onStep?: (delta: number) => void;
 }) {
-  const { box: stage, attach: attachStage } = useMeasuredBox();
+  const { box: stage, attach: attachSize } = useMeasuredBox();
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  // 台面节点既要量尺寸（回调 ref）又要挂非被动 wheel 监听，所以在这里串一层
+  const attachStage = useCallback(
+    (node: HTMLDivElement | null) => {
+      stageRef.current = node;
+      return attachSize(node);
+    },
+    [attachSize],
+  );
+
+  // 滚轮切上下张：React 的 onWheel 是被动监听（preventDefault 无效），这里挂原生非被动监听。
+  // 只在台面滚不动时才接管——放大态滚轮先用来滚纸面，否则放大等于白放。
+  //
+  // 累计量只用一个 ref：够一格（WHEEL_STEP_PX）就换一张并归零，不设空闲定时器——
+  // 定时器在隐藏/无头标签页里会被钳到 ≥1s，行为随标签页是否可见而变，不如不做。
+  // 监听器只挂一次、回调走 ref：onStep 的依赖里有 store（每次渲染都是新对象），
+  // 把它放进 effect 依赖会让监听器反复重建、累计量被清空。
+  const onStepRef = useRef(onStep);
+  useEffect(() => {
+    onStepRef.current = onStep;
+  }, [onStep]);
+  const wheelAccumulated = useRef(0);
+  useEffect(() => {
+    const node = stageRef.current;
+    if (!node) return;
+    const onWheel = (event: WheelEvent) => {
+      const handler = onStepRef.current;
+      if (!handler || event.deltaY === 0) return;
+      // 台面自己能滚（放大态）时，滚轮先用来滚纸面
+      if (node.scrollHeight > node.clientHeight + 2) return;
+      wheelAccumulated.current += event.deltaY;
+      if (Math.abs(wheelAccumulated.current) < WHEEL_STEP_PX) return;
+      event.preventDefault();
+      handler(wheelAccumulated.current > 0 ? 1 : -1);
+      wheelAccumulated.current = 0;
+    };
+    node.addEventListener('wheel', onWheel, { passive: false });
+    return () => node.removeEventListener('wheel', onWheel);
+  }, []);
 
   const rendered = useMemo(() => {
     const scale = Math.min(1, STAGE_MAX_PX / Math.max(layout.pixelWidth, layout.pixelHeight));

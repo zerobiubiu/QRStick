@@ -228,6 +228,11 @@ export function BatchPreviewGrid({
         <Stack direction="row" sx={{ alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
           {previewLayout === 'single' && selectedExists ? (
             <>
+              <Typography
+                sx={{ fontSize: 10.5, color: 'text.secondary', whiteSpace: 'nowrap', display: { xs: 'none', md: 'block' } }}
+              >
+                滚轮切换上下张
+              </Typography>
               <Button size="small" variant="text" onClick={() => step(-1)} sx={{ minHeight: 22 }}>
                 ‹ 上一张
               </Button>
@@ -296,6 +301,7 @@ export function BatchPreviewGrid({
           signature={selectedSignature}
           zoom={previewZoom}
           onZoomChange={store.setPreviewZoom}
+          onStep={step}
         />
       ) : (
         <Box
