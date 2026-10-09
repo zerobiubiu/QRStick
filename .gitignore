@@ -32,3 +32,7 @@ pnpm-lock.yaml
 *.njsproj
 *.sln
 *.sw?
+
+# omp 宿主接入：MCP 配置里是本机绝对路径，机器绑定，不进版本库
+# （aoci 文档要求宿主配置不提交；init 自己写的宿主配置忽略项保持原样）
+.omp/mcp.json

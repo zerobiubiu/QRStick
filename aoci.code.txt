@@ -1,0 +1,101 @@
+#AOCI-CODE-VOLUME: 1
+
+===C:/Users/wang-it-think/Desktop/Code/QRStick/===
+.gitattributes[FC4T]: F:声明全仓文本一律以 LF 检出，使 AOCI 字节基线在各平台一致 | R:- | A:text=auto,eol=lf | S:CRLF 检出会改变全仓字节、被 AOCI 判为漂移，勿改
+.gitignore[FC4T]: F:声明不入库的路径：依赖、构建产物、impeccable 过程产物与其它包管理器锁文件 | R:code:.impeccable/design.json | A:.impeccable/*,!.impeccable/design.json,node_modules,dist | S:放行规则必须紧跟忽略规则：只写 .impeccable/ 会让 design.json 无法入库
+.oxlintrc.json[XQ3T]: F:oxlint 静态检查配置：启用 react/typescript/oxc 插件与两条 react 规则 | R:code:package.json | A:plugins,rules,react/rules-of-hooks,react/only-export-components | S:-
+AGENTS.md[SC6S]: F:agent 执行规则：Git、版本、文档、验证与 bun 口径，并承载 AOCI 认知区块 | R:code:docs/README.md,code:aoci.txt | A:aoci:begin,bun,docs/changes | S:aoci 区块由 aoci init 追加、原文不可改动；受管文件变更后须按 Guide 收尾维护认知
+CHANGELOG.md[SV5T]: F:语义化版本变更日志：只有被发布程序的行为变更才递增版本并记录 | R:code:package.json,code:docs/changes/README.md | A:0.5.1,语义化版本 | S:版本号唯一事实来源是 package.json，递增版本必须同步本文件与 docs/changes/
+DESIGN.md[CU7L]: F:设计令牌与视觉语法唯一事实来源：调色板、字阶、间距、组件语法与拒绝清单 | R:code:.impeccable/design.json,code:src/theme.ts | A:colors,typography,ink,cyan | S:代码里的字号与颜色超出本文件字阶即被判漂移；死变体优先删变体而不是改本文件
+LICENSE[SG2T]: F:MIT 许可证原文：允许自由使用、修改与分发，须保留版权声明 | R:code:package.json | A:MIT | S:-
+PRODUCT.md[SU6T]: F:产品与用户上下文：使用者、场景、定位与约束，impeccable 的约定输入 | R:code:docs/decisions/0001-界面语言-印刷工单与印张.md | A:Users,Positioning,Constraints | S:未定事项（多标签拼版）本期不做；改动本文件前先问用户
+README.md[SG6T]: F:面向使用者的项目说明：能力清单、目录职责、两条硬约定与 bun 命令 | R:code:docs/README.md,code:PRODUCT.md,code:AGENTS.md,code:CHANGELOG.md,code:LICENSE | A:bun run dev,bun run build,src/lib/,docs/README.md | S:新增或改动文档必须回 docs/README.md 补索引；本文件只做摘要不复述细节
+bun.lock[FV3L]: F:bun 生成的依赖锁文件：记录精确版本与完整性校验 | R:code:package.json | A:lockfileVersion | S:只由 bun 安装维护，勿手改
+index.html[EG5T]: F:Vite 入口 HTML：挂载点、站点标题与描述、图标，加载 src/main.tsx | R:code:src/main.tsx | A:#root,/src/main.tsx,favicon.svg | S:预览与构建都以此文件为入口，改挂载点会同时打断开发服务与打包
+package.json[FV6T]: F:项目清单：名称、版本、bun 脚本与依赖清单，版本号唯一事实来源 | R:code:bun.lock,code:CHANGELOG.md,code:vite.config.ts | A:version,scripts,dependencies,devDependencies | S:版本号只在这里递增且必须同步 CHANGELOG.md；脚本只有 dev/build/lint/preview 四个
+tsconfig.app.json[XV4T]: F:应用侧 TypeScript 配置：目标 es2023、bundler 解析、严格未用检查与 noEmit | R:code:tsconfig.json,code:src/main.tsx | A:moduleResolution,noUnusedLocals,noEmit,jsx | S:noEmit 由 vite 负责打包；noUnusedLocals 与 noUnusedParameters 开着，留未用符号会直接编译失败
+tsconfig.json[XV4T]: F:工程引用入口：把应用侧与构建侧两个子配置组合起来 | R:code:tsconfig.app.json,code:tsconfig.node.json | A:references,files | S:本文件只做引用，编译选项都在两个子配置里；tsc -b 由此展开
+tsconfig.node.json[XV4T]: F:构建侧 TypeScript 配置：只覆盖 vite.config.ts，用 nodenext 与 node 类型 | R:code:vite.config.ts,code:tsconfig.json | A:module,nodenext,types,include | S:include 只含 vite.config.ts，改动它会连带改变 tsc -b 的检查范围
+vite.config.ts[XV5T]: F:Vite 构建配置：启用 React 插件，定义开发服务与打包行为 | R:code:package.json,code:tsconfig.node.json | A:defineConfig,plugins,@vitejs/plugin-react | S:产物是纯静态 dist/，直接发布到静态托管根路径；不要在这里引入后端代理
+
+===C:/Users/wang-it-think/Desktop/Code/QRStick/.impeccable/===
+design.json[CU5L]: F:impeccable 产出的机器可读设计令牌表，供设计漂移探测器比对 | R:code:DESIGN.md,code:src/theme.ts | A:colorMeta,typography,schemaVersion | S:与 DESIGN.md 是同一设计语言的两处表述，改令牌必须两处同步
+
+===C:/Users/wang-it-think/Desktop/Code/QRStick/docs/===
+README.md[SG6T]: F:文档体系唯一入口：全部文档索引、类型与状态规范、随行写变更文档的要求 | R:code:AGENTS.md,code:DESIGN.md,code:PRODUCT.md | A:docs/changes/,docs/architecture/,docs/decisions/ | S:改源码必须随行写 docs/changes/ 并回本文件补索引；编号只做目录内局部递增
+
+===C:/Users/wang-it-think/Desktop/Code/QRStick/docs/architecture/===
+0001-渲染核与导出链路.md[SG7T]: F:架构说明：毫米到像素到文件的唯一链路，以及预览与导出必然一致的原因 | R:code:src/lib/render.ts,code:src/lib/export.ts,code:src/export/run.ts,code:src/lib/units.ts | A:renderLabel,layoutLabel,renderQrCode,createPdfBuilder,drawColorBar | S:二维码只在导出网格上按整数像素取整一次，预览只等比缩放同一张位图；缩放后再取整会让屏幕读数与打印互相打架
+README.md[SG4T]: F:架构目录索引：文档清单、阅读顺序与相关代码清单 | R:code:docs/architecture/0001-渲染核与导出链路.md | A:阅读顺序,相关代码/配置 | S:labelStore 的本机四键与界面层文件清单是现状事实，改名后要同步本文件
+
+===C:/Users/wang-it-think/Desktop/Code/QRStick/docs/changes/===
+0001-初版实现.md[SG4T]: F:初版实现记录：技术栈、渲染核与三种导出、CSV 批量与验证限制 | R:code:docs/architecture/0001-渲染核与导出链路.md,code:docs/decisions/0001-界面语言-印刷工单与印张.md | A:0.1.0 | S:-
+0002-改用-bun.md[SV4T]: F:包管理器从 npm 切到 bun：删旧锁文件、重装与命令统一 | R:code:bun.lock,code:.gitignore,code:AGENTS.md | A:bun.lock,bun install,bunx | S:本仓库不再接受 npm/yarn/pnpm 锁文件
+0003-窄屏布局与测量兜底.md[SU5T]: F:窄屏三类问题与台面测量兜底：印张与批量表塌成零高、读数条撑破网格 | R:code:src/App.tsx,code:src/components/PressSheet.tsx,code:src/lib/useElementSize.ts | A:useMeasuredBox,ResizeObserver,xs | S:无头与隐身环境下 ResizeObserver 不投递回调，必须另有窗口 resize 兜底
+0004-完稿评审修复.md[SQ5T]: F:完稿评审六条必修项对账：量测框口径、状态去色、对比度、印刷标记与批量读数 | R:code:src/lib/useElementSize.ts,code:src/theme.ts,code:src/state/labelStore.ts,code:PRODUCT.md | A:useMeasuredBox,clientWidth,INK | S:台面按内容框量、按内容框摆印张；量测误差要表现为整体缩小，不能被裁切
+0005-判定轮收尾.md[SQ3T]: F:判定轮 ship 后的收尾：注释口径、兜底文案去重与批量面取证 | R:code:src/lib/types.ts,code:src/App.tsx,code:docs/decisions/0001-界面语言-印刷工单与印张.md | A:MarksConfig,cropMarks | S:状态行已自带「导出失败：」前缀，兜底文案不得再以它开头
+0006-评审修复.md[SQ6T]: F:设计评审修复：二维码真相链、提醒语义与常驻体检栏、窄屏遮挡与 advisory 清零 | R:code:src/lib/render.ts,code:DESIGN.md,code:src/theme.ts,code:src/index.css | A:qrExportSidePx,qrActualMm,spaceLimited,INK_DEEP | S:模块取整只在导出网格做一次且只允许不超过上限；取整造成的缩短不报警，被空间限住才报
+0007-复核修复与批量能力扩展.md[SQ5T]: F:第二次评审的 P1/P2 与回归修复，加上批量导入扩展与就地编辑、快捷键、预设（0.2.0） | R:code:src/lib/importData.ts,code:src/state/labelStore.ts,code:src/lib/render.ts,code:src/App.tsx | A:importData.ts,renderQrCode,0.2.0 | S:二维码取整只允许不超过空间上限，向上取整越界要改用 floor，否则会挤成左贴
+0008-样式预设范围与导入导出.md[SQ5T]: F:样式预设范围可选与 JSON 导入导出，使样式能跨机器复用（0.3.0） | R:code:src/lib/presetFile.ts,code:src/lib/types.ts,code:src/state/labelStore.ts,code:src/components/Docket.tsx | A:presetFile.ts,style,整套,0.3.0 | S:只样式范围不含纸张、方向、DPI 与页边距，套用时不得覆盖这四项
+0009-图片工作台导出与批量编辑.md[SQ6T]: F:图片导出三模式、可拖拽批量表与多图预览，重写 App 并去掉 DataGrid（0.4.0） | R:code:src/lib/exportImage.ts,code:src/export/runImage.ts,code:src/components/BatchTable.tsx,code:src/components/BatchPreviewGrid.tsx,code:src/App.tsx | A:exportImage.ts,runImage.ts,dnd-kit,fflate,0.4.0 | S:批量表改用 MUI Table 加 dnd-kit，行顺序即数据顺序；拼接总像素上限四千万
+0010-批量预览统一为-PressSheet.md[SQ5T]: F:批量单张预览复用 PressSheet 本体，缩放与列数可调、双击进单张（0.5.0） | R:code:src/components/PressSheet.tsx,code:src/components/BatchPreviewGrid.tsx,code:src/state/labelStore.ts | A:STAGE_MAX_PX,previewZoom,previewLayout,0.5.0 | S:批量与单张预览必须共用同一个 PressSheet，不要另建第二套预览实现
+0011-滚轮换张与预览提示.md[SQ5T]: F:单张突出预览用滚轮换上下张：原生非被动监听加累计阈值（0.5.1） | R:code:src/components/PressSheet.tsx,code:src/components/BatchPreviewGrid.tsx | A:WHEEL_STEP_PX,onStep,0.5.1 | S:React onWheel 是被动监听、preventDefault 无效，滚轮接管必须挂原生非被动监听
+README.md[SG5T]: F:变更记录目录索引：0001 起各次变更的状态与生效版本 | R:code:docs/README.md | A:已执行,不可变变更文档 | S:变更文档定稿后不重写，后续变化另建文档并标注替代关系
+
+===C:/Users/wang-it-think/Desktop/Code/QRStick/docs/decisions/===
+0001-界面语言-印刷工单与印张.md[SG7T]: F:界面语言定为印刷工单与印张：选定过程、落地语法与四条纪律 | R:code:src/theme.ts,code:src/index.css,code:PRODUCT.md,code:src/components/PressSheet.tsx | A:FieldRow,DocketSection,SheetRuler,RegistrationMark,LineMark,drawColorBar | S:状态一律用线型表达而不是颜色；参数按优先级塌缩，恢复默认单独隔离
+README.md[SG4T]: F:关键决策目录索引：决策文档清单与相关代码 | R:code:docs/decisions/0001-界面语言-印刷工单与印张.md | A:相关代码 | S:-
+
+===C:/Users/wang-it-think/Desktop/Code/QRStick/public/===
+favicon.svg[CU3T]: F:站点图标 SVG：32×32 的二维码方块与外框，只用墨黑与纸白 | R:code:index.html | A:viewBox,#101010 | S:-
+
+===C:/Users/wang-it-think/Desktop/Code/QRStick/src/===
+App.tsx[AU7M]: F:应用外壳：顶栏动作条、单张与批量的排布与分栏；导出编排与热键交给 hooks | R:code:src/state/labelStore.ts,code:src/state/useExportActions.ts,code:src/components/Docket.tsx,code:src/components/PressSheet.tsx,code:src/components/BatchPreviewGrid.tsx,code:src/lib/useSplitDrag.ts | A:App,useMediaQuery,EXPORT_ACTION,SHORTCUTS,ACTIONS | S:窄屏塌缩为单列、顶栏模式切换恒定居中；导出记录只由 useExportActions 驱动状态行
+index.css[CU5S]: F:全局样式：焦点环、选中文字与 MUI 之外的少量基线规则 | R:code:src/main.tsx,code:src/theme.ts | A::focus-visible,::selection | S:焦点环须用 !important 压过组件库的 outline 归零，否则键盘焦点不可见
+main.tsx[EG5T]: F:应用入口：挂载根节点、套主题与基线样式、以严格模式渲染 App | R:code:src/App.tsx,code:src/theme.ts,code:src/index.css,code:index.html | A:StrictMode,createRoot,ThemeProvider,CssBaseline | S:挂载点 id 由 index.html 提供，改名要两处同步
+theme.ts[CU6S]: F:设计令牌到 MUI 主题：墨黑纸白与发丝线、字阶、两个字体栈与组件覆盖 | R:code:DESIGN.md,code:.impeccable/design.json,code:src/index.css | A:INK,INK_DEEP,PAPER,GROUND,CYAN,MONO_FONT | S:令牌值必须与 DESIGN.md 一致，超出字阶的字号会被探测器判漂移；死变体优先删变体而不是改令牌
+
+===C:/Users/wang-it-think/Desktop/Code/QRStick/src/components/===
+BatchPreviewGrid.tsx[AU6M]: F:批量预览区：单张突出与多张网格两种排布、列数控制、双击进单张与滚轮换张 | R:code:src/components/PressSheet.tsx,code:src/lib/render.ts,code:src/lib/preview.ts,code:src/lib/batch.ts,code:src/state/labelStore.ts | A:BatchPreviewGrid,THUMB_MAX_PX,previewScaleFor,onStep,buildRowConfig | S:单张突出必须复用 PressSheet 本体；行→配置必须走 lib/batch.ts 同一实现；滚轮换张只在台面滚不动时接管
+BatchSource.tsx[AU5S]: F:批量数据源区：粘贴或选文件导入、格式嗅探、示例下载与解析结果提示 | R:code:src/lib/importData.ts,code:src/lib/download.ts,code:src/components/ConfirmDialog.tsx,code:src/state/labelStore.ts | A:BatchSource,parseDataFile,parsePastedText,buildSampleCsv,DATA_FORMAT_LABEL | S:导入前先经确认框；解析失败只在原地提示，不覆盖已有行
+BatchTable.tsx[AU6L]: F:批量数据表：行拖拽排序、列宽可拖、行列内编辑、多选与删除、窗口化渲染 | R:code:src/state/labelStore.ts,code:src/lib/useElementSize.ts,code:src/lib/types.ts | A:BatchTable,useSortable,SortableContext,verticalListSortingStrategy,restrictToVerticalAxis | S:行顺序即数据顺序，选中与多选要跟着搬位；列宽与滚动位置存 store，刷新不丢
+ConfirmDialog.tsx[AU4T]: F:通用确认对话框：按 ConfirmRequest 渲染标题与说明，承载破坏性动作的二次确认 | R:code:src/theme.ts | A:ConfirmDialog,ConfirmRequest,onClose | S:破坏性动作必须走这里，不要用浏览器原生 confirm
+Docket.tsx[AU6T]: F:工单外壳：批量数据源 + 五段参数 + 体检常驻底栏与恢复默认，字段与各段都在 docket/ | R:code:src/components/BatchSource.tsx,code:src/components/docket/PresetSection.tsx,code:src/components/docket/PaperSection.tsx,code:src/components/docket/QrSection.tsx,code:src/components/docket/ExportSection.tsx | A:Docket,LineMark,PaperSection,TitleSection,QrSection,ExportSection | S:各段只认自己那部分配置与 patch 回调；体检常驻底栏且首条只在状态行出现，同屏不重复
+PressSheet.tsx[AU7M]: F:印张预览：台面加毫米刻度尺与四色套准十字，可缩放、滚轮换张并给出六格读数 | R:code:src/lib/render.ts,code:src/lib/useElementSize.ts,code:src/lib/preview.ts | A:PressSheet,ZOOM_STEPS,WHEEL_STEP_PX,RegistrationMark,SheetRuler,previewScaleFor | S:滚轮接管必须挂原生非被动监听（React onWheel 被动、preventDefault 无效）；预览上限只在 lib/preview.ts 一处，别在本组件再写常量
+StateLine.tsx[AU4S]: F:状态行：用线型表达导出与提醒状态（实线生效、点划线出片中、双线已导出、虚线提醒） | R:code:src/state/types.ts,code:src/theme.ts | A:StateLine,LineMark | S:本组件已固定输出导出失败前缀，调用方兜底文案不得再以它开头
+
+===C:/Users/wang-it-think/Desktop/Code/QRStick/src/export/===
+run.ts[AV7S]: F:三种交付动作的编排：出片 PNG、付印 PDF、交版 Word，含批量逐页与进度回调 | R:code:src/lib/export.ts,code:src/lib/batch.ts,code:src/lib/download.ts,code:src/lib/render.ts,code:src/lib/units.ts,code:src/lib/async.ts | A:runExport,ExportFormat,EXPORT_ACTION,createPdfBuilder,exportWord | S:批量必须边渲染边写出并逐页释放画布（一页 A4 300dpi 约 35MB，攒齐会撑爆标签页）
+runImage.ts[AV6T]: F:图片导出编排：逐张、ZIP 打包与拼接成一张三种模式 | R:code:src/lib/exportImage.ts,code:src/lib/batch.ts,code:src/lib/download.ts,code:src/lib/render.ts,code:src/lib/units.ts | A:runImageExport,ImageExportRequest,exportImages | S:逐张模式要节流并保证文件名唯一；单张失败不中断整批
+
+===C:/Users/wang-it-think/Desktop/Code/QRStick/src/lib/===
+async.ts[CG4T]: F:并发让出工具：把主线程让给绘制与延时等待 | R:code:src/export/run.ts,code:src/lib/exportImage.ts | A:yieldToPaint,wait | S:批量导出每页之间必须让出一次，否则进度不会重绘
+batch.ts[DB5T]: F:行到配置的唯一实现：深拷贝后用一行数据覆盖标题与内容，预览与导出都走它 | R:code:src/lib/types.ts,code:src/export/run.ts,code:src/export/runImage.ts,code:src/components/BatchPreviewGrid.tsx,code:src/App.tsx | A:buildRowConfig,buildBatch,structuredClone,BatchRow | S:深拷贝后不共享 page/qr/title 子对象；预览与导出不得各自拼装行配置（曾各写一份且语义不同）
+download.ts[RG5T]: F:下载与文件名：保存 Blob、画布转 PNG、文件名净化 | R:code:src/export/run.ts,code:src/lib/export.ts,code:src/components/Docket.tsx | A:saveBlob,canvasToPngBlob,sanitizeFileName | S:文件名必须净化掉控制字符与非法字符，否则批量导出在 Windows 上会丢文件
+export.ts[IV7S]: F:三种文件写出：PNG 直存、PDF 逐页无损嵌入、Word 标题可编辑加二维码图片 | R:code:src/lib/download.ts,code:src/lib/fonts.ts,code:src/lib/units.ts | A:exportPng,exportPdf,exportWord,createPdfBuilder,ExportPage,WordPage | S:PDF 必须用 Flate 无损嵌入整张 PNG（有损会毁二维码可扫性）；Word 页面毫米尺寸由 w:pgSz 决定
+exportImage.ts[DV6M]: F:图片批量导出内核：逐张、ZIP 打包（附清单）与拼接成一张（网格/纵向/横向） | R:code:src/lib/async.ts,code:src/lib/download.ts,code:src/lib/types.ts | A:exportImages,ImagePage,zipSync,StitchOptions | S:拼接总像素上限四千万，超限要拒绝并回报；ZIP 内要附清单说明序号与文件名
+fonts.ts[CU5T]: F:标题字体目录与解析：黑体、宋体、楷体、等宽及其回退链 | R:code:src/lib/render.ts,code:src/lib/export.ts,code:src/components/Docket.tsx | A:LABEL_FONTS,resolveLabelFont,LabelFont | S:画布与 Word 必须用同一份字体定义，拆开会出现屏幕与文件不一致
+importData.ts[ID6M]: F:批量数据解析：CSV/TSV/TXT/JSON/XLSX 与粘贴，分隔符嗅探与 UTF-8/GBK 识别 | R:code:src/lib/types.ts,code:src/components/BatchSource.tsx | A:parseDataFile,parseDelimitedText,sniffDelimiter,parsePastedText,buildSampleCsv,DataFormat | S:老式 .xls 明确拒绝并给替代做法；XLSX 只读第一张工作表并提醒；导出文件不写内部 id
+presetFile.ts[DC5S]: F:样式预设文件：带版本信封的 JSON 解析与生成，支持整套与只样式两种范围 | R:code:src/lib/types.ts,code:src/components/Docket.tsx | A:buildPresetFile,parsePresetFile,PresetScope,PresetFileEntry | S:解析要宽容（裸数组、单份配置、缺字段补默认）；结构不对的条目跳过并提醒，而不是整份失败
+preview.ts[CU5T]: F:预览缩放口径：适应窗口与缩略图的最大像素与缩放系数计算 | R:code:src/lib/render.ts,code:src/components/BatchPreviewGrid.tsx | A:PREVIEW_MAX_PX,THUMB_MAX_PX,previewScaleFor | S:缩略图与单张预览共用同一套上限，改一处必须同步另一处
+render.ts[KB9L]: F:渲染核：毫米到像素的排版与画布绘制，产出预览与导出共用的同一张位图 | R:code:src/lib/units.ts,code:src/lib/fonts.ts,code:src/lib/types.ts | A:renderLabel,layoutLabel,renderQrCode,validateLabel,LabelLayout,QrRender | S:二维码必须先在导出网格上按整数像素每模块定边长、且只允许不超过空间上限，预览只等比缩放同一张位图；若在缩小后的 dpi 上重算 modulePx，屏幕毫米、读数与打印会互相打架（实测差 3.27mm）
+types.ts[CD7S]: F:领域类型：页面、二维码、标题与印刷标记配置，批量行与渲染结果 | R:code:src/lib/render.ts,code:src/state/labelStore.ts,code:src/lib/units.ts | A:LabelConfig,PageConfig,QrConfig,TitleConfig,MarksConfig,RenderResult | S:印刷标记默认只开四角裁切标记，色标条与边距线按需开；改默认必须同步 labelStore
+units.ts[CG8T]: F:单位与纸张口径：毫米与像素互转、DPI 与纸张预设、比例解析与数值钳制 | R:code:src/lib/types.ts,code:src/lib/render.ts,code:src/components/Docket.tsx | A:mmToPx,pxToMm,ptToPx,sheetSize,PAGE_PRESETS,DPI_PRESETS | S:这是全项目唯一的毫米与像素换算点，读数一律由像素回读成毫米，不要在别处另写换算
+useElementSize.ts[CU5T]: F:量测钩子：按内容框测元素尺寸并给出可挂载的 ref 回调 | R:code:src/components/PressSheet.tsx,code:src/components/BatchTable.tsx | A:useElementSize,attach,ElementSize | S:必须量内容框（clientWidth 减内边距）；ResizeObserver 不投递回调时要有窗口 resize 兜底
+useAppShortcuts.ts[CU4T]: F:顶栏热键：Alt+数字触发导出、Alt+M 切模式，输入框内不抢键 | R:code:src/App.tsx,code:src/state/useExportActions.ts | A:useAppShortcuts,bindings,onToggleMode | S:动作表由调用方传入，避免按键映射在界面与这里各写一份
+useSplitDrag.ts[CU4T]: F:分栏拖拽：指针事件与几何换算，比例怎么存与怎么钳制由调用方决定 | R:code:src/App.tsx | A:useSplitDrag,containerRef,startDrag | S:松手时无论指针在哪都要解绑监听并复位光标
+
+===C:/Users/wang-it-think/Desktop/Code/QRStick/src/state/===
+labelStore.ts[RD7M]: F:单一状态仓：配置、批量行、预设、界面状态与导出进度的动作；读写全交给 state/persistence.ts | R:code:src/lib/types.ts,code:src/state/types.ts,code:src/state/persistence.ts,code:src/lib/render.ts,code:src/App.tsx | A:useLabelStore,LabelStore,IDLE_EXPORT,setConfig,setPreviewZoom,patchPage | S:存储只在 persistence.ts 一处（四键各带 .v1）；预览与导出共享同一份 config，两个模式不得各存一份
+persistence.ts[PD7S]: F:本机持久化的唯一入口：四个键的读取与兜底、默认值、写入 hook | R:code:src/state/labelStore.ts,code:src/state/types.ts,code:src/lib/types.ts | A:loadInitialState,usePersisted,DEFAULT_CONFIG,DEFAULT_VIEW,CONFIG_KEY,readRaw | S:键值形状对不上必须退回默认值，绝不把旧或半截结构塞进界面；默认值（导出默认打包、拼接 3 列 2mm）改动等于改用户的默认行为
+types.ts[CD5T]: F:状态形状与常量：制作模式、批量来源、导出记录、预设、界面状态，供 storage 与状态仓共用 | R:code:src/state/labelStore.ts,code:src/state/persistence.ts,code:src/state/useExportActions.ts,code:src/components/StateLine.tsx | A:AppMode,ExportRecord,IDLE_EXPORT,LabelPreset,ViewState | S:放这里是为了让持久化与状态仓都能引用而不互相 import，避免形成环
+useExportActions.ts[AV6S]: F:导出编排 hook：图片与文档导出、进度回填、导出记录状态机与「参数一改就不算已导出」 | R:code:src/export/run.ts,code:src/export/runImage.ts,code:src/state/types.ts,code:src/lib/types.ts | A:useExportActions,TopAction,handleExport,busy | S:顶栏按钮与 Alt 快捷键必须共用这一个入口；busy 由导出记录的相位派生，不得在组件里另存一份
+usePresetTransfer.ts[IC5T]: F:预设文件的浏览器侧动作：读文件解析导入、拼文件下载导出与一行就地提示 | R:code:src/lib/presetFile.ts,code:src/lib/download.ts,code:src/state/types.ts,code:src/components/docket/PresetSection.tsx | A:usePresetTransfer,exportFile,onFileChange,openPicker | S:纯格式逻辑在 lib/presetFile.ts，这里只做副作用；导入失败必须就地说明原因
+
+===C:/Users/wang-it-think/Desktop/Code/QRStick/src/components/docket/===
+ExportSection.tsx[AU5S]: F:导出段：图片格式与质量、批量三模式（逐张/打包/拼接）与拼接排布 | R:code:src/components/docket/fields.tsx,code:src/lib/types.ts,code:src/state/types.ts | A:ExportSection,ImageExportMode,StitchPlacement,ImageFormat | S:批量相关字段只在批量模式显示，JPEG 专属字段只在选 JPEG 时显示
+PaperSection.tsx[AU5S]: F:规格段：纸张、方向、版式站位、自定义宽高与长宽比、分辨率、页边距 | R:code:src/components/docket/fields.tsx,code:src/lib/units.ts,code:src/lib/types.ts | A:PaperSection,applyRatio,PAGE_PRESETS,DPI_PRESETS,parseAspectRatio | S:自定义宽高与长宽比只在 presetId=custom 时出现；长宽比看不懂时就地报错，不静默丢弃
+PresetSection.tsx[AU5S]: F:样式预设段：存下整套或只样式、套用、删除与跨机器导入导出 | R:code:src/state/usePresetTransfer.ts,code:src/lib/presetFile.ts,code:src/state/types.ts,code:src/components/ConfirmDialog.tsx,code:src/components/docket/fields.tsx | A:PresetSection,savePreset,applyPreset,usePresetTransfer | S:文件那半在 state/usePresetTransfer.ts，本段不碰 Blob 与 input；删除预设必须走确认框
+QrSection.tsx[AU5S]: F:二维码段：码内容、边长、纠错等级、印刷标记，静默区收在更多规格里 | R:code:src/components/docket/fields.tsx,code:src/lib/types.ts | A:QrSection,ErrorCorrectionLevel,MarksConfig,quietZoneModules | S:静默区的默认展开由 compact 决定（宽屏展开、窄屏收起），不要在段内写死
+TitleSection.tsx[AU5S]: F:标题段：标题内容、字体、字号、对齐与码上码下、粗细与行距、与码间距 | R:code:src/components/docket/fields.tsx,code:src/lib/fonts.ts,code:src/lib/types.ts | A:TitleSection,LABEL_FONTS,FieldTextArea,Segmented | S:字号输入框上限 400pt 而滑杆只到 160pt，滑杆值取 min 以免超出范围显示错位
+fields.tsx[CU6M]: F:联单字段原语：字段名与值的格子、文本域/下拉/数字/成组切换，全站唯一的参数输入形态 | R:code:src/components/docket/PaperSection.tsx,code:src/components/docket/TitleSection.tsx,code:src/components/docket/QrSection.tsx,code:src/components/docket/ExportSection.tsx,code:src/components/docket/PresetSection.tsx | A:FieldRow,DocketSection,NumberField,Segmented,FieldSelect,FieldTextArea | S:字段名与控件的无障碍连线由 FieldLabelId 上下文承接，控件必须用 aria-labelledby 指回字段名；数字输入的越界提示只在这里实现
