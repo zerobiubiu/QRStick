@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created_at": "2026-10-09T15:22:23Z",
-  "updated_at": "2026-10-09T17:52:08Z",
+  "updated_at": "2026-10-09T18:07:49Z",
   "files": {
     ".gitattributes": {
       "role": "index",
@@ -41,15 +41,15 @@
     },
     "CHANGELOG.md": {
       "role": "index",
-      "sha256": "d227f16b2f3d609dee76002196848f01df864066471c3cdb10d35b1e35619f3f",
-      "size": 9820,
-      "normalized_sha256": "d227f16b2f3d609dee76002196848f01df864066471c3cdb10d35b1e35619f3f"
+      "sha256": "2b4da1cb1bbf2acd978e8e0c3356e8ca4c5743c7299092f55e4df30d00b74e43",
+      "size": 10778,
+      "normalized_sha256": "2b4da1cb1bbf2acd978e8e0c3356e8ca4c5743c7299092f55e4df30d00b74e43"
     },
     "DESIGN.md": {
       "role": "index",
-      "sha256": "19667371137080eb1f12822d347874832a80f354d09cbfed9d2970bde300e707",
-      "size": 41742,
-      "normalized_sha256": "19667371137080eb1f12822d347874832a80f354d09cbfed9d2970bde300e707"
+      "sha256": "056064ec5e923d08166e564ebb6be934d20ffdce727cf72c73ee7ac7d97cb530",
+      "size": 43055,
+      "normalized_sha256": "056064ec5e923d08166e564ebb6be934d20ffdce727cf72c73ee7ac7d97cb530"
     },
     "LICENSE": {
       "role": "index",
@@ -71,9 +71,9 @@
     },
     "aoci.code.txt": {
       "role": "index",
-      "sha256": "ab3f776144643c79dcf103c95c54c374350946c7b6a0769a6dae5d9ddd8bdd63",
-      "size": 30289,
-      "normalized_sha256": "ab3f776144643c79dcf103c95c54c374350946c7b6a0769a6dae5d9ddd8bdd63"
+      "sha256": "dafc87525ef7d987d3fc2366a23b04e39ebe1d589d53f07fa6b37763a34c2eaa",
+      "size": 30791,
+      "normalized_sha256": "dafc87525ef7d987d3fc2366a23b04e39ebe1d589d53f07fa6b37763a34c2eaa"
     },
     "aoci.meta.txt": {
       "role": "index",
@@ -95,9 +95,9 @@
     },
     "docs/README.md": {
       "role": "index",
-      "sha256": "ccac63694072994a97ff4f92958ab2475228042911517b3a9d6fe5df60757e77",
-      "size": 4807,
-      "normalized_sha256": "ccac63694072994a97ff4f92958ab2475228042911517b3a9d6fe5df60757e77"
+      "sha256": "4a967a9534f075df40795d8495bb737c39c21bd768590afb6b788a16e116c951",
+      "size": 5075,
+      "normalized_sha256": "4a967a9534f075df40795d8495bb737c39c21bd768590afb6b788a16e116c951"
     },
     "docs/architecture/0001-渲染核与导出链路.md": {
       "role": "index",
@@ -195,11 +195,17 @@
       "size": 8649,
       "normalized_sha256": "eaa2ae9b7c3d1482731ac47d24a2022c1b261936cf2e67f3fe08f176327f6edb"
     },
+    "docs/changes/0015-首访引导与示例标注.md": {
+      "role": "index",
+      "sha256": "0dbe9878ebdf2ffe93969337966fbd45fddc533ab3200da099635c87852e8b20",
+      "size": 7358,
+      "normalized_sha256": "0dbe9878ebdf2ffe93969337966fbd45fddc533ab3200da099635c87852e8b20"
+    },
     "docs/changes/README.md": {
       "role": "index",
-      "sha256": "828c20ee884c14baa26218b2717bae12ce419c7e41de9d4015dae0bc49623c7f",
-      "size": 2800,
-      "normalized_sha256": "828c20ee884c14baa26218b2717bae12ce419c7e41de9d4015dae0bc49623c7f"
+      "sha256": "8f0b97499e61587c59693beb00faa8c55d06eab4c304114ade3cacd39019b37b",
+      "size": 3029,
+      "normalized_sha256": "8f0b97499e61587c59693beb00faa8c55d06eab4c304114ade3cacd39019b37b"
     },
     "docs/decisions/0001-界面语言-印刷工单与印张.md": {
       "role": "index",
@@ -226,9 +232,9 @@
     },
     "package.json": {
       "role": "index",
-      "sha256": "28668539a22f11a051c1ba5f9b831afa18ab763c2415f0aab3b1bf95505375f2",
+      "sha256": "b95a3bad059b51b0af2249ddce40a62721a2a434e514d4c22bd2084d25031146",
       "size": 1005,
-      "normalized_sha256": "28668539a22f11a051c1ba5f9b831afa18ab763c2415f0aab3b1bf95505375f2"
+      "normalized_sha256": "b95a3bad059b51b0af2249ddce40a62721a2a434e514d4c22bd2084d25031146"
     },
     "public/favicon.svg": {
       "role": "index",
@@ -238,9 +244,9 @@
     },
     "src/App.tsx": {
       "role": "index",
-      "sha256": "ae90bcaf96549eeef5a716e7dbe43cc4b7a298e74ca72a10fa4f5292f924e793",
-      "size": 13540,
-      "normalized_sha256": "ae90bcaf96549eeef5a716e7dbe43cc4b7a298e74ca72a10fa4f5292f924e793"
+      "sha256": "37834d8764a82ca0cf3694b2e7b3bc818812951abef4bdf3c820d8e155581585",
+      "size": 15369,
+      "normalized_sha256": "37834d8764a82ca0cf3694b2e7b3bc818812951abef4bdf3c820d8e155581585"
     },
     "src/components/BatchPreviewGrid.tsx": {
       "role": "index",
@@ -280,9 +286,9 @@
     },
     "src/components/StateLine.tsx": {
       "role": "index",
-      "sha256": "dbd8ee3fda2f114286054ad35f53dc52ed8921f5f279890cf4ac9e7bbc44453f",
-      "size": 3404,
-      "normalized_sha256": "dbd8ee3fda2f114286054ad35f53dc52ed8921f5f279890cf4ac9e7bbc44453f"
+      "sha256": "17976ed0d3b2c203aa88653ad6ceb7794a4c1c770e78503fc70aae61ac3e2872",
+      "size": 3980,
+      "normalized_sha256": "17976ed0d3b2c203aa88653ad6ceb7794a4c1c770e78503fc70aae61ac3e2872"
     },
     "src/components/docket/ExportSection.tsx": {
       "role": "index",
@@ -442,21 +448,21 @@
     },
     "src/state/labelStore.ts": {
       "role": "index",
-      "sha256": "952dbd78af782c57bb27399e0e598d7c59618e6d7866ae75af50b7125c221469",
-      "size": 13606,
-      "normalized_sha256": "952dbd78af782c57bb27399e0e598d7c59618e6d7866ae75af50b7125c221469"
+      "sha256": "74d85c91e3ef21823f293a6514eea9cc09678549c19fd130503d6752ecdb4134",
+      "size": 14039,
+      "normalized_sha256": "74d85c91e3ef21823f293a6514eea9cc09678549c19fd130503d6752ecdb4134"
     },
     "src/state/persistence.ts": {
       "role": "index",
-      "sha256": "63e68dcc3d24a2d1cb8ad4b6f7f0b80a9053a7a017f850fb9dc324dbe1d67640",
-      "size": 8611,
-      "normalized_sha256": "63e68dcc3d24a2d1cb8ad4b6f7f0b80a9053a7a017f850fb9dc324dbe1d67640"
+      "sha256": "fb1488ff28114ad148aaa361aa7273d367c6a6609a15646aae01de0c04bf3530",
+      "size": 8816,
+      "normalized_sha256": "fb1488ff28114ad148aaa361aa7273d367c6a6609a15646aae01de0c04bf3530"
     },
     "src/state/types.ts": {
       "role": "index",
-      "sha256": "292425b8af493f5a10682a69913ca291dd85a42f2a1967c57b2ab7ad59b9a485",
-      "size": 1840,
-      "normalized_sha256": "292425b8af493f5a10682a69913ca291dd85a42f2a1967c57b2ab7ad59b9a485"
+      "sha256": "2d7f319655b2c6be36f6eb574b70b4e989b03801ea3e8815d9942c0494aba3e3",
+      "size": 2006,
+      "normalized_sha256": "2d7f319655b2c6be36f6eb574b70b4e989b03801ea3e8815d9942c0494aba3e3"
     },
     "src/state/useExportActions.ts": {
       "role": "index",
